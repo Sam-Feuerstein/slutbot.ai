@@ -1,0 +1,158 @@
+import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
+import connectDB from '@/lib/db/mongodb';
+import { SlutbotUser } from '@/lib/models';
+import { getAppUrl } from '@/lib/site';
+import { newClientId } from '@/lib/auth/slutbotAuth';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+
+type GoogleOAuthConfig = {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+};
+
+export type GoogleProfile = {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  verified_email?: boolean;
+};
+
+export function isGoogleOAuthConfigured() {
+  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
+export function getGoogleOAuthConfig(): GoogleOAuthConfig {
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) {
+    throw new Error('Google OAuth is not configured.');
+  }
+
+  return {
+    clientId,
+    clientSecret,
+    redirectUri: `${getAppUrl()}/api/auth/google/callback`,
+  };
+}
+
+export function buildGoogleAuthUrl(redirect: string) {
+  const { clientId, redirectUri } = getGoogleOAuthConfig();
+  const state = jwt.sign(
+    { redirect, nonce: randomBytes(16).toString('hex'), purpose: 'google-oauth' },
+    JWT_SECRET,
+    { expiresIn: '10m' },
+  );
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    access_type: 'online',
+    prompt: 'select_account',
+  });
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+export function parseGoogleOAuthState(state: string | null) {
+  if (!state) return null;
+
+  try {
+    const decoded = jwt.verify(state, JWT_SECRET) as {
+      redirect?: string;
+      purpose?: string;
+    };
+    if (decoded.purpose !== 'google-oauth') return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
+export async function exchangeGoogleCode(code: string) {
+  const { clientId, clientSecret, redirectUri } = getGoogleOAuthConfig();
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    }),
+  });
+
+  const data = (await res.json()) as { access_token?: string; error?: string; error_description?: string };
+  if (!res.ok || !data.access_token) {
+    throw new Error(data.error_description || data.error || 'Google token exchange failed.');
+  }
+
+  return data.access_token;
+}
+
+export async function fetchGoogleProfile(accessToken: string): Promise<GoogleProfile> {
+  const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const data = (await res.json()) as GoogleProfile & { error?: { message?: string } };
+
+  if (!res.ok || !data.id || !data.email) {
+    throw new Error(data.error?.message || 'Could not load Google profile.');
+  }
+
+  if (data.verified_email === false) {
+    throw new Error('Google email is not verified.');
+  }
+
+  return {
+    id: data.id,
+    email: data.email.trim().toLowerCase(),
+    name: data.name?.trim() || '',
+    picture: data.picture,
+    verified_email: data.verified_email,
+  };
+}
+
+export async function findOrCreateGoogleUser(profile: GoogleProfile) {
+  await connectDB();
+
+  let user = await SlutbotUser.findOne({ googleId: profile.id });
+  if (user) {
+    if (user.banned) {
+      throw new Error('This account is banned.');
+    }
+    user.lastLoginAt = new Date();
+    if (!user.name && profile.name) user.name = profile.name;
+    await user.save();
+    return user;
+  }
+
+  user = await SlutbotUser.findOne({ email: profile.email });
+  if (user) {
+    if (user.banned) {
+      throw new Error('This account is banned.');
+    }
+    user.googleId = profile.id;
+    user.lastLoginAt = new Date();
+    if (!user.name && profile.name) user.name = profile.name;
+    await user.save();
+    return user;
+  }
+
+  return SlutbotUser.create({
+    email: profile.email,
+    name: profile.name,
+    googleId: profile.id,
+    clientId: newClientId(),
+    desires: 0,
+    banned: false,
+    lastLoginAt: new Date(),
+  });
+}

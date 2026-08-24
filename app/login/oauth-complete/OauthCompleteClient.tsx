@@ -1,0 +1,62 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import BrandLogo from '../../components/BrandLogo';
+import { storeAuthSession } from '../LoginClient';
+import { safeNextPath } from '@/lib/site';
+
+export default function OauthCompleteClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = safeNextPath(searchParams.get('redirect'));
+  const [message, setMessage] = useState('Completing Google sign-in…');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function complete() {
+      try {
+        const res = await fetch('/api/auth/google/complete');
+        const data = (await res.json()) as {
+          token?: string;
+          clientId?: string;
+          desires?: number;
+          message?: string;
+        };
+
+        if (cancelled) return;
+
+        if (!res.ok || !data.token || !data.clientId) {
+          setMessage(data.message || 'Google sign-in failed.');
+          return;
+        }
+
+        storeAuthSession({ token: data.token, clientId: data.clientId });
+        localStorage.setItem('slutbot-desires', String(data.desires ?? 0));
+        localStorage.setItem('slutbot-desires-server', String(data.desires ?? 0));
+        window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));
+        router.replace(redirect);
+      } catch {
+        if (!cancelled) {
+          setMessage('Google sign-in failed.');
+        }
+      }
+    }
+
+    void complete();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [redirect, router]);
+
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-[#090505] px-4 py-[max(1.5rem,var(--safe-top))] text-white">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 text-center shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+        <BrandLogo className="mx-auto mb-5 h-8 w-auto" />
+        <p className="text-sm text-white/70">{message}</p>
+      </div>
+    </div>
+  );
+}

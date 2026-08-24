@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  exchangeGoogleCode,
+  fetchGoogleProfile,
+  findOrCreateGoogleUser,
+  isGoogleOAuthConfigured,
+  parseGoogleOAuthState,
+} from '@/lib/auth/googleOAuth';
+import { signSlutbotToken } from '@/lib/auth/slutbotAuth';
+import { getAppUrl, loginHref, safeNextPath } from '@/lib/site';
+
+const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
+
+function oauthErrorRedirect(message: string, redirect = '/') {
+  const url = new URL(loginHref(redirect), getAppUrl());
+  url.searchParams.set('error', message);
+  return NextResponse.redirect(url);
+}
+
+export async function GET(req: NextRequest) {
+  if (!isGoogleOAuthConfigured()) {
+    return oauthErrorRedirect('Google sign-in is not configured.');
+  }
+
+  const code = req.nextUrl.searchParams.get('code');
+  const state = req.nextUrl.searchParams.get('state');
+  const googleError = req.nextUrl.searchParams.get('error');
+
+  const parsedState = parseGoogleOAuthState(state);
+  const redirect = safeNextPath(parsedState?.redirect);
+
+  if (googleError) {
+    return oauthErrorRedirect('Google sign-in was cancelled.', redirect);
+  }
+
+  if (!code || !parsedState) {
+    return oauthErrorRedirect('Invalid Google sign-in response.', redirect);
+  }
+
+  try {
+    const accessToken = await exchangeGoogleCode(code);
+    const profile = await fetchGoogleProfile(accessToken);
+    const user = await findOrCreateGoogleUser(profile);
+    const token = signSlutbotToken(String(user._id));
+
+    const completeUrl = new URL('/login/oauth-complete', getAppUrl());
+    completeUrl.searchParams.set('redirect', redirect);
+
+    const response = NextResponse.redirect(completeUrl);
+    response.cookies.set(OAUTH_LOGIN_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60,
+      path: '/',
+    });
+
+    return response;
+  } catch (err) {
+    console.error('Google OAuth callback error:', err);
+    const message = err instanceof Error ? err.message : 'Google sign-in failed.';
+    return oauthErrorRedirect(message, redirect);
+  }
+}

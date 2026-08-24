@@ -1,0 +1,46 @@
+import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/lib/db/mongodb';
+import { SlutbotUser } from '@/lib/models';
+import { authenticateSlutbotToken } from '@/lib/auth/slutbotAuth';
+
+const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
+
+export async function GET(req: NextRequest) {
+  const token = req.cookies.get(OAUTH_LOGIN_COOKIE)?.value;
+  if (!token) {
+    return NextResponse.json({ message: 'Google sign-in session expired.' }, { status: 401 });
+  }
+
+  try {
+    const authUser = await authenticateSlutbotToken(token);
+    if (!authUser) {
+      return NextResponse.json({ message: 'Google sign-in session expired.' }, { status: 401 });
+    }
+
+    await connectDB();
+    const user = await SlutbotUser.findById(authUser.id);
+    if (!user || user.banned) {
+      return NextResponse.json({ message: 'This account is banned.' }, { status: 403 });
+    }
+
+    const response = NextResponse.json({
+      token,
+      email: user.email,
+      name: user.name || '',
+      clientId: user.clientId,
+      desires: user.desires ?? 0,
+    });
+    response.cookies.set(OAUTH_LOGIN_COOKIE, '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    return response;
+  } catch (err) {
+    console.error('Google OAuth complete error:', err);
+    return NextResponse.json({ message: 'Could not complete Google sign-in.' }, { status: 500 });
+  }
+}
