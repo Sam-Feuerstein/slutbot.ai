@@ -6,7 +6,9 @@ function mediaRemotePatterns(): NonNullable<NextConfig['images']>['remotePattern
     { protocol: 'https', hostname: 'spicybox-generations.b-cdn.net', pathname: '/**' },
   ];
 
-  const base = process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE;
+  const base =
+    process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE ||
+    'https://pub-17aa5d996caf4f7086190be5ee8807c5.r2.dev';
   if (base) {
     try {
       const url = new URL(base);

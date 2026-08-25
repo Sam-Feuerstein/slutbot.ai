@@ -2,8 +2,12 @@ import type { HomePreset } from '@/lib/homePresets';
 
 export const PRESET_MEDIA_PREFIX = 'slutbot.ai';
 
-/** Public R2 base (no trailing slash), e.g. https://pub-xxxx.r2.dev */
-export const PRESET_MEDIA_BASE = (process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE || '').replace(/\/$/, '');
+/** Public R2 host for preset posters/videos. Env wins; fallback keeps production working if the Vercel build missed NEXT_PUBLIC_*. */
+const DEFAULT_PRESET_MEDIA_BASE = 'https://pub-17aa5d996caf4f7086190be5ee8807c5.r2.dev';
+
+export const PRESET_MEDIA_BASE = (
+  process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE || DEFAULT_PRESET_MEDIA_BASE
+).replace(/\/$/, '');
 
 export function presetAssetBase(generation: number): string {
   return `ai-slut-video-generation${generation}`;
