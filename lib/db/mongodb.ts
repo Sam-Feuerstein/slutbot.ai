@@ -1,10 +1,5 @@
 import mongoose from 'mongoose';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
-}
-
-const uri = process.env.MONGODB_URI;
 const options: mongoose.ConnectOptions = {
   family: 4,
   maxPoolSize: 10,
@@ -26,6 +21,14 @@ if (!g.__mongoose) {
   g.__mongoose = { conn: null, promise: null };
 }
 
+function mongoUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
+  }
+  return uri;
+}
+
 async function connectDB() {
   if (mongoose.connection.readyState === 1) {
     return g.__mongoose.conn ?? mongoose;
@@ -37,7 +40,7 @@ async function connectDB() {
 
   if (!g.__mongoose.promise) {
     g.__mongoose.promise = mongoose
-      .connect(uri, options)
+      .connect(mongoUri(), options)
       .then((m) => {
         g.__mongoose.conn = m;
         return m;
