@@ -76,14 +76,30 @@ export async function getAnalyticsSummary() {
       .lean(),
   ]);
 
+  type StatRow = { name?: string; count?: number; day?: string };
+  type EventRow = {
+    name?: string;
+    kind?: string;
+    path?: string;
+    label?: string;
+    plan?: string;
+    method?: string;
+    createdAt?: Date;
+  };
+
+  const totalRows = totals as unknown as StatRow[];
+  const dailyRows = daily as unknown as StatRow[];
+  const recentRows = recent as unknown as EventRow[];
+
   const totalMap: Record<string, number> = {};
-  for (const row of totals as Array<{ name: string; count?: number }>) {
+  for (const row of totalRows) {
+    if (!row.name) continue;
     totalMap[row.name] = row.count ?? 0;
   }
 
-  const days = [...new Set((daily as Array<{ day: string }>).map((row) => row.day))].sort().slice(-14);
+  const days = [...new Set(dailyRows.map((row) => row.day).filter(Boolean) as string[])].sort().slice(-14);
   const byDay = days.map((day) => {
-    const rows = (daily as Array<{ day: string; name: string; count?: number }>).filter((row) => row.day === day);
+    const rows = dailyRows.filter((row) => row.day === day);
     const pick = (name: string) => rows.find((row) => row.name === name)?.count ?? 0;
     return {
       day,
@@ -107,17 +123,9 @@ export async function getAnalyticsSummary() {
       checkoutName: totalMap.checkout_name ?? 0,
     },
     byDay,
-    recent: (recent as Array<{
-      name: string;
-      kind: string;
-      path?: string;
-      label?: string;
-      plan?: string;
-      method?: string;
-      createdAt?: Date;
-    }>).map((row) => ({
-      name: row.name,
-      kind: row.kind,
+    recent: recentRows.map((row) => ({
+      name: row.name || '',
+      kind: row.kind || '',
       path: row.path || '',
       label: row.label || '',
       plan: row.plan || '',
