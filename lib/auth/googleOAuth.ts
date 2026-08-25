@@ -22,25 +22,26 @@ export type GoogleProfile = {
 };
 
 export function isGoogleOAuthConfigured() {
-  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  return Boolean(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
 }
 
-export function getGoogleOAuthConfig(): GoogleOAuthConfig {
+export function getGoogleOAuthConfig(origin?: string): GoogleOAuthConfig {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
     throw new Error('Google OAuth is not configured.');
   }
 
+  const base = (origin || getAppUrl()).replace(/\/$/, '');
   return {
     clientId,
     clientSecret,
-    redirectUri: `${getAppUrl()}/api/auth/google/callback`,
+    redirectUri: `${base}/api/auth/google/callback`,
   };
 }
 
-export function buildGoogleAuthUrl(redirect: string) {
-  const { clientId, redirectUri } = getGoogleOAuthConfig();
+export function buildGoogleAuthUrl(redirect: string, origin?: string) {
+  const { clientId, redirectUri } = getGoogleOAuthConfig(origin);
   const state = jwt.sign(
     { redirect, nonce: randomBytes(16).toString('hex'), purpose: 'google-oauth' },
     JWT_SECRET,
@@ -75,8 +76,8 @@ export function parseGoogleOAuthState(state: string | null) {
   }
 }
 
-export async function exchangeGoogleCode(code: string) {
-  const { clientId, clientSecret, redirectUri } = getGoogleOAuthConfig();
+export async function exchangeGoogleCode(code: string, origin?: string) {
+  const { clientId, clientSecret, redirectUri } = getGoogleOAuthConfig(origin);
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

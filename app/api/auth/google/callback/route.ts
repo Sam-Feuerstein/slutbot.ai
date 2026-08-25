@@ -7,19 +7,20 @@ import {
   parseGoogleOAuthState,
 } from '@/lib/auth/googleOAuth';
 import { signSlutbotToken } from '@/lib/auth/slutbotAuth';
-import { getAppUrl, loginHref, safeNextPath } from '@/lib/site';
+import { loginHref, safeNextPath } from '@/lib/site';
 
 const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
 
-function oauthErrorRedirect(message: string, redirect = '/') {
-  const url = new URL(loginHref(redirect), getAppUrl());
+function oauthErrorRedirect(message: string, origin: string, redirect = '/') {
+  const url = new URL(loginHref(redirect), origin);
   url.searchParams.set('error', message);
   return NextResponse.redirect(url);
 }
 
 export async function GET(req: NextRequest) {
+  const origin = req.nextUrl.origin;
   if (!isGoogleOAuthConfigured()) {
-    return oauthErrorRedirect('Google sign-in is not configured.');
+    return oauthErrorRedirect('Google sign-in is not configured.', origin);
   }
 
   const code = req.nextUrl.searchParams.get('code');
@@ -30,20 +31,20 @@ export async function GET(req: NextRequest) {
   const redirect = safeNextPath(parsedState?.redirect);
 
   if (googleError) {
-    return oauthErrorRedirect('Google sign-in was cancelled.', redirect);
+    return oauthErrorRedirect('Google sign-in was cancelled.', origin, redirect);
   }
 
   if (!code || !parsedState) {
-    return oauthErrorRedirect('Invalid Google sign-in response.', redirect);
+    return oauthErrorRedirect('Invalid Google sign-in response.', origin, redirect);
   }
 
   try {
-    const accessToken = await exchangeGoogleCode(code);
+    const accessToken = await exchangeGoogleCode(code, origin);
     const profile = await fetchGoogleProfile(accessToken);
     const user = await findOrCreateGoogleUser(profile);
     const token = signSlutbotToken(String(user._id));
 
-    const completeUrl = new URL('/login/oauth-complete', getAppUrl());
+    const completeUrl = new URL('/login/oauth-complete', origin);
     completeUrl.searchParams.set('redirect', redirect);
 
     const response = NextResponse.redirect(completeUrl);
@@ -59,6 +60,6 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error('Google OAuth callback error:', err);
     const message = err instanceof Error ? err.message : 'Google sign-in failed.';
-    return oauthErrorRedirect(message, redirect);
+    return oauthErrorRedirect(message, origin, redirect);
   }
 }

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const redirect = safeNextPath(req.nextUrl.searchParams.get('redirect'));
-    const url = buildGoogleAuthUrl(redirect);
+    const url = buildGoogleAuthUrl(redirect, req.nextUrl.origin);
     return NextResponse.redirect(url);
   } catch (err) {
     console.error('Google OAuth start error:', err);
