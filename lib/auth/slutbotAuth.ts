@@ -59,9 +59,3 @@ export async function authenticateSlutbotToken(token?: string | null): Promise<S
 export function newClientId() {
   return randomUUID();
 }
-
-export function adminPasswordOk(req: NextRequest): boolean {
-  const expected = process.env.ADMIN_PASSWORD || '';
-  if (!expected) return true;
-  return req.headers.get('x-admin-password') === expected;
-}

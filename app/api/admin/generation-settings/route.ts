@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminPasswordOk } from '@/lib/auth/slutbotAuth';
+import { adminSessionOk } from '@/lib/auth/adminSession';
 import {
   DEFAULT_IMAGE_PROMPT,
   DEFAULT_VIDEO_PROMPT,
@@ -8,15 +8,15 @@ import {
   setGenerationPrompts,
 } from '@/lib/generationSettings';
 
-function denyAdmin(req: NextRequest) {
-  if (!adminPasswordOk(req)) {
-    return NextResponse.json({ message: 'Admin password required.' }, { status: 401 });
+async function denyAdmin(req: NextRequest) {
+  if (!(await adminSessionOk(req))) {
+    return NextResponse.json({ message: 'Admin login required.' }, { status: 401 });
   }
   return null;
 }
 
 export async function GET(req: NextRequest) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
   const [videoPrompt, imagePrompt] = await Promise.all([getVideoPrompt(), getImagePrompt()]);
   return NextResponse.json({
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
   const body = (await req.json()) as { videoPrompt?: string; imagePrompt?: string };
   const saved = await setGenerationPrompts({

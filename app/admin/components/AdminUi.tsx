@@ -67,7 +67,7 @@ export function StatusChip({ connected }: { connected: boolean }) {
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-      {connected ? 'Ready (mock)' : 'Not connected'}
+      {connected ? 'Ready' : 'Not connected'}
     </span>
   );
 }

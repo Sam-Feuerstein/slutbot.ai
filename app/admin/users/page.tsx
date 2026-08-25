@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { adminHeaders, getAdminPassword, setAdminPassword } from '@/lib/adminApi';
+import { adminHeaders } from '@/lib/adminApi';
 import { PageHeader, Panel, SaveButton, inputClass } from '../components/AdminUi';
 
 type AdminUser = {
@@ -23,7 +23,6 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', name: '', desires: '50' });
-  const [adminPw, setAdminPw] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,14 +44,8 @@ export default function AdminUsersPage() {
   }, [q]);
 
   useEffect(() => {
-    setAdminPw(getAdminPassword());
     void load();
   }, [load]);
-
-  async function saveAdminPassword() {
-    setAdminPassword(adminPw);
-    await load();
-  }
 
   async function createUser(event: React.FormEvent) {
     event.preventDefault();
@@ -100,24 +93,6 @@ export default function AdminUsersPage() {
           </div>
         }
       />
-
-      {!getAdminPassword() ? (
-        <Panel className="mb-5">
-          <p className="text-sm text-white/50">Enter admin password once (from .env.local ADMIN_PASSWORD).</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              type="password"
-              value={adminPw}
-              onChange={(e) => setAdminPw(e.target.value)}
-              placeholder="Admin password"
-              className={`${inputClass} max-w-xs`}
-            />
-            <button type="button" onClick={saveAdminPassword} className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black">
-              Save
-            </button>
-          </div>
-        </Panel>
-      ) : null}
 
       {showCreate ? (
         <Panel className="mb-5">

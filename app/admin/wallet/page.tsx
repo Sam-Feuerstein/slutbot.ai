@@ -1,7 +1,7 @@
 'use client';
 
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
-import { Field, MockNote, PageHeader, Panel, SaveButton, inputClass, useAdminSettings } from '../components/AdminUi';
+import { Field, PageHeader, Panel, SaveButton, inputClass, useAdminSettings } from '../components/AdminUi';
 
 export default function AdminWalletPage() {
   const { settings, setSettings, saved, onSubmit } = useAdminSettings();
@@ -15,7 +15,6 @@ export default function AdminWalletPage() {
         action={<SaveButton />}
       />
       <div className="space-y-5">
-        <MockNote />
         <Panel>
           <h2 className="text-lg font-black">Slutcoins per generation</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

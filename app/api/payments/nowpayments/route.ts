@@ -46,11 +46,24 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-    const data = (await res.json()) as { invoice_url?: string; message?: string };
+    const data = (await res.json()) as { id?: string | number; invoice_url?: string; message?: string };
 
     if (!res.ok || !data.invoice_url) {
       console.error('NowPayments invoice error:', data);
       return NextResponse.json({ message: data?.message || 'Failed to create crypto invoice.' }, { status: 500 });
+    }
+
+    if (data.id != null) {
+      await fetch(`${NP_BASE}/invoice-payment`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ iid: data.id, pay_currency: 'usdttrc20' }),
+      }).catch((err) => {
+        console.error('NowPayments invoice-payment lock error:', err);
+      });
     }
 
     await connectDB();

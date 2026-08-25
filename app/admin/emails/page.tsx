@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import {
   Field,
-  MockNote,
   PageHeader,
   Panel,
   SaveButton,
@@ -56,7 +55,6 @@ export default function AdminEmailsPage() {
           </div>
         }
       />
-      <MockNote />
 
       <Panel>
         <h2 className="text-lg font-black">Sending identity</h2>

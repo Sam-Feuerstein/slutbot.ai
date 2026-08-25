@@ -231,11 +231,10 @@ export default function TermsPage() {
             </p>
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Tease (Starter): 25 Slutcoins for USD $9.99 (660 Telegram Stars).</li>
-              <li>Flirt: 57 Slutcoins for USD $15.14 (1,000 Telegram Stars).</li>
-              <li>Desire: 189 Slutcoins for USD $37.84 (2,500 Telegram Stars).</li>
-              <li>Passion: 568 Slutcoins for USD $75.68 (5,000 Telegram Stars).</li>
-              <li>Ecstasy: 2,018 Slutcoins for USD $151.36 (10,000 Telegram Stars).</li>
+              <li>Flirt (Starter): 121 Slutcoins for USD $15.14 (1,000 Telegram Stars).</li>
+              <li>Desire: 394 Slutcoins for USD $37.84 (2,500 Telegram Stars), including a 30% generation bonus.</li>
+              <li>Passion: 848 Slutcoins for USD $75.68 (5,000 Telegram Stars), including a 40% generation bonus.</li>
+              <li>Ecstasy: 1,818 Slutcoins for USD $151.36 (10,000 Telegram Stars), including a 50% generation bonus.</li>
             </ul>
             <p>
               Estimated image and video counts shown with a pack are illustrations based on typical generation costs

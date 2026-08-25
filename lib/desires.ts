@@ -10,13 +10,13 @@ export const CURRENCY_NAME_SINGULAR = 'Slutcoin';
 
 export const VIDEO_DURATION_SECONDS = 5;
 
-/** Pack video counts are 5s basic (X1). Higher quality is X2 / X3 / X4. Image is desires / images ≈ 2. */
+/** Pack video counts use 480 Normal (8 Slutcoins). Image is 4 Slutcoins. */
 export const DESIRE_COSTS = {
-  image: 2,
+  image: 4,
   videoBasic: 8,
-  videoBetter: 16,
-  videoBetter720: 24,
-  videoBetter1080: 32,
+  videoBetter: 8,
+  videoBetter720: 12,
+  videoBetter1080: 16,
 } as const;
 
 export type VideoQualityTier = 'basic' | 'better' | 'better720' | 'better1080';
@@ -98,7 +98,7 @@ export function formatSlutcoinBalance(amount: number): string {
 
 export function openPremiumPlans() {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(OPEN_PREMIUM_EVENT));
+  window.location.assign('/checkout?plan=flirt');
 }
 
 export function notifyDesiresUpdated() {

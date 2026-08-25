@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'SLUTBOT AI',
+    title: 'SLUTBOT.AI',
   },
   formatDetection: {
     telephone: false,
@@ -68,6 +68,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="dns-prefetch" href={PRESET_MEDIA_BASE} />
               </>
             ) : null}
+            <link rel="manifest" href="/manifest.json?v=1" />
+            <link rel="apple-touch-icon" href="/icons/icon-192.png?v=1" />
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+            <meta name="apple-mobile-web-app-title" content="SLUTBOT.AI" />
             <link rel="preload" as="image" href="/brand/slutbot-logo.webp" type="image/webp" />
             <link rel="preload" as="image" href="/brand/banner-poster.webp" type="image/webp" />
             <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM site summary" />

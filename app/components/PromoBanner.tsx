@@ -94,7 +94,7 @@ export default function PromoBanner() {
         </h1>
 
         <p className="mt-3 max-w-lg text-sm text-white/75 sm:text-base">
-          Your first generation is completely free. Just try it!
+          Give it a try. Generate your AI Slut Bot!
         </p>
 
         <Link

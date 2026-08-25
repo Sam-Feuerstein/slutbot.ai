@@ -19,7 +19,7 @@ export default function AgeConsentGate() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (pathname.startsWith('/admin')) return;
+    if (pathname.startsWith('/admin') || pathname.startsWith('/checkout')) return;
     try {
       const accepted = localStorage.getItem(STORAGE_KEY) === '1';
       setVisible(!accepted);
@@ -88,6 +88,7 @@ export default function AgeConsentGate() {
           onClick={() => {
             localStorage.setItem(STORAGE_KEY, '1');
             setVisible(false);
+            window.dispatchEvent(new Event('slutbot-age-consent'));
           }}
           className="mt-8 flex w-full items-center overflow-hidden rounded-2xl bg-[#ff2d78] text-left font-bold text-black shadow-[0_0_28px_rgba(255,45,120,0.45)] transition-colors hover:bg-[#ff1a6b]"
         >

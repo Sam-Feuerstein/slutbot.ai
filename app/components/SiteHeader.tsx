@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ChevronRight, Menu, X } from 'lucide-react';
 import BrandLogo from './BrandLogo';
+import Breadcrumbs from './Breadcrumbs';
 import {
   CURRENCY_NAME,
   DESIRES_UPDATED_EVENT,
@@ -70,8 +71,12 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-black pt-[var(--safe-top)] md:bg-black/95 md:backdrop-blur-md">
-        <div className="safe-x mx-auto flex h-12 max-w-[1600px] items-center justify-between gap-2 sm:h-14 sm:gap-4">
+      <header className="relative sticky top-0 z-50 overflow-hidden border-b border-[#ff2d78]/25 bg-[#4a122c] pt-[var(--safe-top)] md:bg-[#4a122c]/95 md:backdrop-blur-md">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-[min(52%,28rem)] bg-[linear-gradient(90deg,#000_0%,#000_38%,transparent_100%)]"
+        />
+        <div className="safe-x relative mx-auto flex h-12 max-w-[1600px] items-center justify-between gap-2 sm:h-14 sm:gap-4">
           <Link href="/" aria-label="SLUTBOT home" className="flex min-w-0 items-center gap-3 sm:gap-4">
             <BrandLogo className="h-6 w-auto sm:h-8" />
 
@@ -135,6 +140,7 @@ export default function SiteHeader() {
           </div>
         </div>
       </header>
+      <Breadcrumbs />
 
       {menuOpen ? (
         <div className="fixed inset-0 z-[100]">

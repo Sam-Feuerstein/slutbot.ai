@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { adminHeaders, getAdminPassword, setAdminPassword } from '@/lib/adminApi';
+import { adminHeaders } from '@/lib/adminApi';
 import { Field, PageHeader, Panel, SaveButton, inputClass } from '../components/AdminUi';
 
 export default function AdminPromptsPage() {
@@ -9,7 +9,6 @@ export default function AdminPromptsPage() {
   const [imagePrompt, setImagePrompt] = useState('');
   const [defaultVideoPrompt, setDefaultVideoPrompt] = useState('');
   const [defaultImagePrompt, setDefaultImagePrompt] = useState('');
-  const [adminPw, setAdminPw] = useState('');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,14 +41,8 @@ export default function AdminPromptsPage() {
   }, []);
 
   useEffect(() => {
-    setAdminPw(getAdminPassword());
     void load();
   }, [load]);
-
-  async function saveAdminPassword() {
-    setAdminPassword(adminPw);
-    await load();
-  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -82,28 +75,6 @@ export default function AdminPromptsPage() {
         description="Users never see these. Every image and video generation uses the matching prompt to undress the uploaded photo."
         action={<SaveButton>Save prompts</SaveButton>}
       />
-
-      {!getAdminPassword() ? (
-        <Panel className="mb-5">
-          <p className="text-sm text-white/50">Enter admin password once (from .env.local ADMIN_PASSWORD).</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              type="password"
-              value={adminPw}
-              onChange={(e) => setAdminPw(e.target.value)}
-              placeholder="Admin password"
-              className={`${inputClass} max-w-xs`}
-            />
-            <button
-              type="button"
-              onClick={saveAdminPassword}
-              className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black"
-            >
-              Save
-            </button>
-          </div>
-        </Panel>
-      ) : null}
 
       <div className="space-y-5">
         <Panel>

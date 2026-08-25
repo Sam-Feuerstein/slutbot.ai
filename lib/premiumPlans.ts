@@ -11,6 +11,9 @@ export type PremiumPlan = {
   price: number;
   stars: number;
   badge?: 'Best value' | 'Most chosen';
+  bonusPercent?: number;
+  bonusImageGenerations?: number;
+  bonusVideoGenerations?: number;
   imageGenerations: number;
   videoGenerations: number;
   features: {
@@ -32,22 +35,30 @@ export function formatUsdPrice(amount: number): string {
   return Number.isInteger(amount) ? `$${amount}` : `$${amount.toFixed(2)}`;
 }
 
-/**
- * Original catalog $/Slutcoin. New packs keep that curve so coin grants
- * scale with the corrected USD, not with a wrong Stars rate.
- */
-const ORIGINAL_PACK_VALUE: Record<string, { usd: number; desires: number }> = {
-  tease: { usd: 20, desires: 50 },
-  flirt: { usd: 40, desires: 150 },
-  desire: { usd: 60, desires: 300 },
-  passion: { usd: 120, desires: 900 },
-  ecstasy: { usd: 300, desires: 4000 },
-};
+export function planGenerationCopy(plan: PremiumPlan): string {
+  const images = plan.imageGenerations.toLocaleString('en-US');
+  const videos = plan.videoGenerations.toLocaleString('en-US');
+  const videoWord = plan.videoGenerations === 1 ? 'video' : 'videos';
+  return `You get ${images} image generations or ${videos} ${videoWord}`;
+}
 
-function slutcoinsForUsd(planId: string, usd: number): number {
-  const original = ORIGINAL_PACK_VALUE[planId];
-  if (!original) return Math.max(1, Math.round(usd / 0.4));
-  return Math.max(1, Math.round((original.desires * usd) / original.usd));
+export function planBonusPercentLabel(plan: PremiumPlan): string | null {
+  return plan.bonusPercent ? `+${plan.bonusPercent}%` : null;
+}
+
+export function planBonusGenerationCopy(plan: PremiumPlan): string | null {
+  if (!plan.bonusImageGenerations || !plan.bonusVideoGenerations) return null;
+  const images = plan.bonusImageGenerations.toLocaleString('en-US');
+  const videos = plan.bonusVideoGenerations.toLocaleString('en-US');
+  const videoWord = plan.bonusVideoGenerations === 1 ? 'video' : 'videos';
+  return `+${images} images or +${videos} ${videoWord}`;
+}
+
+/** Linear coin rate: $9.99 → 80 Slutcoins (20 images or 10 videos). Pack USD/Stars are unchanged. */
+const RATE_SLUTCOINS = 20 * DESIRE_COSTS.image;
+
+function slutcoinsForUsd(usd: number): number {
+  return Math.max(1, Math.round((RATE_SLUTCOINS * usd) / BASE_USD));
 }
 
 const BASE_FEATURES = {
@@ -77,17 +88,29 @@ function definePlan(input: {
   subtitle?: string;
   stars: number;
   badge?: PremiumPlan['badge'];
+  bonusPercent?: number;
   features: PremiumPlan['features'];
 }): PremiumPlan {
   const price = usdFromStars(input.stars);
-  const desires = slutcoinsForUsd(input.id, price);
+  const baseCoins = slutcoinsForUsd(price);
+  const bonusPercent = input.bonusPercent ?? 0;
+  const desires =
+    bonusPercent > 0 ? Math.round((baseCoins * (100 + bonusPercent)) / 100) : baseCoins;
+  const baseImageGenerations = Math.floor(baseCoins / DESIRE_COSTS.image);
+  const baseVideoGenerations = Math.floor(baseCoins / DESIRE_COSTS.videoBetter);
+  const imageGenerations = Math.floor(desires / DESIRE_COSTS.image);
+  const videoGenerations = Math.floor(desires / DESIRE_COSTS.videoBetter);
   return {
     ...input,
     price,
     desires,
     pricePerDesire: Number((price / desires).toFixed(4)),
-    imageGenerations: Math.floor(desires / DESIRE_COSTS.image),
-    videoGenerations: Math.floor(desires / DESIRE_COSTS.videoBetter),
+    imageGenerations,
+    videoGenerations,
+    bonusImageGenerations:
+      bonusPercent > 0 ? Math.max(0, imageGenerations - baseImageGenerations) : undefined,
+    bonusVideoGenerations:
+      bonusPercent > 0 ? Math.max(0, videoGenerations - baseVideoGenerations) : undefined,
   };
 }
 
@@ -97,6 +120,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     tier: 'Ecstasy',
     stars: 10000,
     badge: 'Best value',
+    bonusPercent: 50,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -112,6 +136,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'passion',
     tier: 'Passion',
     stars: 5000,
+    bonusPercent: 40,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -127,6 +152,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'desire',
     tier: 'Desire',
     stars: 2500,
+    bonusPercent: 30,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -141,22 +167,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
     id: 'flirt',
     tier: 'Flirt',
-    stars: 1000,
-    features: features({
-      proExports: 'check',
-      ultraHd: 'check',
-      history48h: 'check',
-      faster: 'check',
-      fullVideo: 'check',
-      highQuality: 'check',
-      priority: 'check',
-    }),
-  }),
-  definePlan({
-    id: 'tease',
-    tier: 'Tease',
     subtitle: 'Starter',
-    stars: BASE_STARS,
+    stars: 1000,
     badge: 'Most chosen',
     features: features({
       proExports: 'check',
@@ -170,4 +182,4 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
 ];
 
-export const DEFAULT_PLAN_INDEX = PREMIUM_PLANS.findIndex((plan) => plan.id === 'tease');
+export const DEFAULT_PLAN_INDEX = PREMIUM_PLANS.findIndex((plan) => plan.id === 'flirt');

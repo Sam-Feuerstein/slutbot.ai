@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import InteractionTracker from './InteractionTracker';
 
 export default function SiteChrome({
   children,
@@ -12,10 +13,19 @@ export default function SiteChrome({
   footer: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const bare = pathname.startsWith('/admin') || pathname.startsWith('/login');
-  if (bare) return <>{children}</>;
+  const bare =
+    pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/checkout');
+  if (bare) {
+    return (
+      <>
+        <InteractionTracker />
+        {children}
+      </>
+    );
+  }
   return (
     <div className="flex min-h-dvh w-full flex-col">
+      <InteractionTracker />
       <div className="w-full min-w-0 flex-1">{children}</div>
       {featuredOn}
       {footer}

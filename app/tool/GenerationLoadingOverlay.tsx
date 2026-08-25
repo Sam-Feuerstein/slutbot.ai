@@ -59,11 +59,11 @@ export default function GenerationLoadingOverlay({ imageUrl, mode, phase, videoM
         <p className="text-base sm:text-lg font-medium text-white/90">{label}</p>
       </div>
 
-      <div className="relative z-10 px-6 pb-[max(2.5rem,calc(var(--safe-bottom)+1.5rem))] text-center sm:pb-12">
+      <div className="relative z-10 px-6 pb-10 sm:pb-12 text-center">
         <p className="text-sm text-white/80 mb-4">You can find your results in archive</p>
         <Link
           href="/archive"
-          className="inline-flex items-center gap-2 px-5 py-3 min-h-12 rounded-full border border-[#ff2d78] text-[#ff2d78] text-sm font-semibold hover:bg-[#ff2d78]/10 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#ff2d78] text-[#ff2d78] text-sm font-semibold hover:bg-[#ff2d78]/10 transition-colors"
         >
           <Archive className="w-4 h-4" />
           Archive

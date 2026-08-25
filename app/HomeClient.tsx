@@ -7,13 +7,15 @@ import { HOME_PRESETS } from '@/lib/homePresets';
 export default function HomeClient() {
   return (
     <div className="w-full text-white">
-      <SiteHeader />
+      <div className="bg-[#4a122c]">
+        <SiteHeader />
 
-      <div className="safe-x mx-auto max-w-[1600px]">
-        <div className="pt-3 sm:pt-5">
-          <PromoBanner />
+        <div className="safe-x mx-auto max-w-[1600px]">
+          <div className="pt-3 sm:pt-5">
+            <PromoBanner />
+          </div>
+          <ExploreTabs />
         </div>
-        <ExploreTabs />
       </div>
 
       <main className="safe-x mx-auto max-w-[1600px] pb-[max(1.5rem,var(--safe-bottom))] sm:pb-8">

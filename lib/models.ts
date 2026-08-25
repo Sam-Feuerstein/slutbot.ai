@@ -92,3 +92,31 @@ const platformSettingsSchema = new Schema(
 
 export const PlatformSettings =
   models.PlatformSettings || model('PlatformSettings', platformSettingsSchema);
+
+const analyticsStatSchema = new Schema(
+  {
+    day: { type: String, default: '', index: true },
+    name: { type: String, required: true, index: true },
+    count: { type: Number, default: 0 },
+  },
+  { timestamps: true, collection: 'analyticsstats' },
+);
+analyticsStatSchema.index({ day: 1, name: 1 }, { unique: true });
+
+export const AnalyticsStat = models.AnalyticsStat || model('AnalyticsStat', analyticsStatSchema);
+
+const analyticsEventSchema = new Schema(
+  {
+    name: { type: String, required: true, index: true },
+    kind: { type: String, enum: ['click', 'view', 'interaction'], default: 'interaction', index: true },
+    path: { type: String, default: '' },
+    label: { type: String, default: '' },
+    plan: { type: String, default: '' },
+    method: { type: String, default: '' },
+    clientId: { type: String, default: '', index: true },
+  },
+  { timestamps: true, collection: 'analyticsevents' },
+);
+analyticsEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 });
+
+export const AnalyticsEvent = models.AnalyticsEvent || model('AnalyticsEvent', analyticsEventSchema);

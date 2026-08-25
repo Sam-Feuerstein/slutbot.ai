@@ -1,9 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { MOCK_ADMIN_USERS } from '@/lib/adminMock';
-import { loadAdminSettings } from '@/lib/adminSettings';
+import { useEffect, useState } from 'react';
 import { PageHeader, Panel, StatusChip, usePaymentEnvStatus } from './components/AdminUi';
 
 const CARDS = [
@@ -26,9 +24,9 @@ const CARDS = [
     key: 'email' as const,
   },
   {
-    href: '/admin/users',
-    title: 'Users',
-    copy: 'Accounts, bans, and Slutcoin tweaks.',
+    href: '/admin/analytics',
+    title: 'Analytics',
+    copy: 'Total clicks, page views, and checkout Pay / pack / method totals.',
     key: 'users' as const,
   },
   {
@@ -39,29 +37,92 @@ const CARDS = [
   },
 ];
 
+type Overview = {
+  totalPaid: number;
+  totalUsers: number;
+  paidUsers: number;
+  freeUsers: number;
+  daily: Array<{ day: string; paid: number; free: number }>;
+};
+
+function formatUsd(amount: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}
+
+function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
+  const max = Math.max(1, ...daily.flatMap((row) => [row.paid, row.free]));
+  const w = 640;
+  const h = 220;
+  const pad = { l: 28, r: 8, t: 16, b: 36 };
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const gap = 8;
+  const groupW = innerW / Math.max(daily.length, 1);
+  const barW = Math.max(4, (groupW - gap) / 2);
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Paid vs free users by signup day">
+        {daily.map((row, i) => {
+          const x0 = pad.l + i * groupW;
+          const paidH = (row.paid / max) * innerH;
+          const freeH = (row.free / max) * innerH;
+          return (
+            <g key={row.day}>
+              <rect
+                x={x0}
+                y={pad.t + innerH - paidH}
+                width={barW}
+                height={paidH}
+                rx={3}
+                fill="#ff2d78"
+              />
+              <rect
+                x={x0 + barW + 3}
+                y={pad.t + innerH - freeH}
+                width={barW}
+                height={freeH}
+                rx={3}
+                fill="#6b7280"
+              />
+              <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+                {row.day.slice(5)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex gap-4 text-xs text-white/50">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-[#ff2d78]" /> Paid signups
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-[#6b7280]" /> Free signups
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminOverviewPage() {
   const env = usePaymentEnvStatus();
-  const [emailConfigured, setEmailConfigured] = useState(false);
+  const [data, setData] = useState<Overview | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const s = loadAdminSettings();
-    setEmailConfigured(Boolean(s.email.smtpHost && s.email.smtpUser));
-  }, []);
-
-  const stats = useMemo(() => {
-    const paid = MOCK_ADMIN_USERS.flatMap((u) => u.purchases.filter((p) => p.status === 'paid'));
-    return {
-      users: MOCK_ADMIN_USERS.length,
-      banned: MOCK_ADMIN_USERS.filter((u) => u.banned).length,
-      usd: paid.reduce((sum, p) => sum + p.usdAmount, 0),
-      stars: paid.reduce((sum, p) => sum + p.starsAmount, 0),
-    };
+    void fetch('/api/admin/overview')
+      .then(async (res) => {
+        const json = (await res.json()) as Overview & { message?: string };
+        if (!res.ok) throw new Error(json.message || 'Could not load overview.');
+        setData(json);
+      })
+      .catch((err: Error) => setError(err.message));
   }, []);
 
   const connected = {
     now: env.nowpayments,
     tg: env.telegram,
-    email: emailConfigured,
+    email: false,
     users: true,
   };
 
@@ -69,23 +130,38 @@ export default function AdminOverviewPage() {
     <div>
       <PageHeader
         kicker="Control room"
-        title="Payments use the Erogram accounts."
-        description="Crypto and Stars share Erogram’s NOWPayments key and VIP payment bot. Email templates are still preview-only."
+        title="Live admin overview"
+        description="Totals from real users and paid invoices. No demo numbers."
       />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: 'Mock users', value: String(stats.users) },
-          { label: 'Banned', value: String(stats.banned) },
-          { label: 'Paid USD (demo)', value: `$${stats.usd}` },
-          { label: 'Stars (demo)', value: String(stats.stars) },
-        ].map((item) => (
-          <Panel key={item.label} className="!p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">{item.label}</p>
-            <p className="mt-3 text-3xl font-black tracking-tight">{item.value}</p>
-          </Panel>
-        ))}
+      {error ? <p className="mb-4 text-sm text-rose-300">{error}</p> : null}
+
+      <div className="mb-8 grid gap-4 sm:grid-cols-2">
+        <Panel className="!p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total paid</p>
+          <p className="mt-3 text-3xl font-black tracking-tight">
+            {data ? formatUsd(data.totalPaid) : '—'}
+          </p>
+          <p className="mt-1 text-xs text-white/40">
+            {data ? `${data.paidUsers} paid users` : ''}
+          </p>
+        </Panel>
+        <Panel className="!p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total users</p>
+          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalUsers : '—'}</p>
+          <p className="mt-1 text-xs text-white/40">
+            {data ? `${data.freeUsers} free` : ''}
+          </p>
+        </Panel>
       </div>
+
+      <Panel className="mb-8">
+        <h2 className="text-lg font-black">Paid vs free daily</h2>
+        <p className="mt-1 text-sm text-white/45">New accounts in the last 14 days, split by whether they have a paid invoice.</p>
+        <div className="mt-5">
+          {data ? <PaidFreeChart daily={data.daily} /> : <p className="text-sm text-white/40">Loading…</p>}
+        </div>
+      </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {CARDS.map((card) => (

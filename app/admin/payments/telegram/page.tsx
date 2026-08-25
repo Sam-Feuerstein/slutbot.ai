@@ -22,7 +22,7 @@ export default function TelegramStarsPage() {
       <PageHeader
         kicker="Telegram"
         title="Stars payments"
-        description="Same Erogram VIP bot. Packs are named SLUTBOT Ecstasy / Passion / Desire / Flirt / Tease so they show up on that bot without mixing into VIP membership."
+        description="Same Erogram VIP bot. Packs are named SLUTBOT Ecstasy / Passion / Desire / Flirt so they show up on that bot without mixing into VIP membership."
         action={
           <div className="flex items-center gap-3">
             <StatusChip connected={connected} />

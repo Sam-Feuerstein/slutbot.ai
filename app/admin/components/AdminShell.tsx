@@ -10,6 +10,7 @@ const NAV = [
     label: 'Workspace',
     items: [
       { href: '/admin', label: 'Overview', match: 'exact' as const },
+      { href: '/admin/analytics', label: 'Analytics', match: 'exact' as const },
       { href: '/admin/users', label: 'Users', match: 'prefix' as const },
       { href: '/admin/wallet', label: 'Slutcoin cost', match: 'exact' as const },
       { href: '/admin/prompts', label: 'Prompts', match: 'exact' as const },
@@ -35,6 +36,16 @@ function isActive(pathname: string, href: string, match: 'exact' | 'prefix') {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const login = pathname === '/admin/login';
+
+  async function logout() {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    window.location.href = '/admin/login';
+  }
+
+  if (login) {
+    return <div className="min-h-screen bg-[#070406] text-white">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#070406] text-white">
@@ -44,7 +55,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="px-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">{SITE_DOMAIN}</p>
             <BrandLogo className="mt-2 h-7 w-auto" />
-            <p className="text-xs text-white/40">Admin preview</p>
+            <p className="text-xs text-white/40">Admin</p>
           </div>
           <nav className="mt-8 flex-1 space-y-6 overflow-y-auto">
             {NAV.map((group) => (
@@ -71,6 +82,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </div>
             ))}
           </nav>
+          <button type="button" onClick={() => void logout()} className="rounded-2xl px-3 py-2 text-left text-sm text-white/35 hover:text-white">
+            Log out
+          </button>
           <Link href="/" className="rounded-2xl px-3 py-2 text-sm text-white/35 hover:text-white">
             ← Back to site
           </Link>

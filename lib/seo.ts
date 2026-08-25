@@ -11,6 +11,8 @@ export const LEGAL_SITEMAP_PATHS = [
   '/anti-trafficking',
   '/2257',
   '/content-removal',
+  '/payments/crypto-tutorial',
+  '/payments/telegram-stars-tutorial',
 ] as const;
 
 export function absoluteUrl(path: string): string {

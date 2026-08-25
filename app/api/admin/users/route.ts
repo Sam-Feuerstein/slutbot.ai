@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
-import { adminPasswordOk, newClientId } from '@/lib/auth/slutbotAuth';
+import { newClientId } from '@/lib/auth/slutbotAuth';
+import { adminSessionOk } from '@/lib/auth/adminSession';
 import { setUserDesires } from '@/lib/users/wallet';
 
-function denyAdmin(req: NextRequest) {
-  if (!adminPasswordOk(req)) {
-    return NextResponse.json({ message: 'Admin password required.' }, { status: 401 });
+async function denyAdmin(req: NextRequest) {
+  if (!(await adminSessionOk(req))) {
+    return NextResponse.json({ message: 'Admin login required.' }, { status: 401 });
   }
   return null;
 }
@@ -39,7 +40,7 @@ function serializeUser(user: {
 }
 
 export async function GET(req: NextRequest) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
 
   await connectDB();
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
 
   const body = (await req.json()) as {

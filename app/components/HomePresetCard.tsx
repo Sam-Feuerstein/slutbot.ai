@@ -11,14 +11,10 @@ import {
   getPresetSourceUrl,
   presetHasVideo,
 } from '@/lib/presetMedia';
-import { generatorPresetPath } from '@/lib/site';
-import MediaImage from './MediaImage';
+import { getAuthToken } from '@/lib/desires';
+import { generatorPresetPath, loginHref } from '@/lib/site';
 
 const UPLOAD_KEY = 'slutbot-home-upload';
-
-function canHoverPlay() {
-  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-}
 
 function ArrowCurve({ mirrored = false }: { mirrored?: boolean }) {
   return (
@@ -28,7 +24,7 @@ function ArrowCurve({ mirrored = false }: { mirrored?: boolean }) {
       viewBox="0 0 36 36"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`h-7 w-7 shrink-0 text-white/90 sm:h-9 sm:w-9 ${mirrored ? 'ml-auto' : 'mx-[25%]'}`}
+      className={`h-9 w-9 shrink-0 text-white/90 ${mirrored ? 'ml-auto' : 'mx-[25%]'}`}
       aria-hidden
     >
       {mirrored ? (
@@ -68,9 +64,11 @@ function ArrowCurve({ mirrored = false }: { mirrored?: boolean }) {
 
 export default function HomePresetCard({
   preset,
+  playing = false,
   eager = false,
 }: {
   preset: HomePreset;
+  playing?: boolean;
   eager?: boolean;
 }) {
   const router = useRouter();
@@ -119,7 +117,7 @@ export default function HomePresetCard({
   }, []);
 
   const onMouseEnter = () => {
-    if (canHoverPlay()) setHovering(true);
+    setHovering(true);
   };
 
   const onMouseLeave = () => {
@@ -134,25 +132,28 @@ export default function HomePresetCard({
   const posterSrc = getPresetPosterUrl(preset);
   const sourceSrc = getPresetSourceUrl(preset);
   const mainImageSrc = getPresetMainImageUrl(preset) ?? posterSrc;
+  const active = playing || hovering;
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !hovering || !previewSrc) return;
+    if (!video || !active || !previewSrc) return;
     video.play().catch(() => undefined);
-  }, [hovering, previewSrc]);
+  }, [active, previewSrc]);
 
   const mainVisual = presetHasVideo(preset) ? (
     <>
-      <MediaImage
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={posterSrc}
         alt=""
-        fill
-        sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw"
-        quality={65}
-        priority={eager}
-        className="pointer-events-none select-none object-cover transition-[filter] duration-500"
+        width={320}
+        height={420}
+        loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={eager ? 'high' : 'auto'}
+        decoding="async"
+        className="pointer-events-none relative h-full w-full select-none object-cover transition-[filter] duration-500"
       />
-      {hovering && previewSrc ? (
+      {active && previewSrc ? (
         <video
           ref={videoRef}
           src={previewSrc}
@@ -160,20 +161,18 @@ export default function HomePresetCard({
           loop
           muted
           playsInline
-          preload="none"
+          autoPlay
+          preload="metadata"
           className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
         />
       ) : null}
     </>
   ) : (
-    <MediaImage
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={mainImageSrc}
       alt=""
-      fill
-      sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 20vw"
-      quality={65}
-      priority={eager}
-      className="pointer-events-none select-none object-cover transition-[filter] duration-500"
+      className="pointer-events-none relative h-full w-full select-none object-cover transition-[filter] duration-500"
     />
   );
 
@@ -193,26 +192,39 @@ export default function HomePresetCard({
       onMouseLeave={onMouseLeave}
       onFocus={onMouseEnter}
       onBlur={onMouseLeave}
-      className="preset-card group/item relative flex aspect-[160/210] w-full cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl bg-[#161616] text-white outline-none transition-shadow duration-300 focus-visible:ring-2 focus-visible:ring-[#ff2d78] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] sm:rounded-2xl"
+      className="group/item relative flex aspect-[160/210] w-full cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#161616] text-white outline-none transition-shadow duration-300 focus-visible:ring-2 focus-visible:ring-[#ff2d78] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
     >
       <div className="card-video-mask relative h-full w-full">{mainVisual}</div>
 
-      <div className="card-idle-only pointer-events-none absolute left-1.5 top-1.5 w-[27%] sm:left-2 sm:top-2">
+      <div
+        className={`pointer-events-none absolute left-2 top-2 w-[27%] transition-opacity duration-200 ${
+          hovering ? 'opacity-20' : 'opacity-100'
+        }`}
+      >
         <div className="flex w-full flex-col gap-[16cqi]">
-          <div className="card-thumb-swing relative aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
-            <MediaImage src={sourceSrc} alt="" fill sizes="72px" quality={50} className="object-cover" />
+          <div className="card-thumb-swing aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={sourceSrc} alt="" className="h-full w-full object-cover" />
           </div>
           <ArrowCurve />
         </div>
       </div>
 
-      <div className="card-hover-only absolute right-1.5 top-1.5 flex flex-col gap-3 sm:right-2 sm:top-2">
-        <div className="relative size-11 drop-shadow-lg sm:size-[60px]">
+      <div
+        className={`absolute right-2 top-2 flex flex-col gap-3 transition-opacity duration-200 ${
+          hovering ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      >
+        <div className="relative size-[60px] drop-shadow-lg">
           <button
             type="button"
             aria-label={uploadPreview ? 'Change photo' : 'Upload a photo'}
             onClick={(e) => {
               e.stopPropagation();
+              if (!getAuthToken()) {
+                router.push(loginHref(generatorPresetPath(preset.id)));
+                return;
+              }
               inputRef.current?.click();
             }}
             className="group/upload relative flex aspect-square h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-solid border-white duration-200"
@@ -227,7 +239,7 @@ export default function HomePresetCard({
               </>
             ) : (
               <span className="flex h-full w-full items-center justify-center bg-[#ff2d78] text-white">
-                <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6" />
+                <ImagePlus className="h-6 w-6" />
               </span>
             )}
           </button>
@@ -236,7 +248,7 @@ export default function HomePresetCard({
               type="button"
               aria-label="Remove photo"
               onClick={clearUpload}
-              className="absolute -right-0.5 -top-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#1d1d1d] text-white sm:h-5 sm:w-5"
+              className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#1d1d1d] text-white"
             >
               <X className="h-3 w-3" />
             </button>
@@ -257,16 +269,20 @@ export default function HomePresetCard({
         }}
       />
 
-      <div className="card-idle-only absolute inset-x-1.5 bottom-1.5 flex flex-col gap-0.5 sm:inset-x-2 sm:bottom-2 sm:gap-1">
-        <div className="inline-flex max-w-full items-center gap-1.5 sm:gap-2">
-          <h3 className="truncate text-[13px] font-bold text-white sm:text-base">{preset.title}</h3>
+      <div
+        className={`absolute inset-x-2 bottom-2 flex flex-col gap-1 transition-opacity duration-200 ${
+          hovering ? 'pointer-events-none opacity-0' : 'opacity-100'
+        }`}
+      >
+        <div className="inline-flex max-w-full items-center gap-2">
+          <h3 className="truncate text-base font-bold text-white">{preset.title}</h3>
           {preset.verified ? (
-            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#ff2d78] sm:h-5 sm:w-5">
-              <Flame className="h-2.5 w-2.5 text-white sm:h-3 sm:w-3" />
+            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff2d78]">
+              <Flame className="h-3 w-3 text-white" />
             </span>
           ) : null}
         </div>
-        <p className="truncate text-[11px] text-white/50 sm:text-sm">
+        <p className="truncate text-sm text-white/50">
           {preset.remixes.includes('used')
             ? preset.remixes
             : `${preset.remixes} Remixes`}{' '}
@@ -274,14 +290,18 @@ export default function HomePresetCard({
         </p>
       </div>
 
-      <div className="card-hover-only pointer-events-none absolute inset-x-0 bottom-0 flex p-2">
+      <div
+        className={`pointer-events-none absolute inset-x-0 bottom-0 flex p-2 transition-opacity duration-200 ${
+          hovering ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             goToTool();
           }}
-          className="pointer-events-auto flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#ff2d78] px-3 py-3 text-sm font-bold leading-none text-white shadow-lg shadow-[#ff2d78]/40 transition-colors hover:bg-[#ff1a6b]"
+          className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-full bg-[#ff2d78] px-3 py-3 text-sm font-bold leading-none text-white shadow-lg shadow-[#ff2d78]/40 transition-colors hover:bg-[#ff1a6b]"
         >
           <span>Start Generate</span>
         </button>

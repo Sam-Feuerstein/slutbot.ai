@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser } from '@/lib/models';
-import { adminPasswordOk } from '@/lib/auth/slutbotAuth';
+import { adminSessionOk } from '@/lib/auth/adminSession';
 import { adjustUserDesires, setUserDesires } from '@/lib/users/wallet';
 
 type UserLean = {
@@ -33,15 +33,15 @@ function serializeUser(user: UserLean) {
   };
 }
 
-function denyAdmin(req: NextRequest) {
-  if (!adminPasswordOk(req)) {
-    return NextResponse.json({ message: 'Admin password required.' }, { status: 401 });
+async function denyAdmin(req: NextRequest) {
+  if (!(await adminSessionOk(req))) {
+    return NextResponse.json({ message: 'Admin login required.' }, { status: 401 });
   }
   return null;
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
 
   const { id } = await ctx.params;
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
 
   const { id } = await ctx.params;
@@ -122,7 +122,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const denied = denyAdmin(req);
+  const denied = await denyAdmin(req);
   if (denied) return denied;
 
   const { id } = await ctx.params;

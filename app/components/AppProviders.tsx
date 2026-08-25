@@ -2,11 +2,10 @@
 
 import dynamic from 'next/dynamic';
 
-const PremiumPlansModal = dynamic(() => import('./PremiumPlansModal'), {
+const AgeConsentGate = dynamic(() => import('./AgeConsentGate'), {
   ssr: false,
 });
-
-const AgeConsentGate = dynamic(() => import('./AgeConsentGate'), {
+const PwaInstallBanner = dynamic(() => import('./PwaInstallBanner'), {
   ssr: false,
 });
 
@@ -14,8 +13,8 @@ export default function AppProviders({ children }: { children: React.ReactNode }
   return (
     <>
       {children}
+      <PwaInstallBanner />
       <AgeConsentGate />
-      <PremiumPlansModal />
     </>
   );
 }
