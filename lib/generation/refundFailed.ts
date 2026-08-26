@@ -1,7 +1,10 @@
 import { findOwnedJobByTaskId, refundChargedJob } from '@/lib/generation/jobs';
 import { getUserDesires } from '@/lib/users/wallet';
+import { envValue } from '@/lib/env';
 
-const WAVESPEED_API_KEY = process.env.WAVESPEED_API_KEY;
+function wavespeedApiKey() {
+  return envValue('WAVESPEED_API_KEY');
+}
 const WAVESPEED_HOST = 'api.wavespeed.ai';
 const TASK_ID_RE = /^[a-zA-Z0-9_-]{8,128}$/;
 const FAILED_WAVESPEED_STATUSES = new Set(['failed', 'cancelled', 'timeout']);
@@ -27,12 +30,12 @@ function assertWavespeedPollUrl(url: string) {
 }
 
 async function wavespeedTaskStatus(taskId: string): Promise<string | null> {
-  if (!WAVESPEED_API_KEY) return null;
+  if (!wavespeedApiKey()) return null;
   const pollUrl = wavespeedResultUrl(taskId);
   assertWavespeedPollUrl(pollUrl);
   const res = await fetch(pollUrl, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${WAVESPEED_API_KEY}` },
+    headers: { Authorization: `Bearer ${wavespeedApiKey()}` },
     cache: 'no-store',
   });
   const raw = (await res.json().catch(() => null)) as

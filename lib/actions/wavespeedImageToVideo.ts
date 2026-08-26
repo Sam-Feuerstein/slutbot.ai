@@ -21,8 +21,11 @@ import { displayMediaUrl, isUserUploadKey, wavespeedFetchUrl } from '@/lib/media
 import { uploadToR2, isR2Configured } from '@/lib/r2';
 import { adjustUserDesires, recordUserGeneration, spendUserDesires } from '@/lib/users/wallet';
 import type { AiToolGenerationRecord, VideoModel } from '@/lib/imageToVideo/types';
+import { envValue } from '@/lib/env';
 
-const WAVESPEED_API_KEY = process.env.WAVESPEED_API_KEY;
+function wavespeedApiKey() {
+  return envValue('WAVESPEED_API_KEY');
+}
 const WAVESPEED_HOST = 'api.wavespeed.ai';
 const LTX_SPICY_SUBMIT_URL =
   'https://api.wavespeed.ai/api/v3/wavespeed-ai/ltx-2.3-spicy/image-to-video';
@@ -86,11 +89,11 @@ function unwrapData<T extends Record<string, unknown>>(payload: unknown): T {
 }
 
 function authHeaders(): HeadersInit {
-  if (!WAVESPEED_API_KEY) {
+  if (!wavespeedApiKey()) {
     throw new Error('WAVESPEED_API_KEY is not configured.');
   }
   return {
-    Authorization: `Bearer ${WAVESPEED_API_KEY}`,
+    Authorization: `Bearer ${wavespeedApiKey()}`,
     'Content-Type': 'application/json',
   };
 }
@@ -167,7 +170,7 @@ async function startWavespeedJob(input: {
   submitUrl: string;
   body: Record<string, unknown>;
 }): Promise<{ taskId?: string; desires?: number; error?: string }> {
-  if (!WAVESPEED_API_KEY) {
+  if (!wavespeedApiKey()) {
     return { error: 'WAVESPEED_API_KEY is not configured.' };
   }
   if (!isUserUploadKey(input.sourceKey)) {
@@ -402,8 +405,8 @@ export async function listAiToolGenerations(): Promise<{
 export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageToVideoPollResult> {
   const auth = await requireUser();
   if (auth.error || !auth.user) return { status: 'failed', error: auth.error || 'Sign in required.' };
-  if (!WAVESPEED_API_KEY) {
-    return { status: 'failed', error: 'WAVESPEED_API_KEY is not configured.' };
+  if (!wavespeedApiKey()) {
+    return { status: 'failed', error: 'wavespeedApiKey() is not configured.' };
   }
 
   const trimmed = taskId?.trim();
@@ -430,7 +433,7 @@ export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageTo
 
   const res = await fetch(pollUrl, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${WAVESPEED_API_KEY}` },
+    headers: { Authorization: `Bearer ${wavespeedApiKey()}` },
     cache: 'no-store',
   });
 
