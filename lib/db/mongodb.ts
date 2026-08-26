@@ -14,10 +14,8 @@ const baseOptions: mongoose.ConnectOptions = {
 };
 
 function mongoDbName(): string {
-  const dbName = process.env.MONGODB_DB?.trim() || '';
-  if (!dbName) {
-    throw new Error('MONGODB_DB is required and must be a dedicated database (not the shared Erogram DB).');
-  }
+  const fromEnv = process.env.MONGODB_DB?.trim() || '';
+  const dbName = fromEnv || 'slutbot';
   if (dbName === SHARED_EROGRAM_DB) {
     throw new Error('MONGODB_DB must not be "erogram". Use a dedicated database such as "slutbot".');
   }

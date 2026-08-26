@@ -59,7 +59,6 @@ export async function GET(req: NextRequest) {
     return response;
   } catch (err) {
     console.error('Google OAuth callback error:', err);
-    const message = err instanceof Error ? err.message : 'Google sign-in failed.';
-    return oauthErrorRedirect(message, origin, redirect);
+    return oauthErrorRedirect('Google sign-in failed. Please try again.', origin, redirect);
   }
 }
