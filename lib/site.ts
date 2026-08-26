@@ -1,4 +1,4 @@
-export const SITE_DOMAIN = 'slutbot.ai';
+export const SITE_DOMAIN = 'aislutbot.com';
 export const SITE_URL = `https://${SITE_DOMAIN}`;
 export const GENERATOR_PATH = '/ai-porn-generator';
 export const GENERATOR_CANONICAL = `${SITE_URL}${GENERATOR_PATH}`;

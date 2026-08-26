@@ -58,7 +58,7 @@ export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 3 — Place Your Order with Cryptocurrency',
       paragraphs: [
-        'On SLUTBOT AI, choose your Slutcoin pack, open checkout, select Crypto (USDT TRC20 only), and click Pay. You will be redirected to the NOWPayments page.',
+        'On AI SLUTBOT, choose your Slutcoin pack, open checkout, select Crypto (USDT TRC20 only), and click Pay. You will be redirected to the NOWPayments page.',
       ],
       images: [
         '/payments/tutorials/crypto/crypto-step-3-plan.avif',
@@ -71,7 +71,7 @@ export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
         'On the NOWPayments page, pay with USDT on the TRC20 (Tron) network only. Do not switch coin or network.',
         'Copy the payment amount and the wallet address shown on the order page.',
         'In Trust Wallet, select USDT (TRC20), tap “Send”, paste the payment address, enter the exact amount, and confirm the transaction.',
-        'Once the payment is successfully sent, your SLUTBOT AI Slutcoins will be activated right away! 🔥',
+        'Once the payment is successfully sent, your AI SLUTBOT Slutcoins will be activated right away! 🔥',
       ],
       images: [
         '/payments/tutorials/crypto/8crypto.avif',
@@ -112,7 +112,7 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 2 — Confirm the Telegram payment popup',
       paragraphs: [
-        'After tapping “Card with Telegram”, you will be instantly redirected to Telegram, where a payment popup for your SLUTBOT AI subscription will appear.',
+        'After tapping “Card with Telegram”, you will be instantly redirected to Telegram, where a payment popup for your AI SLUTBOT subscription will appear.',
       ],
       images: ['/payments/tutorials/stars/stars-step-2.avif'],
     },
@@ -132,7 +132,7 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 5 — Credits activated automatically',
       paragraphs: [
-        'Right after the purchase, Stars will be automatically deducted and your SLUTBOT AI Slutcoins will be activated! 🔥',
+        'Right after the purchase, Stars will be automatically deducted and your AI SLUTBOT Slutcoins will be activated! 🔥',
       ],
     },
     {

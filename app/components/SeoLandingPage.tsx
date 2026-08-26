@@ -26,7 +26,7 @@ export default function SeoLandingPage({ page }: { page: SeoLandingPageData }) {
 
       <main className="mx-auto max-w-4xl px-4 pb-[max(4rem,var(--safe-bottom))] pt-6 sm:px-6 sm:pt-10">
         <section className="rounded-2xl border border-[#ff2d78]/25 bg-black/40 px-5 py-8 text-center shadow-[0_0_40px_rgba(255,45,120,0.15)] sm:rounded-[28px] sm:px-10 sm:py-14">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ff2d78]">SLUTBOT AI</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ff2d78]">AI SLUTBOT</p>
           <h1 className="mt-4 text-[1.75rem] font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             {page.name}: {page.heroTagline}
           </h1>
@@ -37,7 +37,7 @@ export default function SeoLandingPage({ page }: { page: SeoLandingPageData }) {
         </section>
 
         <section className="mt-14">
-          <h2>{`SLUTBOT.ai vs. ${page.name}`}</h2>
+          <h2>{`AI SLUTBOT vs. ${page.name}`}</h2>
           <p>{page.vsCompetitor}</p>
         </section>
 

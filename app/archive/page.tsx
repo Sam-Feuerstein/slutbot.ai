@@ -3,7 +3,7 @@ import ArchiveClient from './ArchiveClient';
 
 export const metadata: Metadata = {
   title: 'My Collection',
-  description: 'Your saved SLUTBOT AI generations.',
+  description: 'Your saved AI SLUTBOT generations.',
   robots: { index: false, follow: false },
 };
 

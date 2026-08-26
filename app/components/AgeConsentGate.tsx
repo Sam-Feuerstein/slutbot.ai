@@ -46,7 +46,7 @@ export default function AgeConsentGate() {
         className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0a0a0a] px-6 py-8 shadow-2xl sm:px-8"
       >
         <div className="flex justify-center">
-          <BrandLogo className="h-9 w-auto sm:h-10" />
+          <BrandLogo className="h-[58px] w-auto sm:h-16" />
         </div>
 
         <h2

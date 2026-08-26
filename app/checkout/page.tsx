@@ -5,7 +5,7 @@ import CheckoutClient, { type CheckoutMethod } from './CheckoutClient';
 
 export const metadata = buildPageMetadata({
   title: 'Checkout',
-  description: 'Pay for SLUTBOT AI Slutcoins with Telegram Stars or cryptocurrency.',
+  description: 'Pay for AI SLUTBOT Slutcoins with Telegram Stars or cryptocurrency.',
   path: '/checkout',
   noIndex: true,
 });

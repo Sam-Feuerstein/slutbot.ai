@@ -53,8 +53,8 @@ export default function ContentRemovalClient() {
           </p>
           <p>
             For legal complaints, non-consensual content, trafficking, abuse, coercion, or urgent safety reports, email{' '}
-            <a href="mailto:legal@slutbot.ai" className="text-white underline underline-offset-2 hover:text-white/80">
-              legal@slutbot.ai
+            <a href="mailto:legal@aislutbot.com" className="text-white underline underline-offset-2 hover:text-white/80">
+              legal@aislutbot.com
             </a>
           </p>
         </div>

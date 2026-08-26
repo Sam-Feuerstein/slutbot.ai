@@ -76,9 +76,9 @@ export default function SiteHeader() {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 w-[min(52%,28rem)] bg-[linear-gradient(90deg,#000_0%,#000_38%,transparent_100%)]"
         />
-        <div className="safe-x relative mx-auto flex h-12 max-w-[1600px] items-center justify-between gap-2 sm:h-14 sm:gap-4">
-          <Link href="/" aria-label="SLUTBOT home" className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo className="h-6 w-auto sm:h-8" />
+        <div className="safe-x relative mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-2 sm:h-20 sm:gap-4">
+          <Link href="/" aria-label="AI SLUTBOT home" className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <BrandLogo className="h-[44px] w-auto sm:h-[56px]" />
 
             <div className="hidden h-7 w-px shrink-0 bg-white/20 sm:block" />
 

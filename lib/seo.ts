@@ -27,7 +27,7 @@ export function buildPageMetadata(input: {
   noIndex?: boolean;
 }): Metadata {
   const url = absoluteUrl(input.path);
-  const ogTitle = input.ogTitle ?? `${input.title} | SLUTBOT AI`;
+  const ogTitle = input.ogTitle ?? `${input.title} | AI SLUTBOT`;
 
   return {
     title: input.title,
@@ -38,14 +38,14 @@ export function buildPageMetadata(input: {
       description: input.description,
       url,
       type: 'website',
-      siteName: 'SLUTBOT AI',
+      siteName: 'AI SLUTBOT',
       locale: 'en_US',
       images: [
         {
           url: DEFAULT_OG_IMAGE,
           width: 1200,
           height: 630,
-          alt: 'SLUTBOT AI — AI nude generator',
+          alt: 'AI SLUTBOT — AI nude generator',
         },
       ],
     },
@@ -78,10 +78,10 @@ export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'SLUTBOT AI',
+    name: 'AI SLUTBOT',
     url: SITE_URL,
-    logo: absoluteUrl('/brand/slutbot-logo.webp'),
-    email: 'legal@slutbot.ai',
+    logo: absoluteUrl('/brand/aislutbot-logo.webp'),
+    email: 'legal@aislutbot.com',
   };
 }
 
@@ -89,7 +89,7 @@ export function websiteJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'SLUTBOT AI',
+    name: 'AI SLUTBOT',
     url: SITE_URL,
     description: 'AI nude generator for uncensored AI slut images and short videos.',
     inLanguage: 'en-US',
@@ -100,7 +100,7 @@ export function softwareApplicationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'SLUTBOT AI Generator',
+    name: 'AI SLUTBOT Generator',
     applicationCategory: 'MultimediaApplication',
     operatingSystem: 'Web',
     url: absoluteUrl('/ai-porn-generator'),

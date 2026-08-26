@@ -113,13 +113,14 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   const [planId, setPlanId] = useState(plan.id);
   const [method, setMethod] = useState<CheckoutMethod>(initialMethod);
   const [telegramName, setTelegramName] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [buying, setBuying] = useState(false);
   const [note, setNote] = useState('');
   const [toast, setToast] = useState<string | null>(null);
 
   const selected = PREMIUM_PLANS.find((item) => item.id === planId) ?? plan;
   const payLabel = useMemo(
-    () => (buying ? 'Opening…' : `Pay ${formatUsdPrice(selected.price)}`),
+    () => (buying ? 'Opening…' : `CONTINUE · ${formatUsdPrice(selected.price)}`),
     [buying, selected.price],
   );
 
@@ -140,6 +141,10 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   };
 
   const startCheckout = async () => {
+    if (!agreed) {
+      setNote('Please confirm you are 18+ and agree to the Terms of Service.');
+      return;
+    }
     trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method });
     setBuying(true);
     setNote('');
@@ -218,7 +223,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
             </svg>
           </Link>
           <Link href="/" className="hover:text-white">
-            SLUTBOT
+            AI SLUTBOT
           </Link>
           <span className="text-white/45">/</span>
           <span className="text-white">Checkout</span>
@@ -400,11 +405,36 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
               : "You'll be securely redirected to NOWPayments to pay with USDT TRC20."}
           </p>
 
+          <div className="mt-5 flex items-start gap-2.5 text-[13px] leading-snug text-[#3d424d]">
+            <input
+              id="checkout-age-terms"
+              type="checkbox"
+              checked={agreed}
+              onChange={(event) => {
+                setAgreed(event.target.checked);
+                if (event.target.checked) setNote('');
+              }}
+              className="mt-[3px] h-4 w-4 shrink-0 cursor-pointer accent-[#635bff]"
+              required
+            />
+            <label htmlFor="checkout-age-terms" className="cursor-pointer">
+              By clicking CONTINUE, you confirm that you are at least 18 years old and agree to our{' '}
+              <Link
+                href="/terms"
+                className="font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff]"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Terms of Service
+              </Link>
+              .
+            </label>
+          </div>
+
           <button
             type="button"
-            disabled={buying}
+            disabled={buying || !agreed}
             onClick={() => void startCheckout()}
-            className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7a72ff] to-[#4f3dff] px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,91,255,0.35)] hover:from-[#6e66f8] hover:to-[#4636f0] disabled:opacity-50"
+            className="mt-5 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7a72ff] to-[#4f3dff] px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,91,255,0.35)] hover:from-[#6e66f8] hover:to-[#4636f0] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {payLabel}
             <LockIcon className="h-3.5 w-3.5" />

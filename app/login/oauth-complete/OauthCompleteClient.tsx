@@ -54,7 +54,7 @@ export default function OauthCompleteClient() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[#090505] px-4 py-[max(1.5rem,var(--safe-top))] text-white">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 text-center shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-        <BrandLogo className="mx-auto mb-5 h-8 w-auto" />
+        <BrandLogo className="mx-auto mb-5 h-[51px] w-auto" />
         <p className="text-sm text-white/70">{message}</p>
       </div>
     </div>

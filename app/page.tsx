@@ -5,11 +5,11 @@ import JsonLd from './components/JsonLd';
 import { buildPageMetadata, softwareApplicationJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
-  title: 'AI Nude image and video Generator | SLUTBOT.AI',
+  title: 'AI Nude image and video Generator | AI SLUTBOT',
   description:
-    'Experience SLUTBOT AI the cutting edge of AI nude video and image generation. Bring your AI SLUT BOT to life in just a few clicks.',
+    'Experience AI SLUTBOT the cutting edge of AI nude video and image generation. Bring your AI SLUT BOT to life in just a few clicks.',
   path: '/',
-  ogTitle: 'AI Nude image and video Generator | SLUTBOT.AI',
+  ogTitle: 'AI Nude image and video Generator | AI SLUTBOT',
 });
 
 export default function HomePage() {

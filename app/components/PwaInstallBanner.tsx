@@ -136,7 +136,7 @@ export default function PwaInstallBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Install SLUTBOT.AI"
+      aria-label="Install AI SLUTBOT"
       className="pointer-events-none fixed inset-x-0 bottom-0 z-[9998] pb-[var(--safe-bottom)]"
     >
       <div className="pointer-events-auto mx-auto max-w-lg px-3 pb-3">
@@ -158,14 +158,14 @@ export default function PwaInstallBanner() {
             <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icons/icon-192.png?v=1"
+                src="/icons/icon-192.png?v=2"
                 alt=""
                 width={44}
                 height={44}
                 className="shrink-0 rounded-xl"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight text-[#111]">SLUTBOT.AI</p>
+                <p className="text-sm font-semibold leading-tight text-[#111]">AI SLUTBOT</p>
                 <p className="mt-0.5 text-[12px] text-[#666]">Download App</p>
               </div>
               <button

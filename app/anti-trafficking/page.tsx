@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Anti-Trafficking & Abuse Policy',
   description:
-    'SLUTBOT AI zero-tolerance policy on trafficking, abuse, coercion, and non-consensual content. Reporting via legal@slutbot.ai and our content removal form.',
+    'AI SLUTBOT zero-tolerance policy on trafficking, abuse, coercion, and non-consensual content. Reporting via legal@aislutbot.com and our content removal form.',
   path: '/anti-trafficking',
 });
 
@@ -28,12 +28,12 @@ export default function AntiTraffickingPage() {
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Anti-Trafficking &amp; Abuse Policy</h1>
         <p className="mt-3 text-sm text-white/45">Effective Date: 23.06.2026</p>
-        <p className="mt-1 text-sm text-white/45">Platform: Slutbot.ai</p>
+        <p className="mt-1 text-sm text-white/45">Platform: aislutbot.com</p>
 
         <div className="mt-10 space-y-10">
           <Section title="1. Purpose">
             <p>
-              Slutbot.ai maintains a strict zero-tolerance policy toward slavery, human trafficking, sex trafficking,
+              AI SLUTBOT maintains a strict zero-tolerance policy toward slavery, human trafficking, sex trafficking,
               forced labor, coercion, exploitation, physical abuse, and any form of non-consensual or abusive conduct.
             </p>
             <p>
@@ -46,7 +46,7 @@ export default function AntiTraffickingPage() {
           <Section title="2. Scope">
             <p>This Policy applies to:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>all users of Slutbot.ai;</li>
+              <li>all users of AI SLUTBOT;</li>
               <li>all uploaded, submitted, generated, published, shared, or promoted content;</li>
               <li>all verified models, creators, affiliates, contractors, vendors, and business partners;</li>
               <li>all internal staff, moderators, support agents, compliance personnel, and service providers;</li>
@@ -59,7 +59,7 @@ export default function AntiTraffickingPage() {
 
           <Section title="3. Zero-Tolerance Statement">
             <p>
-              Slutbot.ai strictly prohibits any content, conduct, transaction, account activity, or business
+              AI SLUTBOT strictly prohibits any content, conduct, transaction, account activity, or business
               relationship involving or suggesting:
             </p>
             <ul className="list-disc space-y-2 pl-5">
@@ -157,7 +157,7 @@ export default function AntiTraffickingPage() {
 
           <Section title="5. Consent and Verification Standards">
             <p>
-              Slutbot.ai requires that any real person represented in uploaded or training-related content must be
+              AI SLUTBOT requires that any real person represented in uploaded or training-related content must be
               properly verified according to the platform’s applicable verification procedures.
             </p>
             <p>Where applicable, this may include:</p>
@@ -174,7 +174,7 @@ export default function AntiTraffickingPage() {
               authorization where such authorization is required.
             </p>
             <p>
-              Slutbot.ai does not accept outdated, unrelated, misleading, altered, or fraudulent verification materials.
+              AI SLUTBOT does not accept outdated, unrelated, misleading, altered, or fraudulent verification materials.
               The person shown in the identity document, consent material, and submitted content must match the
               individual being verified.
             </p>
@@ -182,7 +182,7 @@ export default function AntiTraffickingPage() {
 
           <Section title="6. AI-Generated Content">
             <p>
-              Because Slutbot.ai provides AI-generated content tools, this Policy applies equally to prompts, generated
+              Because AI SLUTBOT provides AI-generated content tools, this Policy applies equally to prompts, generated
               images, generated videos, character creation, model training, public content, private content, and any
               other AI-assisted output.
             </p>
@@ -206,7 +206,7 @@ export default function AntiTraffickingPage() {
 
           <Section title="7. Moderation and Enforcement">
             <p>
-              Slutbot.ai may use a combination of automated systems, keyword detection, AI moderation tools, human
+              AI SLUTBOT may use a combination of automated systems, keyword detection, AI moderation tools, human
               review, user reporting, and compliance checks to detect and prevent prohibited content and activity.
             </p>
             <p>Enforcement actions may include, without limitation:</p>
@@ -226,7 +226,7 @@ export default function AntiTraffickingPage() {
               </li>
             </ul>
             <p>
-              Slutbot.ai reserves the right to take action based on reasonable suspicion, contextual indicators,
+              AI SLUTBOT reserves the right to take action based on reasonable suspicion, contextual indicators,
               repeated attempts to violate policy, or risk to users, the platform, payment partners, or the public.
             </p>
           </Section>
@@ -240,14 +240,14 @@ export default function AntiTraffickingPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 Email:{' '}
-                <a href="mailto:legal@slutbot.ai" className="text-white underline underline-offset-2 hover:text-white/80">
-                  legal@slutbot.ai
+                <a href="mailto:legal@aislutbot.com" className="text-white underline underline-offset-2 hover:text-white/80">
+                  legal@aislutbot.com
                 </a>
               </li>
               <li>
                 Content removal form:{' '}
                 <Link href="/content-removal" className="text-white underline underline-offset-2 hover:text-white/80">
-                  slutbot.ai/content-removal
+                  aislutbot.com/content-removal
                 </Link>
               </li>
             </ul>
@@ -259,30 +259,30 @@ export default function AntiTraffickingPage() {
               <li>whether there is an immediate safety concern.</li>
             </ul>
             <p>
-              Slutbot.ai reviews reports seriously and may prioritize reports involving possible trafficking, abuse,
+              AI SLUTBOT reviews reports seriously and may prioritize reports involving possible trafficking, abuse,
               minors, coercion, or imminent harm.
             </p>
           </Section>
 
           <Section title="9. Business Partners, Affiliates and Vendors">
             <p>
-              Slutbot.ai expects all affiliates, vendors, contractors, payment partners, service providers, and other
+              AI SLUTBOT expects all affiliates, vendors, contractors, payment partners, service providers, and other
               business partners to comply with this Policy and with all applicable laws prohibiting slavery, human
               trafficking, sex trafficking, forced labor, exploitation, and abuse.
             </p>
             <p>
-              Partners may not use Slutbot.ai to promote, monetize, redirect traffic from, or associate with any
+              Partners may not use AI SLUTBOT to promote, monetize, redirect traffic from, or associate with any
               content, website, individual, organization, or activity involving trafficking, coercion, exploitation,
               abuse, or illegal sexual services.
             </p>
             <p>
-              Slutbot.ai may terminate any business relationship immediately if a partner is suspected of violating this
+              AI SLUTBOT may terminate any business relationship immediately if a partner is suspected of violating this
               Policy or creating unacceptable legal, compliance, reputational, or safety risk.
             </p>
           </Section>
 
           <Section title="10. Internal Responsibilities">
-            <p>Slutbot.ai personnel, contractors, moderators, and support staff are expected to:</p>
+            <p>AI SLUTBOT personnel, contractors, moderators, and support staff are expected to:</p>
             <ul className="list-disc space-y-2 pl-5">
               <li>escalate suspected trafficking, abuse, coercion, or exploitation concerns;</li>
               <li>follow internal moderation and reporting procedures;</li>
@@ -299,7 +299,7 @@ export default function AntiTraffickingPage() {
 
           <Section title="11. Recordkeeping and Compliance Review">
             <p>
-              Slutbot.ai may maintain records relating to verification, moderation, reports, enforcement actions, user
+              AI SLUTBOT may maintain records relating to verification, moderation, reports, enforcement actions, user
               submissions, account activity, and compliance decisions as required or permitted by law.
             </p>
             <p>
@@ -310,14 +310,14 @@ export default function AntiTraffickingPage() {
 
           <Section title="12. No Retaliation">
             <p>
-              Slutbot.ai prohibits retaliation against any person who, in good faith, reports suspected trafficking,
+              AI SLUTBOT prohibits retaliation against any person who, in good faith, reports suspected trafficking,
               abuse, coercion, exploitation, or violation of this Policy.
             </p>
             <p>False, malicious, or abusive reports may result in enforcement action against the reporting party.</p>
           </Section>
 
           <Section title="13. Consequences of Violation">
-            <p>Violation of this Policy may result in immediate and permanent removal from Slutbot.ai, including:</p>
+            <p>Violation of this Policy may result in immediate and permanent removal from AI SLUTBOT, including:</p>
             <ul className="list-disc space-y-2 pl-5">
               <li>content deletion;</li>
               <li>account suspension or termination;</li>
@@ -332,8 +332,8 @@ export default function AntiTraffickingPage() {
             <p>Questions or reports regarding this Policy may be directed to:</p>
             <p>
               Email:{' '}
-              <a href="mailto:legal@slutbot.ai" className="text-white underline underline-offset-2 hover:text-white/80">
-                legal@slutbot.ai
+              <a href="mailto:legal@aislutbot.com" className="text-white underline underline-offset-2 hover:text-white/80">
+                legal@aislutbot.com
               </a>
             </p>
           </Section>

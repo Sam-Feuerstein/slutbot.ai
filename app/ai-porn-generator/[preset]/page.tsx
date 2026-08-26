@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     path: generatorPresetPath(presetId),
-    ogTitle: `${title} | SLUTBOT AI`,
+    ogTitle: `${title} | AI SLUTBOT`,
   });
 }
 

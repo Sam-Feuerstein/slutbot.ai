@@ -76,19 +76,19 @@ export function defaultAdminSettings(): AdminMockSettings {
       webhookSecret: '',
     },
     email: {
-      fromName: 'SLUTBOT AI',
-      fromEmail: 'offers@slutbot.ai',
+      fromName: 'AI SLUTBOT',
+      fromEmail: 'offers@aislutbot.com',
       smtpHost: '',
       smtpPort: '587',
       smtpUser: '',
       smtpPassword: '',
       offerSubject: '{{name}}, extra Slutcoins this week',
       offerBody:
-        'Hey {{name}},\n\nUnlock {{plan}} and keep generating. This offer is mock-only until SMTP is connected.\n\n— SLUTBOT AI',
+        'Hey {{name}},\n\nUnlock {{plan}} and keep generating. This offer is mock-only until SMTP is connected.\n\n— AI SLUTBOT',
       purchaseSubject: 'Your {{plan}} pack is ready',
       purchaseBody:
         'Hi {{name}},\n\nWe received your {{plan}} purchase ({{amount}}).\n{{desires}} Slutcoins were added to your wallet.\n\nThanks for playing.',
-      resetSubject: 'Reset your SLUTBOT password',
+      resetSubject: 'Reset your AI SLUTBOT password',
       resetBody:
         'Hi {{name}},\n\nUse this link to restore access:\n{{resetLink}}\n\nIf you did not ask for this, ignore the email.',
     },

@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Cookie Policy',
   description:
-    'How SLUTBOT AI uses cookies and similar technologies, including essential, performance, and analytics cookies. Contact legal@slutbot.ai with questions.',
+    'How AI SLUTBOT uses cookies and similar technologies, including essential, performance, and analytics cookies. Contact legal@aislutbot.com with questions.',
   path: '/cookies',
 });
 
@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@slutbot.ai' }: { children?: string }) => (
+const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -38,8 +38,8 @@ export default function CookiesPage() {
         <div className="mt-10 space-y-10">
           <Section title="1. Introduction">
             <p>
-              This Cookie Policy explains how cookies and similar technologies are used on the SLUTBOT AI Platform at
-              Slutbot.ai (the “Platform”). By using our Platform, you consent to the use of cookies in accordance with
+              This Cookie Policy explains how cookies and similar technologies are used on the AI SLUTBOT Platform at
+              aislutbot.com (the “Platform”). By using our Platform, you consent to the use of cookies in accordance with
               this Cookie Policy.
             </p>
           </Section>

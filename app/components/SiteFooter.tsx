@@ -34,9 +34,9 @@ export default function SiteFooter() {
       <div className="safe-x mx-auto max-w-[1600px] py-8 sm:py-12 lg:py-14">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           <div>
-            <BrandLogo className="h-8 w-auto" />
+            <BrandLogo className="h-[58px] w-auto" />
             <p className="mt-3 max-w-[22rem] text-sm leading-relaxed text-white/55">
-              Experience SLUTBOT AI the cutting edge of AI nude video and image generation. Bring
+              Experience AI SLUTBOT the cutting edge of AI nude video and image generation. Bring
               your AI SLUT BOT to life in just a few clicks.
             </p>
             <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
@@ -115,9 +115,9 @@ export default function SiteFooter() {
                 className="h-10 w-auto bg-white"
               />
             </a>
-            <p>© 2023–2026 SLUTBOT AI</p>
+            <p>© 2023–2026 AI SLUTBOT</p>
             <p>
-              SLUTBOT AI and related marks are trademarks. Unauthorized use is prohibited.
+              AI SLUTBOT and related marks are trademarks. Unauthorized use is prohibited.
             </p>
           </div>
           <div>

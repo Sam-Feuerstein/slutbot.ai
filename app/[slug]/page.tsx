@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: page.title,
     description: page.metaDescription,
     path: `/${page.slug}`,
-    ogTitle: `${page.title} | SLUTBOT AI`,
+    ogTitle: `${page.title} | AI SLUTBOT`,
   });
 }
 

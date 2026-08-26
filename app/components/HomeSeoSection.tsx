@@ -18,19 +18,19 @@ const COMPETITOR_LINKS: { label: string; href: string }[] = [
 
 const FAQ = [
   {
-    question: 'Is SLUTBOT.ai Safe to Use?',
+    question: 'Is AI SLUTBOT Safe to Use?',
     answer:
-      'SLUTBOT.ai prioritizes user safety and privacy policies, ensuring a secure platform for creating AI nude content. We implement robust measures to protect your data and prevent any unauthorized leak of your creations. Our commitment to ethical AI image generation means you can confidently create high-quality, realistic nude images without concerns about your personal information or the security of your fantasy content.',
+      'AI SLUTBOT prioritizes user safety and privacy policies, ensuring a secure platform for creating AI nude content. We implement robust measures to protect your data and prevent any unauthorized leak of your creations. Our commitment to ethical AI image generation means you can confidently create high-quality, realistic nude images without concerns about your personal information or the security of your fantasy content.',
   },
   {
-    question: 'What Makes SLUTBOT.ai the Best Nude AI Generator?',
+    question: 'What Makes AI SLUTBOT the Best Nude AI Generator?',
     answer:
-      'SLUTBOT.ai distinguishes itself as the best nude AI generator through its unparalleled realism, extensive customization, and commitment to user privacy. Our advanced AI porn generator tools allow users to create stunningly realistic nude images with incredible detail and accuracy. The ability to generate uncensored, high-quality content tailored to your specific preference makes us the ultimate choice for AI-generated adult content, surpassing other platforms in both quality and control.',
+      'AI SLUTBOT distinguishes itself as the best nude AI generator through its unparalleled realism, extensive customization, and commitment to user privacy. Our advanced AI porn generator tools allow users to create stunningly realistic nude images with incredible detail and accuracy. The ability to generate uncensored, high-quality content tailored to your specific preference makes us the ultimate choice for AI-generated adult content, surpassing other platforms in both quality and control.',
   },
   {
-    question: 'Can I Create Videos with SLUTBOT.ai?',
+    question: 'Can I Create Videos with AI SLUTBOT?',
     answer:
-      'Currently, SLUTBOT.ai specializes in creating high-quality, realistic nude still images from text prompts or existing images. While our focus is on refining AI nude image generation, we are continuously exploring future developments, including potential video generator capabilities. For now, users can rely on our platform for exceptional static AI art and explicit content creation, ensuring every nude image meets the highest standards of realism and detail.',
+      'Currently, AI SLUTBOT specializes in creating high-quality, realistic nude still images from text prompts or existing images. While our focus is on refining AI nude image generation, we are continuously exploring future developments, including potential video generator capabilities. For now, users can rely on our platform for exceptional static AI art and explicit content creation, ensuring every nude image meets the highest standards of realism and detail.',
   },
 ];
 
@@ -58,7 +58,7 @@ export default function HomeSeoSection() {
       <h2 className="text-2xl font-black tracking-tight sm:text-3xl">AI porn generator for uncensored images and videos</h2>
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-white/65 sm:text-base">
         <p>
-          SLUTBOT AI lets you upload any photo and generate uncensored adult AI images and short videos in your browser.
+          AI SLUTBOT lets you upload any photo and generate uncensored adult AI images and short videos in your browser.
           Browse 160+ presets — blowjob, cumshot, doggy, missionary, and more — or open the{' '}
           <Link href={GENERATOR_PATH} className="text-white underline underline-offset-2 hover:text-white/80">
             AI porn generator
@@ -66,7 +66,7 @@ export default function HomeSeoSection() {
           directly. No desktop app required.
         </p>
         <p>
-          Pick a preset, upload your image, and generate in minutes. SLUTBOT AI uses modern neural models for sharp
+          Pick a preset, upload your image, and generate in minutes. AI SLUTBOT uses modern neural models for sharp
           stills and motion clips. Slutcoin packs keep pricing transparent: you see the cost before each run. Outputs
           are AI-generated entertainment for adults 18+ only.
         </p>
@@ -94,12 +94,12 @@ export default function HomeSeoSection() {
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-white/65 sm:text-base">
         <div>
           <h2 className="text-xl font-black text-white sm:text-2xl">
-            Experience the Best AI NSFW Nude Generator SLUTBOT.ai
+            Experience the Best AI NSFW Nude Generator AI SLUTBOT
           </h2>
           <p className="mt-4">
-            Delve into the revolutionary world of AI-generated adult content with SLUTBOT.ai, the premier platform for
+            Delve into the revolutionary world of AI-generated adult content with AI SLUTBOT, the premier platform for
             creating stunningly realistic nude images. This guide will explore how artificial intelligence is reshaping
-            the landscape of erotic art and why SLUTBOT.ai stands out as the ultimate choice for your creative needs.
+            the landscape of erotic art and why AI SLUTBOT stands out as the ultimate choice for your creative needs.
           </p>
         </div>
 
@@ -126,9 +126,9 @@ export default function HomeSeoSection() {
         </div>
 
         <div>
-          <h3 className="text-lg font-black text-white sm:text-xl">Why Choose SLUTBOT.ai Over Competitors?</h3>
+          <h3 className="text-lg font-black text-white sm:text-xl">Why Choose AI SLUTBOT Over Competitors?</h3>
           <p className="mt-4">
-            SLUTBOT.ai stands as the superior alternative to other platforms. Our AI nude generator excels in providing
+            AI SLUTBOT stands as the superior alternative to other platforms. Our AI nude generator excels in providing
             unparalleled realism, extensive customization options, and robust privacy policies, ensuring a seamless and
             secure experience for creating your ideal AI-generated nudes. We pride ourselves on being the best AI porn
             generator available, offering a level of quality and control that our competitors simply cannot match.
@@ -138,7 +138,7 @@ export default function HomeSeoSection() {
             <table className="w-full min-w-[480px] text-left text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-[#141414]">
-                  <th className="px-4 py-3 font-semibold text-white">SLUTBOT.ai Feature</th>
+                  <th className="px-4 py-3 font-semibold text-white">AI SLUTBOT Feature</th>
                   <th className="px-4 py-3 font-semibold text-white">Competitor Platforms</th>
                 </tr>
               </thead>
@@ -191,11 +191,11 @@ export default function HomeSeoSection() {
         </div>
 
         <div>
-          <h3 className="text-lg font-black text-white sm:text-xl">Features of SLUTBOT.ai</h3>
+          <h3 className="text-lg font-black text-white sm:text-xl">Features of AI SLUTBOT</h3>
 
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Creating Stunning AI Generated Nudes</h4>
           <p className="mt-3">
-            SLUTBOT.ai provides an intuitive interface for creating stunning AI-generated nudes, allowing users to craft
+            AI SLUTBOT provides an intuitive interface for creating stunning AI-generated nudes, allowing users to craft
             their ideal images with precision. Our platform empowers you to generate realistic nude images by simply
             providing text prompts, transforming your imagination into vivid and lifelike visuals that exceed
             expectations.
@@ -204,14 +204,14 @@ export default function HomeSeoSection() {
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Realistic Image Generation Techniques</h4>
           <p className="mt-3">
             Our platform employs advanced realistic image generation techniques to ensure every AI nude image created is
-            of the highest quality and realism. SLUTBOT.ai utilizes sophisticated algorithms to capture intricate
+            of the highest quality and realism. AI SLUTBOT utilizes sophisticated algorithms to capture intricate
             details, textures, and lighting, resulting in incredibly lifelike outputs that truly bring your vision to
             life.
           </p>
 
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Uncensored and Customizable Options</h4>
           <p className="mt-3">
-            SLUTBOT.ai offers uncensored and highly customizable options, giving you complete control over your AI nude
+            AI SLUTBOT offers uncensored and highly customizable options, giving you complete control over your AI nude
             creations. Users can adjust various parameters, ensuring that every image perfectly matches their preference
             and desired level of explicit content. These parameters include:
           </p>
@@ -223,11 +223,11 @@ export default function HomeSeoSection() {
         </div>
 
         <div>
-          <h3 className="text-lg font-black text-white sm:text-xl">How to Use SLUTBOT.ai</h3>
+          <h3 className="text-lg font-black text-white sm:text-xl">How to Use AI SLUTBOT</h3>
 
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Step-by-Step Guide to Generate Nudes</h4>
           <p className="mt-3">
-            Generating stunningly realistic nude images with SLUTBOT.ai is a seamless process designed for ease and
+            Generating stunningly realistic nude images with AI SLUTBOT is a seamless process designed for ease and
             efficiency. Our intuitive AI nude generator tools guide you through each step, ensuring a smooth creation of
             your desired explicit content. The process involves:
           </p>
@@ -247,7 +247,7 @@ export default function HomeSeoSection() {
 
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Tips for Best Results</h4>
           <p className="mt-3">
-            To achieve the best results with SLUTBOT.ai, focus on providing detailed and clear prompts for your AI nude
+            To achieve the best results with AI SLUTBOT, focus on providing detailed and clear prompts for your AI nude
             creations. Experiment with various descriptions of body type, lingerie, and scenarios to guide the AI image
             generation process. Utilizing our customization options and understanding the AI image filters will help you
             create high-quality, realistic nude images that perfectly match your vision and preference.
@@ -255,7 +255,7 @@ export default function HomeSeoSection() {
 
           <h4 className="mt-5 text-base font-bold text-white sm:text-lg">Understanding the AI Image Filters</h4>
           <p className="mt-3">
-            SLUTBOT.ai employs advanced AI image filters to enhance the realism and quality of your AI nude creations.
+            AI SLUTBOT employs advanced AI image filters to enhance the realism and quality of your AI nude creations.
             These filters allow you to refine textures, lighting, and overall aesthetics, ensuring that the generated
             nude image meets your exact specifications. Understanding how to use these generator tools empowers you to
             produce stunningly realistic nude art, pushing the boundaries of AI-generated adult content with precision
@@ -283,12 +283,12 @@ export default function HomeSeoSection() {
         <h3 className="text-lg font-black text-white sm:text-xl">Conclusion</h3>
 
         <div>
-          <h4 className="text-base font-bold text-white sm:text-lg">Why You Should Choose SLUTBOT.ai Today</h4>
+          <h4 className="text-base font-bold text-white sm:text-lg">Why You Should Choose AI SLUTBOT Today</h4>
           <p className="mt-3">
-            Choose SLUTBOT.ai today to experience the pinnacle of AI nude generator technology, enabling you to create
+            Choose AI SLUTBOT today to experience the pinnacle of AI nude generator technology, enabling you to create
             stunningly realistic nude images with unmatched customization and privacy. Our platform offers superior AI
             image generation, allowing you to transform your deepest fantasies into high-quality, uncensored adult
-            content. Join our community and discover why SLUTBOT.ai is the best nude AI generator for all your erotic
+            content. Join our community and discover why AI SLUTBOT is the best nude AI generator for all your erotic
             and artistic needs.
           </p>
         </div>
@@ -296,9 +296,9 @@ export default function HomeSeoSection() {
         <div>
           <h4 className="text-base font-bold text-white sm:text-lg">Future of AI in NSFW Content Creation</h4>
           <p className="mt-3">
-            The future of AI in NSFW content creation, spearheaded by platforms like SLUTBOT.ai, promises even greater
+            The future of AI in NSFW content creation, spearheaded by platforms like AI SLUTBOT, promises even greater
             realism and customization. We anticipate advancements in AI porn generator capabilities, leading to more
-            dynamic and interactive AI nude experiences, including enhanced video generator features. SLUTBOT.ai is
+            dynamic and interactive AI nude experiences, including enhanced video generator features. AI SLUTBOT is
             committed to pushing these boundaries, ensuring that AI-generated adult content continues to evolve,
             offering users unparalleled creative freedom and stunningly realistic outputs.
           </p>

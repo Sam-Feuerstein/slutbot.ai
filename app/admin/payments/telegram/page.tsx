@@ -22,7 +22,7 @@ export default function TelegramStarsPage() {
       <PageHeader
         kicker="Telegram"
         title="Stars payments"
-        description="Same Erogram VIP bot. Packs are named SLUTBOT Ecstasy / Passion / Desire / Flirt so they show up on that bot without mixing into VIP membership."
+        description="Same Erogram VIP bot. Packs are named AI SLUTBOT Ecstasy / Passion / Desire / Flirt so they show up on that bot without mixing into VIP membership."
         action={
           <div className="flex items-center gap-3">
             <StatusChip connected={connected} />
@@ -45,9 +45,9 @@ export default function TelegramStarsPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-dashed border-white/12 bg-black/20 px-4 py-3 text-xs leading-relaxed text-white/40">
-              One bot for all Stars. Invoice titles are <span className="text-white/70">SLUTBOT Passion</span>, not
+              One bot for all Stars. Invoice titles are <span className="text-white/70">AI SLUTBOT Passion</span>, not
               Erogram VIP. Money and the Telegram charge stay on the VIP bot. Erogram does not turn the buyer into a
-              VIP member. Slutcoins are added to the SLUTBOT wallet after Telegram confirms.
+              VIP member. Slutcoins are added to the AI SLUTBOT wallet after Telegram confirms.
             </div>
           </div>
         </Panel>

@@ -5,7 +5,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Content Removal & Complaints',
   description:
-    'Submit a content removal or complaint to SLUTBOT AI. Reports reviewed within 5 business days. For urgent legal or safety issues, email legal@slutbot.ai.',
+    'Submit a content removal or complaint to AI SLUTBOT. Reports reviewed within 5 business days. For urgent legal or safety issues, email legal@aislutbot.com.',
   path: '/content-removal',
 });
 

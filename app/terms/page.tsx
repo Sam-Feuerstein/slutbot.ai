@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Terms of Service',
   description:
-    'Terms of Service for SLUTBOT AI at slutbot.ai — AI porn generator rules, Slutcoins, prohibited content, refunds, and adult-only use.',
+    'Terms of Service for AI SLUTBOT at aislutbot.com — AI porn generator rules, Slutcoins, prohibited content, refunds, and adult-only use.',
   path: '/terms',
 });
 
@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@slutbot.ai' }: { children?: string }) => (
+const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -42,9 +42,9 @@ export default function TermsPage() {
         <div className="mt-10 space-y-10">
           <Section title="1. Introduction">
             <p>
-              These Terms of Service govern access to and use of the SLUTBOT AI image and video generation Platform
+              These Terms of Service govern access to and use of the AI SLUTBOT image and video generation Platform
               (the “Platform”) and the services we offer on the Platform. The Platform is designed and operated by
-              SLUTBOT AI at Slutbot.ai (“we”, “us”, or “our”).
+              AI SLUTBOT at aislutbot.com (“we”, “us”, or “our”).
             </p>
             <p>
               If you are accepting these Terms of Service and using the Platform and services on behalf of a company,
@@ -409,15 +409,15 @@ export default function TermsPage() {
               these Terms.
             </p>
             <p>
-              Affiliates may not use SLUTBOT AI, Slutbot.ai, or any confusingly similar variation of
+              Affiliates may not use AI SLUTBOT, aislutbot.com, or any confusingly similar variation of
               these names or marks in any domain name, subdomain, app name, landing page, ad copy, metadata, social
               media profile, paid search campaign, display URL, redirect URL, or promotional material in a way that
-              suggests ownership, official affiliation, endorsement, or control by SLUTBOT AI.
+              suggests ownership, official affiliation, endorsement, or control by AI SLUTBOT.
             </p>
             <p>
-              Affiliates may refer to SLUTBOT AI only for legitimate affiliate promotion, provided that the promotion
+              Affiliates may refer to AI SLUTBOT only for legitimate affiliate promotion, provided that the promotion
               clearly identifies the affiliate as an independent third-party promoter and does not create confusion
-              with the official SLUTBOT AI brand. Unauthorized trademark use, misleading landing pages, or redirect
+              with the official AI SLUTBOT brand. Unauthorized trademark use, misleading landing pages, or redirect
               abuse may result in suspension or termination of the affiliate account and withholding of commissions.
             </p>
           </Section>
@@ -429,7 +429,7 @@ export default function TermsPage() {
               that we shall not be liable for delays or reduced performance during generation.
             </p>
             <p>
-              To the maximum extent permitted by applicable law, in no event shall SLUTBOT AI, or its affiliates,
+              To the maximum extent permitted by applicable law, in no event shall AI SLUTBOT, or its affiliates,
               officers, directors, agents, partners, suppliers, and employees, be liable for any indirect, punitive,
               incidental, special, consequential, or exemplary damages, including without limitation damages for loss
               of profits, goodwill, use, data, or other intangible losses, arising out of or relating to the use of,
@@ -551,7 +551,7 @@ export default function TermsPage() {
           <Section title="20. Intellectual Property">
             <p>
               The architecture of the Platform, its graphics, user interfaces, visual interfaces, symbols, logos,
-              artwork, and computer code belong to SLUTBOT AI or its licensors and are protected by copyright, patent,
+              artwork, and computer code belong to AI SLUTBOT or its licensors and are protected by copyright, patent,
               trademark, and other intellectual property laws.
             </p>
             <p>

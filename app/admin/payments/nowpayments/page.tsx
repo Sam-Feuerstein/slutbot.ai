@@ -23,7 +23,7 @@ export default function NowPaymentsPage() {
       <PageHeader
         kicker="Crypto"
         title="NOWPayments"
-        description="Same API key as Erogram. Invoices use this account; IPN comes back here so Erogram VIP is never mixed with SLUTBOT packs."
+        description="Same API key as Erogram. Invoices use this account; IPN comes back here so Erogram VIP is never mixed with AI SLUTBOT packs."
         action={
           <div className="flex items-center gap-3">
             <StatusChip connected={connected} />

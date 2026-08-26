@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Privacy Policy',
   description:
-    'Privacy Policy for SLUTBOT AI. How we collect, use, and protect personal data, GDPR rights, cookies, and contact details at legal@slutbot.ai.',
+    'Privacy Policy for AI SLUTBOT. How we collect, use, and protect personal data, GDPR rights, cookies, and contact details at legal@aislutbot.com.',
   path: '/privacy',
 });
 
@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@slutbot.ai' }: { children?: string }) => (
+const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
 
           <Section title="2. Company Information and Data Controller">
             <p>
-              SLUTBOT AI, operating the Platform at Slutbot.ai, is the data controller responsible for the processing
+              AI SLUTBOT, operating the Platform at aislutbot.com, is the data controller responsible for the processing
               of personal data described in this Privacy Policy (“we”, “us”, or “our”).
             </p>
             <p>
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
               <li>how you can manage your preferences and exercise your rights.</li>
             </ul>
             <p>
-              By accessing or using the SLUTBOT AI image and video generation Platform and associated services
+              By accessing or using the AI SLUTBOT image and video generation Platform and associated services
               (collectively, the “Platform”), you acknowledge that you have read and understood this Privacy Policy. If
               you do not agree with our practices, please do not use our Platform.
             </p>
@@ -288,7 +288,7 @@ export default function PrivacyPage() {
             <p>
               <strong className="text-white/80">8.2. Legal obligations and protection of rights.</strong> We may
               disclose personal data to comply with law or legal process; to enforce our Terms; or to protect the
-              rights, property, or safety of SLUTBOT AI, our users, or others, including fraud prevention.
+              rights, property, or safety of AI SLUTBOT, our users, or others, including fraud prevention.
             </p>
             <p>
               <strong className="text-white/80">8.3. Business transfers.</strong> If we are involved in a merger,
@@ -415,8 +415,8 @@ export default function PrivacyPage() {
           <Section title="16. Definitions">
             <ul className="list-disc space-y-2 pl-5">
               <li>
-                <strong className="text-white/80">Platform:</strong> the SLUTBOT AI image and video generation services
-                operated at Slutbot.ai, including related features such as Slutcoins, generation history, and
+                <strong className="text-white/80">Platform:</strong> the AI SLUTBOT image and video generation services
+                operated at aislutbot.com, including related features such as Slutcoins, generation history, and
                 affiliate tools.
               </li>
               <li>
@@ -438,7 +438,7 @@ export default function PrivacyPage() {
                 using the Platform. Users retain ownership subject to our Terms of Service and this Policy.
               </li>
               <li>
-                <strong className="text-white/80">Data controller:</strong> SLUTBOT AI, which determines the purposes
+                <strong className="text-white/80">Data controller:</strong> AI SLUTBOT, which determines the purposes
                 and means of processing personal data collected through the Platform.
               </li>
               <li>

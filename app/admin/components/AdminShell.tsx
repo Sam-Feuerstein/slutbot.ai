@@ -54,7 +54,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/8 bg-black/40 px-4 py-6 backdrop-blur-xl lg:flex">
           <div className="px-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">{SITE_DOMAIN}</p>
-            <BrandLogo className="mt-2 h-7 w-auto" />
+            <BrandLogo className="mt-2 h-[45px] w-auto" />
             <p className="text-xs text-white/40">Admin</p>
           </div>
           <nav className="mt-8 flex-1 space-y-6 overflow-y-auto">
@@ -93,7 +93,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-white/8 bg-[#070406]/80 px-4 py-3 backdrop-blur-xl lg:hidden">
             <div className="flex items-center justify-between gap-3">
-              <BrandLogo className="h-6 w-auto" />
+              <BrandLogo className="h-[38px] w-auto" />
               <Link href="/" className="text-xs text-white/50">
                 Site
               </Link>

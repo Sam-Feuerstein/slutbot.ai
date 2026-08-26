@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: '18 U.S.C. §2257 Compliance Statement',
   description:
-    '18 U.S.C. §2257 record-keeping compliance statement for SLUTBOT AI. AI-generated content, user uploads, and contact at legal@slutbot.ai.',
+    '18 U.S.C. §2257 record-keeping compliance statement for AI SLUTBOT. AI-generated content, user uploads, and contact at legal@aislutbot.com.',
   path: '/2257',
 });
 
@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@slutbot.ai' }: { children?: string }) => (
+const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -36,12 +36,12 @@ export default function Usc2257Page() {
           18 U.S.C. §2257 Record-Keeping Requirements Compliance Statement
         </h1>
         <p className="mt-3 text-sm text-white/45">Last updated on: 08/24/2026</p>
-        <p className="mt-1 text-sm text-white/45">Platform: Slutbot.ai</p>
+        <p className="mt-1 text-sm text-white/45">Platform: aislutbot.com</p>
 
         <div className="mt-10 space-y-10">
           <Section title="1. Nature of content on the Platform">
             <p>
-              SLUTBOT AI operates an AI image and video generation platform at Slutbot.ai (the “Platform”). Content
+              AI SLUTBOT operates an AI image and video generation platform at aislutbot.com (the “Platform”). Content
               available on the Platform is AI-generated and is provided for entertainment purposes only. It does not
               depict real individuals or events, except where a user uploads their own source image.
             </p>
@@ -49,8 +49,8 @@ export default function Usc2257Page() {
 
           <Section title="2. Producer status">
             <p>
-              SLUTBOT AI is not the primary or secondary producer (as defined in 18 U.S.C. § 2257) of third-party
-              user-uploaded source materials. With respect to such materials, SLUTBOT AI’s activities are limited to
+              AI SLUTBOT is not the primary or secondary producer (as defined in 18 U.S.C. § 2257) of third-party
+              user-uploaded source materials. With respect to such materials, AI SLUTBOT’s activities are limited to
               the transmission, storage, retrieval, hosting, and/or formatting of content submitted by users.
             </p>
           </Section>
@@ -64,13 +64,13 @@ export default function Usc2257Page() {
 
           <Section title="4. Compliance procedures">
             <p>
-              SLUTBOT AI abides by the following compliance procedures regarding generation, uploads, and related
+              AI SLUTBOT abides by the following compliance procedures regarding generation, uploads, and related
               content:
             </p>
             <p>
               All users must be at least eighteen (18) years of age (or the age required by their state, jurisdiction,
               or country if higher than 18) and are identified and verified as the Platform requires before they may
-              generate, upload, share, or sell content on Slutbot.ai.
+              generate, upload, share, or sell content on aislutbot.com.
             </p>
             <p>
               Before any upload or generation involving a real person’s likeness, users must provide evidence or
@@ -80,11 +80,11 @@ export default function Usc2257Page() {
               <li>
                 all depicted persons are over the age of 18 years old (or the minimum age required to appear in such
                 content by their state, jurisdiction, or country if higher than 18); that they freely consented to
-                appear in the content at the time of its production; and that they agree to its use on Slutbot.ai;
+                appear in the content at the time of its production; and that they agree to its use on aislutbot.com;
               </li>
               <li>
                 as producer of said content, the user certifies being compliant with record-keeping requirements under
-                18 U.S.C. § 2257 for all such content on Slutbot.ai, and agrees to deliver such documentation promptly
+                18 U.S.C. § 2257 for all such content on aislutbot.com, and agrees to deliver such documentation promptly
                 upon request; and
               </li>
               <li>

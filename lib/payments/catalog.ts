@@ -30,7 +30,7 @@ function toCheckoutPlan(plan: PremiumPlan): CheckoutPlan {
     desires: plan.desires,
     usdPrice: plan.price,
     starsAmount: plan.stars,
-    label: `SLUTBOT ${plan.tier}`,
+    label: `AI SLUTBOT ${plan.tier}`,
     description: `${plan.desires.toLocaleString()} Slutcoins · ${plan.imageGenerations.toLocaleString()} images or ${plan.videoGenerations.toLocaleString()} videos`,
   };
 }

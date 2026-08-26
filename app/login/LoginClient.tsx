@@ -71,7 +71,7 @@ export default function LoginClient() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[#090505] px-4 py-[max(1.5rem,var(--safe-top))] text-white">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-        <BrandLogo className="mb-5 h-8 w-auto" />
+        <BrandLogo className="mb-5 h-16 w-auto" />
         <h1 className="text-2xl font-black">Sign in</h1>
         <p className="mt-2 text-sm text-white/55">Use your email and password to access your account.</p>
 

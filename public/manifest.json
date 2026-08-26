@@ -1,7 +1,7 @@
 {
-  "name": "SLUTBOT.AI — AI Nude Generator",
-  "short_name": "SLUTBOT.AI",
-  "description": "Experience SLUTBOT AI the cutting edge of AI nude video and image generation. Bring your AI SLUT BOT to life in just a few clicks.",
+  "name": "AI SLUTBOT — AI Nude Generator",
+  "short_name": "AI SLUTBOT",
+  "description": "Experience AI SLUTBOT the cutting edge of AI nude video and image generation. Bring your AI SLUT BOT to life in just a few clicks.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,25 +10,25 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.png?v=1",
+      "src": "/icons/icon-192.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png?v=1",
+      "src": "/icons/icon-192-maskable.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512.png?v=1",
+      "src": "/icons/icon-512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=1",
+      "src": "/icons/icon-512-maskable.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
