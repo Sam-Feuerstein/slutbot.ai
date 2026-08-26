@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
-import { storeAuthSession } from '../LoginClient';
+import { cacheUserProfile } from '@/lib/auth/profile';
+import { storeAuthSession } from '@/lib/auth/session';
 import { safeNextPath } from '@/lib/site';
 
 export default function OauthCompleteClient() {
@@ -17,22 +18,29 @@ export default function OauthCompleteClient() {
 
     async function complete() {
       try {
-        const res = await fetch('/api/auth/google/complete');
+        const res = await fetch('/api/auth/google/complete', { credentials: 'include' });
         const data = (await res.json()) as {
-          token?: string;
           clientId?: string;
+          email?: string;
+          name?: string;
+          avatarUrl?: string;
           desires?: number;
           message?: string;
         };
 
         if (cancelled) return;
 
-        if (!res.ok || !data.token || !data.clientId) {
+        if (!res.ok || !data.clientId) {
           setMessage(data.message || 'Google sign-in failed.');
           return;
         }
 
-        storeAuthSession({ token: data.token, clientId: data.clientId });
+        storeAuthSession({ clientId: data.clientId });
+        cacheUserProfile({
+          email: data.email || '',
+          name: data.name || '',
+          avatarUrl: data.avatarUrl || '',
+        });
         localStorage.setItem('slutbot-desires', String(data.desires ?? 0));
         localStorage.setItem('slutbot-desires-server', String(data.desires ?? 0));
         window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));

@@ -31,8 +31,24 @@ export function usdFromStars(stars: number): number {
   return Math.round((stars * BASE_USD * 100) / BASE_STARS) / 100;
 }
 
-export function formatUsdPrice(amount: number): string {
-  return Number.isInteger(amount) ? `$${amount}` : `$${amount.toFixed(2)}`;
+export function starsFromUsd(usd: number): number {
+  const amount = Math.max(0, Number(usd) || 0);
+  return Math.max(1, Math.round((amount * BASE_STARS) / BASE_USD));
+}
+
+export function formatUsdPrice(usd: number): string {
+  return `$${usd.toFixed(2)}`;
+}
+
+export function formatStarsCount(stars: number): string {
+  return `${Math.round(stars).toLocaleString('en-US')} Stars`;
+}
+
+/** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
+export const CRYPTO_DISCOUNT_PERCENT = 20;
+
+export function cryptoUsdPrice(usd: number): number {
+  return Math.round(usd * (100 - CRYPTO_DISCOUNT_PERCENT)) / 100;
 }
 
 export function planGenerationCopy(plan: PremiumPlan): string {

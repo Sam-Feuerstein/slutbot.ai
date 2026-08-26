@@ -8,6 +8,7 @@ import SiteHeader from '../components/SiteHeader';
 import {
   deleteAiToolGeneration,
   pollWavespeedImageToVideo,
+  refundFailedGeneration,
   saveAiToolGeneration,
   submitWavespeedImageEdit,
   submitWavespeedImageToVideo,
@@ -20,17 +21,15 @@ import {
   getAuthToken,
   getDesires,
   getGenerationDesireCost,
-  notifyDesiresUpdated,
-  openPremiumPlans,
+  openCheckoutInsufficient,
   refreshDesiresFromServer,
-  spendDesiresServer,
+  setDesires,
   VIDEO_DURATION_SECONDS,
   VIDEO_OUTPUT_TIERS,
 } from '@/lib/desires';
 import type { VideoModel } from '@/lib/imageToVideo/types';
 import { uiMediaUrl } from '@/lib/presetMedia';
 import { loginHref } from '@/lib/site';
-import { getImageToVideoClientId } from './clientId';
 
 const GenerationLoadingOverlay = dynamic(() => import('./GenerationLoadingOverlay'), { ssr: false });
 
@@ -242,9 +241,12 @@ export default function ImageToVideoClient({
     }
   }, []);
 
-  const pollUntilDone = useCallback(async (pollUrl: string) => {
+  const pollUntilDone = useCallback(async (taskId: string) => {
     for (let i = 0; i < 120; i += 1) {
-      const result = await pollWavespeedImageToVideo(pollUrl);
+      const result = await pollWavespeedImageToVideo(taskId);
+      if (typeof result.desires === 'number') {
+        setDesires(result.desires);
+      }
       if (result.status === 'completed' && result.outputUrl) {
         return result.outputUrl;
       }
@@ -264,18 +266,15 @@ export default function ImageToVideoClient({
     }
 
     const desireCost = getGenerationDesireCost(mode, videoModel, quality);
-    const token = getAuthToken();
-    if (!token) {
+    if (!getAuthToken()) {
       router.push(loginHref(pathname || '/ai-porn-generator'));
       return;
     }
     if (getDesires() < desireCost) {
-      openPremiumPlans();
-      return;
-    }
-    const spent = await spendDesiresServer(desireCost, mode);
-    if (!spent) {
-      openPremiumPlans();
+      setError(
+        `Not enough Slutcoins. You need ${desireCost.toLocaleString('en-US')} but have ${getDesires().toLocaleString('en-US')}. Redirecting to checkout…`,
+      );
+      window.setTimeout(() => openCheckoutInsufficient(desireCost, getDesires()), 1600);
       return;
     }
 
@@ -286,42 +285,41 @@ export default function ImageToVideoClient({
     setPhase('uploading');
     setStatusText('Uploading image...');
 
+    let taskId = '';
     try {
       const fd = new FormData();
       fd.set('file', await compressImageForUpload(selectedFile));
-      const upload = await uploadImageToVideoSource(fd, token);
-      if (upload.error || !upload.url) throw new Error(upload.error || 'Upload failed.');
+      const upload = await uploadImageToVideoSource(fd);
+      if (upload.error || !upload.key) throw new Error(upload.error || 'Upload failed.');
 
       setPhase('generating');
       setStatusText('Starting generation...');
       const submit =
         mode === 'image'
-          ? await submitWavespeedImageEdit(upload.url, undefined, token)
+          ? await submitWavespeedImageEdit(upload.key)
           : await submitWavespeedImageToVideo(
-              upload.url,
+              upload.key,
               undefined,
               quality,
               duration,
               'tuned',
               videoModel,
-              token,
             );
-      if (submit.error || !submit.resultUrl) throw new Error(submit.error || 'Submit failed.');
+      if (typeof submit.desires === 'number') setDesires(submit.desires);
+      if (submit.error || !submit.taskId) throw new Error(submit.error || 'Submit failed.');
+      taskId = submit.taskId;
 
-      const url = await pollUntilDone(submit.resultUrl);
+      const url = await pollUntilDone(submit.taskId);
       setResultUrl(url);
       setResultKind(mode);
       setPhase('done');
       setStatusText('Done.');
 
       const saved = await saveAiToolGeneration({
-        clientId: getImageToVideoClientId(),
-        token: getAuthToken(),
         mode,
         videoModel: mode === 'video' ? videoModel : null,
-        sourceImageUrl: upload.url,
+        sourceKey: upload.key,
         outputUrl: url,
-        prompt: '',
         quality: mode === 'video' ? quality : '',
         duration: mode === 'video' ? duration : null,
       });
@@ -331,7 +329,7 @@ export default function ImageToVideoClient({
         id,
         mode,
         videoModel: mode === 'video' ? videoModel : null,
-        sourceImageUrl: upload.url,
+        sourceImageUrl: upload.key,
         outputUrl: url,
         prompt: '',
         quality: mode === 'video' ? quality : '',
@@ -339,20 +337,12 @@ export default function ImageToVideoClient({
         createdAt: new Date().toISOString(),
       });
     } catch (e: unknown) {
-      await fetch('/api/wallet/refund', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: desireCost }),
-      }).then(async (res) => {
-        const data = (await res.json()) as { desires?: number };
-        if (typeof data.desires === 'number') {
-          localStorage.setItem('slutbot-desires', String(data.desires));
-          notifyDesiresUpdated();
-        }
-      });
+      if (taskId) {
+        const refunded = await refundFailedGeneration(taskId);
+        if (typeof refunded.desires === 'number') setDesires(refunded.desires);
+      } else {
+        await refreshDesiresFromServer();
+      }
       setPhase('error');
       setError(e instanceof Error ? e.message : 'Something went wrong.');
     }
@@ -366,7 +356,7 @@ export default function ImageToVideoClient({
 
   const onDeleteResult = async () => {
     if (resultId && !resultId.startsWith('local-')) {
-      await deleteAiToolGeneration(resultId, getImageToVideoClientId(), getAuthToken());
+      await deleteAiToolGeneration(resultId);
     }
     if (resultId) removeLocalCollectionItem(resultId, resultUrl);
     resetOutput();

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL } from '@/lib/site';
+import { LEGAL_EMAIL, SITE_URL } from '@/lib/site';
 
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/brand/banner-poster.webp`;
 export const SEO_LAST_MODIFIED = new Date('2026-08-24T00:00:00.000Z');
@@ -27,7 +27,7 @@ export function buildPageMetadata(input: {
   noIndex?: boolean;
 }): Metadata {
   const url = absoluteUrl(input.path);
-  const ogTitle = input.ogTitle ?? `${input.title} | AI SLUTBOT`;
+  const ogTitle = input.ogTitle ?? `${input.title} | SLUTBOT AI`;
 
   return {
     title: input.title,
@@ -38,14 +38,14 @@ export function buildPageMetadata(input: {
       description: input.description,
       url,
       type: 'website',
-      siteName: 'AI SLUTBOT',
+      siteName: 'SLUTBOT AI',
       locale: 'en_US',
       images: [
         {
           url: DEFAULT_OG_IMAGE,
           width: 1200,
           height: 630,
-          alt: 'AI SLUTBOT — AI nude generator',
+          alt: 'SLUTBOT AI — AI nude generator',
         },
       ],
     },
@@ -78,10 +78,10 @@ export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'AI SLUTBOT',
+    name: 'SLUTBOT AI',
     url: SITE_URL,
     logo: absoluteUrl('/brand/aislutbot-logo.webp'),
-    email: 'legal@aislutbot.com',
+    email: LEGAL_EMAIL,
   };
 }
 
@@ -89,7 +89,7 @@ export function websiteJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'AI SLUTBOT',
+    name: 'SLUTBOT AI',
     url: SITE_URL,
     description: 'AI nude generator for uncensored AI slut images and short videos.',
     inLanguage: 'en-US',
@@ -100,7 +100,7 @@ export function softwareApplicationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'AI SLUTBOT Generator',
+    name: 'SLUTBOT AI Generator',
     applicationCategory: 'MultimediaApplication',
     operatingSystem: 'Web',
     url: absoluteUrl('/ai-porn-generator'),

@@ -1,4 +1,5 @@
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
+import { OFFERS_EMAIL, SITE_DOMAIN, SITE_URL } from '@/lib/site';
 
 export const ADMIN_SETTINGS_KEY = 'slutbot-admin-mock-v1';
 
@@ -77,22 +78,33 @@ export function defaultAdminSettings(): AdminMockSettings {
     },
     email: {
       fromName: 'AI SLUTBOT',
-      fromEmail: 'offers@aislutbot.com',
+      fromEmail: OFFERS_EMAIL,
       smtpHost: '',
       smtpPort: '587',
       smtpUser: '',
       smtpPassword: '',
       offerSubject: '{{name}}, extra Slutcoins this week',
       offerBody:
-        'Hey {{name}},\n\nUnlock {{plan}} and keep generating. This offer is mock-only until SMTP is connected.\n\n— AI SLUTBOT',
+        `Hey {{name}},\n\nUnlock {{plan}} and keep generating on ${SITE_DOMAIN}.\n\n${SITE_URL}\n\n— AI SLUTBOT`,
       purchaseSubject: 'Your {{plan}} pack is ready',
       purchaseBody:
-        'Hi {{name}},\n\nWe received your {{plan}} purchase ({{amount}}).\n{{desires}} Slutcoins were added to your wallet.\n\nThanks for playing.',
+        `Hi {{name}},\n\nWe received your {{plan}} purchase ({{amount}}).\n{{desires}} Slutcoins were added to your wallet.\n\nManage your account: ${SITE_URL}/account\n\nThanks for playing.\n— AI SLUTBOT (${SITE_DOMAIN})`,
       resetSubject: 'Reset your AI SLUTBOT password',
       resetBody:
-        'Hi {{name}},\n\nUse this link to restore access:\n{{resetLink}}\n\nIf you did not ask for this, ignore the email.',
+        `Hi {{name}},\n\nUse this link to restore access to your ${SITE_DOMAIN} account:\n{{resetLink}}\n\nIf you did not ask for this, ignore the email.\n\n— AI SLUTBOT`,
     },
   };
+}
+
+function normalizeContactEmail(email: string, fallback: string): string {
+  const value = (email || '').trim();
+  if (!value) return fallback;
+  const lowered = value.toLowerCase();
+  if (lowered.endsWith('@camslut.ai') || lowered.endsWith('@slutbot.ai')) {
+    const local = value.split('@')[0] || 'offers';
+    return `${local}@aislutbot.com`;
+  }
+  return value;
 }
 
 export function loadAdminSettings(): AdminMockSettings {
@@ -106,6 +118,8 @@ export function loadAdminSettings(): AdminMockSettings {
     };
     const parsedCosts: Partial<AdminMockSettings['costs']> & { videoCheap?: number; videoCurrent?: number } =
       parsed.costs || {};
+    const email = { ...base.email, ...parsed.email };
+    email.fromEmail = normalizeContactEmail(email.fromEmail, base.email.fromEmail);
     return {
       ...base,
       ...parsed,
@@ -119,7 +133,7 @@ export function loadAdminSettings(): AdminMockSettings {
       plans: parsed.plans?.length ? parsed.plans : base.plans,
       nowpayments: { ...base.nowpayments, ...parsed.nowpayments },
       telegram: { ...base.telegram, ...parsed.telegram },
-      email: { ...base.email, ...parsed.email },
+      email,
     };
   } catch {
     return base;

@@ -1,4 +1,6 @@
-export const PAYMENT_SUPPORT_EMAIL = 'support@camslut.ai';
+import { SUPPORT_EMAIL } from '@/lib/site';
+
+export const PAYMENT_SUPPORT_EMAIL = SUPPORT_EMAIL;
 
 export type PaymentTutorialStep = {
   title: string;
@@ -60,10 +62,6 @@ export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
       paragraphs: [
         'On AI SLUTBOT, choose your Slutcoin pack, open checkout, select Crypto (USDT TRC20 only), and click Pay. You will be redirected to the NOWPayments page.',
       ],
-      images: [
-        '/payments/tutorials/crypto/crypto-step-3-plan.avif',
-        '/payments/tutorials/crypto/crypto-step-3-payment.avif',
-      ],
     },
     {
       title: 'Step 4 — Complete the Payment in Your Wallet',
@@ -107,7 +105,6 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
       paragraphs: [
         'Go to the subscription page, select the Slutcoin pack you want, and click Buy now. On checkout, choose Telegram Stars and click Pay.',
       ],
-      images: ['/payments/tutorials/stars/stars-step-1-v2.avif'],
     },
     {
       title: 'Step 2 — Confirm the Telegram payment popup',

@@ -1,4 +1,5 @@
 import { getImageToVideoClientId } from '@/app/tool/clientId';
+import { capturePosthogEvent } from '@/lib/posthog';
 import type { TrackKind, TrackName } from '@/lib/trackTypes';
 
 export function trackEvent(
@@ -15,6 +16,7 @@ export function trackEvent(
     method: extra?.method,
     clientId: getImageToVideoClientId(),
   };
+  capturePosthogEvent(name, payload);
   const body = JSON.stringify(payload);
   try {
     if (navigator.sendBeacon) {

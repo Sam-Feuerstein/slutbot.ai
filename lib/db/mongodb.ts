@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 
-const options: mongoose.ConnectOptions = {
+const SHARED_EROGRAM_DB = 'erogram';
+
+const baseOptions: mongoose.ConnectOptions = {
   family: 4,
   maxPoolSize: 10,
   minPoolSize: 0,
@@ -10,6 +12,21 @@ const options: mongoose.ConnectOptions = {
   socketTimeoutMS: 20000,
   bufferCommands: false,
 };
+
+function mongoDbName(): string {
+  const dbName = process.env.MONGODB_DB?.trim() || '';
+  if (!dbName) {
+    throw new Error('MONGODB_DB is required and must be a dedicated database (not the shared Erogram DB).');
+  }
+  if (dbName === SHARED_EROGRAM_DB) {
+    throw new Error('MONGODB_DB must not be "erogram". Use a dedicated database such as "slutbot".');
+  }
+  return dbName;
+}
+
+function connectOptions(): mongoose.ConnectOptions {
+  return { ...baseOptions, dbName: mongoDbName() };
+}
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -40,7 +57,7 @@ async function connectDB() {
 
   if (!g.__mongoose.promise) {
     g.__mongoose.promise = mongoose
-      .connect(mongoUri(), options)
+      .connect(mongoUri(), connectOptions())
       .then((m) => {
         g.__mongoose.conn = m;
         return m;

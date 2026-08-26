@@ -3,8 +3,14 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { signSlutbotToken } from '@/lib/auth/slutbotAuth';
+import { setSessionCookie } from '@/lib/auth/sessionCookie';
+import { clientIp, rateLimitAllowed } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimitAllowed({ name: 'login', key: clientIp(req), windowMs: 15 * 60_000, max: 10 })) {
+    return NextResponse.json({ message: 'Too many login attempts. Try again later.' }, { status: 429 });
+  }
+
   try {
     const body = (await req.json()) as { email?: string; password?: string };
     const email = body.email?.trim().toLowerCase() || '';
@@ -34,13 +40,15 @@ export async function POST(req: NextRequest) {
     await user.save();
 
     const token = signSlutbotToken(String(user._id));
-    return NextResponse.json({
-      token,
+    const res = NextResponse.json({
       email: user.email,
       name: user.name || '',
+      avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
       desires: user.desires ?? 0,
     });
+    setSessionCookie(res, token);
+    return res;
   } catch (err) {
     console.error('Login error:', err);
     return NextResponse.json({ message: 'Server error.' }, { status: 500 });

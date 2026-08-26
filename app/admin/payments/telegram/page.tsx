@@ -55,8 +55,8 @@ export default function TelegramStarsPage() {
         <Panel>
           <h2 className="text-lg font-black">Stars pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            Live invoices charge these Star amounts. USD is Stars × ($9.99 / 660) so crypto matches the same consumer
-            value.
+            These fields are a local preview. Live Telegram invoices use catalog Stars, then the country rules on
+            Stars by country. USD is Stars × ($9.99 / 660) so crypto matches the same consumer value.
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {
@@ -96,7 +96,15 @@ export default function TelegramStarsPage() {
           </div>
         </Panel>
       </div>
-      {saved ? <p className="text-sm text-[#ffb0c8]">Preview prices saved in this browser. Live invoices use the catalog Star amounts.</p> : null}
+          {saved ? (
+            <p className="text-sm text-[#ffb0c8]">
+              Preview prices saved in this browser. Live invoices use catalog Stars, then country rules from{' '}
+              <a href="/admin/payments/stars-geo" className="underline">
+                Stars by country
+              </a>
+              .
+            </p>
+          ) : null}
     </form>
   );
 }

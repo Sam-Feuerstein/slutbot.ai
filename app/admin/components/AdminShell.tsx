@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { SITE_DOMAIN } from '@/lib/site';
+import { signOutClient } from '@/lib/auth/session';
 import BrandLogo from '../../components/BrandLogo';
 
 const NAV = [
@@ -13,6 +15,7 @@ const NAV = [
       { href: '/admin/analytics', label: 'Analytics', match: 'exact' as const },
       { href: '/admin/users', label: 'Users', match: 'prefix' as const },
       { href: '/admin/wallet', label: 'Slutcoin cost', match: 'exact' as const },
+      { href: '/admin/coupons', label: 'Coupons', match: 'exact' as const },
       { href: '/admin/prompts', label: 'Prompts', match: 'exact' as const },
     ],
   },
@@ -21,6 +24,7 @@ const NAV = [
     items: [
       { href: '/admin/payments/nowpayments', label: 'NOWPayments', match: 'exact' as const },
       { href: '/admin/payments/telegram', label: 'Telegram Stars', match: 'exact' as const },
+      { href: '/admin/payments/stars-geo', label: 'Stars by country', match: 'exact' as const },
     ],
   },
   {
@@ -36,15 +40,56 @@ function isActive(pathname: string, href: string, match: 'exact' | 'prefix') {
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const login = pathname === '/admin/login';
+  const [authorized, setAuthorized] = useState(login);
+
+  useEffect(() => {
+    if (login) {
+      setAuthorized(true);
+      return;
+    }
+
+    let cancelled = false;
+    setAuthorized(false);
+    void fetch('/api/admin/me', { credentials: 'same-origin' })
+      .then((res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          const next = encodeURIComponent(pathname || '/admin');
+          router.replace(`/admin/login?next=${next}`);
+          return;
+        }
+        setAuthorized(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          const next = encodeURIComponent(pathname || '/admin');
+          router.replace(`/admin/login?next=${next}`);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [login, pathname, router]);
 
   async function logout() {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    signOutClient();
     window.location.href = '/admin/login';
   }
 
   if (login) {
     return <div className="min-h-screen bg-[#070406] text-white">{children}</div>;
+  }
+
+  if (!authorized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#070406] text-sm text-white/50">
+        Checking admin session…
+      </div>
+    );
   }
 
   return (

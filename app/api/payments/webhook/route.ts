@@ -60,9 +60,12 @@ export async function POST(req: NextRequest) {
         await answerPreCheckoutQuery(query.id, false, 'Invalid payment data');
         return NextResponse.json({ ok: true });
       }
-      if (typeof query.total_amount === 'number' && query.total_amount !== plan.starsAmount) {
-        await answerPreCheckoutQuery(query.id, false, 'This pack price changed. Open checkout again.');
-        return NextResponse.json({ ok: true });
+      if (typeof query.total_amount === 'number') {
+        const expected = payload.stars ?? plan.starsAmount;
+        if (query.total_amount !== expected) {
+          await answerPreCheckoutQuery(query.id, false, 'This pack price changed. Open checkout again.');
+          return NextResponse.json({ ok: true });
+        }
       }
 
       await answerPreCheckoutQuery(query.id, true);

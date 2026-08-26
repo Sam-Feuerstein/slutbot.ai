@@ -1,4 +1,4 @@
-import { PREMIUM_PLANS, type PremiumPlan } from '@/lib/premiumPlans';
+import { CRYPTO_DISCOUNT_PERCENT, cryptoUsdPrice, PREMIUM_PLANS, type PremiumPlan } from '@/lib/premiumPlans';
 
 export type CheckoutPlan = {
   id: string;
@@ -35,6 +35,10 @@ function toCheckoutPlan(plan: PremiumPlan): CheckoutPlan {
   };
 }
 
+export function cryptoUsdForPlan(plan: CheckoutPlan, discountApplied = false): number {
+  return discountApplied ? cryptoUsdPrice(plan.usdPrice) : plan.usdPrice;
+}
+
 export function isClientId(value: string): boolean {
-  return /^[a-zA-Z0-9._-]{8,80}$/.test(value);
+  return /^[a-zA-Z0-9_-]{8,128}$/.test(value.trim());
 }

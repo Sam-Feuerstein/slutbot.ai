@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
 import { buildPageMetadata } from '@/lib/seo';
@@ -21,5 +22,9 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
 
   const initialMethod: CheckoutMethod = params.method === 'crypto' ? 'crypto' : 'stars';
 
-  return <CheckoutClient plan={plan} initialMethod={initialMethod} />;
+  return (
+    <Suspense fallback={<div className="min-h-dvh bg-white" />}>
+      <CheckoutClient plan={plan} initialMethod={initialMethod} />
+    </Suspense>
+  );
 }

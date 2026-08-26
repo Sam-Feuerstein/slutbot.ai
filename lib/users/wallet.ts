@@ -51,26 +51,31 @@ export async function adjustUserDesires(userId: string, delta: number) {
   return user.desires;
 }
 
+async function syncWalletBalance(clientId: string | undefined, userId: unknown, desires: number) {
+  if (!clientId) return;
+  await SlutbotWallet.findOneAndUpdate(
+    { clientId },
+    { $set: { desires, userId } },
+    { upsert: true },
+  );
+}
+
 export async function spendUserDesires(userId: string, amount: number): Promise<{ ok: boolean; desires: number }> {
   await connectDB();
   const cost = Math.round(amount);
   if (cost <= 0) return { ok: false, desires: await getUserDesires(userId) };
 
-  const user = await SlutbotUser.findById(userId);
-  if (!user || user.banned) return { ok: false, desires: 0 };
-  if ((user.desires ?? 0) < cost) return { ok: false, desires: user.desires ?? 0 };
-
-  user.desires = (user.desires ?? 0) - cost;
-  await user.save();
-
-  if (user.clientId) {
-    await SlutbotWallet.findOneAndUpdate(
-      { clientId: user.clientId },
-      { $set: { desires: user.desires, userId: user._id } },
-      { upsert: true },
-    );
+  const user = await SlutbotUser.findOneAndUpdate(
+    { _id: userId, banned: { $ne: true }, desires: { $gte: cost } },
+    { $inc: { desires: -cost } },
+    { new: true },
+  );
+  if (!user) {
+    const current = (await SlutbotUser.findById(userId).select('desires').lean()) as { desires?: number } | null;
+    return { ok: false, desires: current?.desires ?? 0 };
   }
 
+  await syncWalletBalance(user.clientId, user._id, user.desires);
   return { ok: true, desires: user.desires };
 }
 

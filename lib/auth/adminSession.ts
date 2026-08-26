@@ -1,10 +1,12 @@
 import { NextRequest } from 'next/server';
 
+import { requireJwtSecret } from '@/lib/auth/secrets';
+
 export const ADMIN_COOKIE = 'slutbot-admin';
 const MAX_AGE_SEC = 60 * 60 * 12;
 
 function secret() {
-  return process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'admin-session';
+  return requireJwtSecret();
 }
 
 function toBase64Url(bytes: Uint8Array) {

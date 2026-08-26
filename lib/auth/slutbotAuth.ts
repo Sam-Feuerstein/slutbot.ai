@@ -3,33 +3,32 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+import { requireJwtSecret } from '@/lib/auth/secrets';
+import { sessionTokenFromRequest } from '@/lib/auth/sessionCookie';
 
 export type SlutbotAuthUser = {
   id: string;
   email: string;
   name: string;
+  avatarUrl: string;
   clientId: string;
   desires: number;
   banned: boolean;
 };
 
 export function signSlutbotToken(userId: string) {
-  return jwt.sign({ id: userId, app: 'slutbot' }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: userId, app: 'slutbot' }, requireJwtSecret(), { expiresIn: '30d' });
 }
 
 export function authenticateSlutbotUser(req: NextRequest): Promise<SlutbotAuthUser | null> {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) return Promise.resolve(null);
-  return authenticateSlutbotToken(authHeader.slice(7));
+  return authenticateSlutbotToken(sessionTokenFromRequest(req));
 }
 
 export async function authenticateSlutbotToken(token?: string | null): Promise<SlutbotAuthUser | null> {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id?: string; app?: string };
+    const decoded = jwt.verify(token, requireJwtSecret()) as { id?: string; app?: string };
     if (!decoded.id || decoded.app !== 'slutbot') return null;
 
     await connectDB();
@@ -37,6 +36,7 @@ export async function authenticateSlutbotToken(token?: string | null): Promise<S
       _id: unknown;
       email: string;
       name?: string;
+      avatarUrl?: string;
       clientId: string;
       desires?: number;
       banned?: boolean;
@@ -47,6 +47,7 @@ export async function authenticateSlutbotToken(token?: string | null): Promise<S
       id: String(user._id),
       email: user.email,
       name: user.name || '',
+      avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
       desires: user.desires ?? 0,
       banned: !!user.banned,

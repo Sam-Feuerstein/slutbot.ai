@@ -9,6 +9,7 @@ type InvoicePayload = {
   source: 'slutbot';
   clientId: string;
   plan: string;
+  stars?: number;
 };
 
 export function parseSlutbotPayload(raw: string): InvoicePayload | null {
@@ -16,7 +17,13 @@ export function parseSlutbotPayload(raw: string): InvoicePayload | null {
     const parsed = JSON.parse(raw) as Partial<InvoicePayload>;
     if (parsed.source !== 'slutbot') return null;
     if (!parsed.clientId || !parsed.plan) return null;
-    return { source: 'slutbot', clientId: parsed.clientId, plan: parsed.plan };
+    const stars = Number(parsed.stars);
+    return {
+      source: 'slutbot',
+      clientId: parsed.clientId,
+      plan: parsed.plan,
+      stars: Number.isFinite(stars) && stars >= 1 ? Math.round(stars) : undefined,
+    };
   } catch {
     return null;
   }
@@ -56,6 +63,7 @@ export async function createStarsInvoiceLink(input: {
         source: 'slutbot',
         clientId: input.clientId,
         plan: input.planId,
+        stars: input.starsAmount,
       } satisfies InvoicePayload),
       currency: 'XTR',
       prices: [{ label: input.label, amount: input.starsAmount }],

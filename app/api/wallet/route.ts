@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
-import { getWalletDesires } from '@/lib/users/wallet';
-import { isClientId } from '@/lib/payments/catalog';
+import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
 
 export async function GET(req: NextRequest) {
   const user = await authenticateSlutbotUser(req);
-  if (user) {
-    return NextResponse.json({ desires: user.desires, clientId: user.clientId, source: 'user' });
-  }
+  if (!user) return NextResponse.json({ message: 'Sign in required.' }, { status: 401 });
 
-  const clientId = req.nextUrl.searchParams.get('clientId')?.trim() || '';
-  if (!isClientId(clientId)) {
-    return NextResponse.json({ desires: 0 });
-  }
-  try {
-    const desires = await getWalletDesires(clientId);
-    return NextResponse.json({ desires, clientId, source: 'guest' });
-  } catch {
-    return NextResponse.json({ desires: 0 });
-  }
+  const desires = isAdminAppUserEmail(user.email) ? ADMIN_INFINITE_DESIRES : user.desires;
+  return NextResponse.json({
+    desires,
+    clientId: user.clientId,
+    source: 'user',
+    ...(isAdminAppUserEmail(user.email) ? { infinite: true, isAdmin: true } : {}),
+  });
 }

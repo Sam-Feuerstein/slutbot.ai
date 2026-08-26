@@ -1,5 +1,6 @@
 import type { HomePreset } from '@/lib/homePresets';
 
+/** R2 folder prefix for preset assets (CDN path only — not the public site domain). */
 export const PRESET_MEDIA_PREFIX = 'slutbot.ai';
 
 /** Public R2 host for preset posters/videos. Env wins; fallback keeps production working if the Vercel build missed NEXT_PUBLIC_*. */

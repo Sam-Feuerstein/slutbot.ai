@@ -4,8 +4,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { getAppUrl } from '@/lib/site';
 import { newClientId } from '@/lib/auth/slutbotAuth';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+import { requireJwtSecret } from '@/lib/auth/secrets';
 
 type GoogleOAuthConfig = {
   clientId: string;
@@ -44,7 +43,7 @@ export function buildGoogleAuthUrl(redirect: string, origin?: string) {
   const { clientId, redirectUri } = getGoogleOAuthConfig(origin);
   const state = jwt.sign(
     { redirect, nonce: randomBytes(16).toString('hex'), purpose: 'google-oauth' },
-    JWT_SECRET,
+    requireJwtSecret(),
     { expiresIn: '10m' },
   );
 
@@ -65,7 +64,7 @@ export function parseGoogleOAuthState(state: string | null) {
   if (!state) return null;
 
   try {
-    const decoded = jwt.verify(state, JWT_SECRET) as {
+    const decoded = jwt.verify(state, requireJwtSecret()) as {
       redirect?: string;
       purpose?: string;
     };
@@ -131,6 +130,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     }
     user.lastLoginAt = new Date();
     if (!user.name && profile.name) user.name = profile.name;
+    if (profile.picture) user.avatarUrl = profile.picture;
     await user.save();
     return user;
   }
@@ -143,6 +143,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     user.googleId = profile.id;
     user.lastLoginAt = new Date();
     if (!user.name && profile.name) user.name = profile.name;
+    if (profile.picture) user.avatarUrl = profile.picture;
     await user.save();
     return user;
   }
@@ -151,6 +152,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     email: profile.email,
     name: profile.name,
     googleId: profile.id,
+    avatarUrl: profile.picture || '',
     clientId: newClientId(),
     desires: 0,
     banned: false,

@@ -3,7 +3,7 @@ import { SPICYBOX_PRESETS } from './spicyboxPresets';
 export type HomePreset = {
   id: string;
   title: string;
-  /** Maps to R2 assets: ai-slut-video-generation{N}.* under slutbot.ai/ */
+  /** Maps to R2 assets: ai-slut-video-generation{N}.* under the CDN folder prefix (not aislutbot.com). */
   generation: number;
   remixes: string;
   verified?: boolean;

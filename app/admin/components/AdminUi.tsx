@@ -81,11 +81,18 @@ export function MockNote() {
   );
 }
 
-export function SaveButton({ children = 'Save on this device' }: { children?: ReactNode }) {
+export function SaveButton({
+  children = 'Save on this device',
+  disabled = false,
+}: {
+  children?: ReactNode;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="submit"
-      className="rounded-full bg-[#ff2d78] px-6 py-2.5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(255,45,120,0.35)] transition hover:bg-[#ff1a6b]"
+      disabled={disabled}
+      className="rounded-full bg-[#ff2d78] px-6 py-2.5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(255,45,120,0.35)] transition hover:bg-[#ff1a6b] disabled:opacity-50"
     >
       {children}
     </button>
@@ -118,9 +125,13 @@ export function usePaymentEnvStatus() {
   const [status, setStatus] = useState({ nowpayments: false, telegram: false, loaded: false });
 
   useEffect(() => {
-    fetch('/api/admin/payment-status')
-      .then((res) => res.json())
-      .then((data: { nowpayments?: boolean; telegram?: boolean }) => {
+    fetch('/api/admin/payment-status', { credentials: 'same-origin' })
+      .then(async (res) => {
+        if (!res.ok) {
+          setStatus((s) => ({ ...s, loaded: true }));
+          return;
+        }
+        const data = (await res.json()) as { nowpayments?: boolean; telegram?: boolean };
         setStatus({
           nowpayments: Boolean(data.nowpayments),
           telegram: Boolean(data.telegram),

@@ -1,3 +1,5 @@
+import { getStoredAuthToken } from '@/lib/auth/session';
+
 const STORAGE_KEY = 'image-to-video-client-id';
 const USER_CLIENT_KEY = 'slutbot-user-client-id';
 
@@ -17,6 +19,5 @@ export function getImageToVideoClientId(): string {
 }
 
 export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  return getStoredAuthToken();
 }

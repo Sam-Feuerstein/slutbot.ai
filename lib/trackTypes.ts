@@ -6,6 +6,7 @@ export const TRACK_NAMES = [
   'checkout_method',
   'checkout_pay',
   'checkout_tutorial',
+  'checkout_coupon',
   'checkout_name',
 ] as const;
 

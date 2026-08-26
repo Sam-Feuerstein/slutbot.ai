@@ -2,6 +2,10 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser, SlutbotWallet } from '@/lib/models';
 import { getCheckoutPlan } from '@/lib/payments/catalog';
 
+function isDupKey(err: unknown) {
+  return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: number }).code === 11000);
+}
+
 async function creditClientWallet(clientId: string, desires: number, chargeId: string, userId?: string | null) {
   const user = await SlutbotUser.findOne({ clientId });
   if (user) {
@@ -17,6 +21,8 @@ async function creditClientWallet(clientId: string, desires: number, chargeId: s
     },
     { upsert: true, new: true },
   );
+
+  return user;
 }
 
 export async function creditDesires(input: {
@@ -34,31 +40,54 @@ export async function creditDesires(input: {
 
   await connectDB();
 
-  const existing = await SlutbotPayment.findOne({
+  const fields = {
+    clientId: input.clientId,
+    planId: input.planId,
+    provider: input.provider,
+    status: 'paid' as const,
+    usdAmount: input.usdAmount,
+    starsAmount: input.starsAmount ?? 0,
+    desires: plan.desires,
+    orderId: input.orderId ?? '',
     chargeId: input.chargeId,
-    status: 'paid',
-  }).lean();
-  if (existing) return { ok: true, already: true };
+    walletCredited: false,
+  };
 
-  await creditClientWallet(input.clientId, plan.desires, input.chargeId);
+  try {
+    await SlutbotPayment.create(fields);
+  } catch (err) {
+    if (!isDupKey(err)) throw err;
+  }
 
-  await SlutbotPayment.findOneAndUpdate(
-    { chargeId: input.chargeId },
-    {
-      $set: {
-        clientId: input.clientId,
-        planId: input.planId,
-        provider: input.provider,
-        status: 'paid',
-        usdAmount: input.usdAmount,
-        starsAmount: input.starsAmount ?? 0,
-        desires: plan.desires,
-        orderId: input.orderId ?? '',
-        chargeId: input.chargeId,
-      },
-    },
-    { upsert: true, new: true },
+  const claimed = await SlutbotPayment.findOneAndUpdate(
+    { chargeId: input.chargeId, walletCredited: { $ne: true } },
+    { $set: { walletCredited: true, status: 'paid' } },
   );
+  if (!claimed) return { ok: true, already: true };
+
+  try {
+    const linkedUser = await creditClientWallet(input.clientId, plan.desires, input.chargeId);
+    if (linkedUser) {
+      await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { userId: linkedUser._id } });
+    }
+  } catch (err) {
+    await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { walletCredited: false } });
+    throw err;
+  }
+
+  try {
+    const { attachPendingCouponToPaidCharge } = await import('@/lib/coupons/store');
+    await attachPendingCouponToPaidCharge({
+      clientId: input.clientId,
+      planId: input.planId,
+      provider: input.provider,
+      chargeId: input.chargeId,
+      orderId: input.orderId,
+      starsAmount: input.starsAmount,
+    });
+  } catch (err) {
+    console.error('Could not record checkout coupon:', err);
+  }
 
   return { ok: true };
 }

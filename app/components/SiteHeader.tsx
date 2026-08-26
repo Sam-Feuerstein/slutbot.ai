@@ -1,21 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ChevronRight, Menu, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import Breadcrumbs from './Breadcrumbs';
+import UserAvatar from './UserAvatar';
+import {
+  AUTH_CHANGED_EVENT,
+  displayName,
+  fetchUserProfile,
+  readCachedUserProfile,
+  type UserProfile,
+} from '@/lib/auth/profile';
+import { signOutClient } from '@/lib/auth/session';
 import {
   CURRENCY_NAME,
+  DESIRE_COSTS,
   DESIRES_UPDATED_EVENT,
   formatDesireBalance,
-  getDesires,
   getAuthToken,
+  getDesires,
   openPremiumPlans,
   refreshDesiresFromServer,
+  remainingGenerationsCopy,
 } from '@/lib/desires';
-import { GENERATOR_PATH, loginHref } from '@/lib/site';
+import { GENERATOR_PATH, loginHref, ACCOUNT_PATH } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -40,27 +51,51 @@ const MENU_LINKS = [
   { href: '/', label: 'Explore' },
   { href: GENERATOR_PATH, label: 'AI porn generator' },
   { href: '/archive', label: 'My Collection' },
+  { href: ACCOUNT_PATH, label: 'Account', signedInOnly: true },
 ];
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [desires, setDesires] = useState(0);
   const [signedIn, setSignedIn] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  const refreshAuth = useCallback(() => {
+    const token = getAuthToken();
+    setSignedIn(Boolean(token));
+    setDesires(getDesires());
+
+    if (!token) {
+      setProfile(null);
+      setDesires(0);
+      return;
+    }
+
+    const cached = readCachedUserProfile();
+    if (cached) setProfile(cached);
+
+    void fetchUserProfile().then((fresh) => {
+      if (fresh) setProfile(fresh);
+    });
+  }, []);
 
   useEffect(() => {
-    const load = () => {
-      setDesires(getDesires());
-      setSignedIn(Boolean(getAuthToken()));
-    };
-    load();
+    refreshAuth();
     void refreshDesiresFromServer().then((amount) => {
       setDesires(amount);
-      setSignedIn(Boolean(getAuthToken()));
+      refreshAuth();
     });
-    window.addEventListener(DESIRES_UPDATED_EVENT, load);
-    return () => window.removeEventListener(DESIRES_UPDATED_EVENT, load);
-  }, []);
+    window.addEventListener(DESIRES_UPDATED_EVENT, refreshAuth);
+    window.addEventListener(AUTH_CHANGED_EVENT, refreshAuth);
+    return () => {
+      window.removeEventListener(DESIRES_UPDATED_EVENT, refreshAuth);
+      window.removeEventListener(AUTH_CHANGED_EVENT, refreshAuth);
+    };
+  }, [refreshAuth]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
@@ -69,9 +104,43 @@ export default function SiteHeader() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!accountOpen) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setAccountOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAccountOpen(false);
+    }
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [accountOpen]);
+
+  useEffect(() => {
+    setAccountOpen(false);
+  }, [pathname]);
+
+  const userLabel = profile ? displayName(profile) : 'Account';
+
+  function logOut() {
+    setAccountOpen(false);
+    setMenuOpen(false);
+    signOutClient();
+    router.push('/');
+  }
+
   return (
     <>
-      <header className="relative sticky top-0 z-50 overflow-hidden border-b border-[#ff2d78]/25 bg-[#4a122c] pt-[var(--safe-top)] md:bg-[#4a122c]/95 md:backdrop-blur-md">
+      <header className="relative sticky top-0 z-50 border-b border-[#ff2d78]/25 bg-[#4a122c] pt-[var(--safe-top)] md:bg-[#4a122c]/95 md:backdrop-blur-md">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 w-[min(52%,28rem)] bg-[linear-gradient(90deg,#000_0%,#000_38%,transparent_100%)]"
@@ -111,30 +180,73 @@ export default function SiteHeader() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-            <Link
-              href={signedIn ? GENERATOR_PATH : loginHref(pathname)}
-              className="hidden h-9 items-center rounded-full border border-white/15 bg-white/[0.06] px-3 text-xs font-bold text-white/80 hover:bg-white/10 sm:inline-flex"
-            >
-              {signedIn ? 'Account' : 'Sign in'}
-            </Link>
+            {signedIn ? (
+              <div ref={accountMenuRef} className="relative z-[60]">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  aria-label={`${userLabel} account menu`}
+                  title={userLabel}
+                  onClick={() => setAccountOpen((open) => !open)}
+                  className="inline-flex h-10 min-h-10 max-w-[11rem] items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] py-1 pl-1 pr-2 text-white transition-colors hover:bg-white/10 sm:h-9 sm:max-w-[13rem] sm:pr-2.5"
+                >
+                  <UserAvatar
+                    name={profile?.name || ''}
+                    email={profile?.email || ''}
+                    avatarUrl={profile?.avatarUrl}
+                    size={30}
+                  />
+                  <span className="hidden min-w-0 truncate text-xs font-bold text-white/90 sm:inline">
+                    {userLabel}
+                  </span>
+                  <ChevronDown className={`hidden h-3.5 w-3.5 shrink-0 text-white/55 sm:block ${accountOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {accountOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#141414] py-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
+                  >
+                    <p className="truncate px-3.5 pb-1.5 pt-1 text-[11px] font-semibold text-white/45">
+                      {userLabel}
+                    </p>
+                    <Link
+                      href={ACCOUNT_PATH}
+                      role="menuitem"
+                      onClick={() => setAccountOpen(false)}
+                      className="block px-3.5 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/[0.06]"
+                    >
+                      Account
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={logOut}
+                      className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-white/90 hover:bg-white/[0.06]"
+                    >
+                      <LogOut className="h-3.5 w-3.5 text-white/50" />
+                      Log out
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <Link
+                href={loginHref(pathname)}
+                className="hidden h-9 items-center rounded-full border border-white/15 bg-white/[0.06] px-3 text-xs font-bold text-white/80 hover:bg-white/10 sm:inline-flex"
+              >
+                Sign in
+              </Link>
+            )}
 
             <button
               type="button"
-              onClick={openPremiumPlans}
-              title={CURRENCY_NAME}
-              className="inline-flex h-10 min-h-10 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:h-9 sm:gap-2 sm:px-3"
+              aria-label={`Open menu, ${formatDesireBalance(desires)} ${CURRENCY_NAME}`}
+              onClick={() => setMenuOpen(true)}
+              className="inline-flex h-10 min-h-10 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-2.5 text-white transition-colors hover:bg-white/10 sm:h-9 sm:gap-2 sm:px-3"
             >
               <SparkleIcon className="h-4 w-4 text-[#ff2d78] sm:h-[18px] sm:w-[18px]" />
-              <span className="tabular-nums">{formatDesireBalance(desires)}</span>
-              <ChevronRight className="hidden h-4 w-4 text-white/70 sm:block" />
-            </button>
-
-            <button
-              type="button"
-              aria-label="Open menu"
-              onClick={() => setMenuOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white transition-colors hover:bg-white/10 sm:h-9 sm:w-9"
-            >
+              <span className="text-sm font-semibold tabular-nums">{formatDesireBalance(desires)}</span>
               <Menu className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
             </button>
           </div>
@@ -163,8 +275,48 @@ export default function SiteHeader() {
               </button>
             </div>
 
+            {signedIn && profile ? (
+              <Link
+                href={ACCOUNT_PATH}
+                onClick={() => setMenuOpen(false)}
+                className="mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.06]"
+              >
+                <UserAvatar
+                  name={profile.name}
+                  email={profile.email}
+                  avatarUrl={profile.avatarUrl}
+                  size={40}
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-white">{displayName(profile)}</p>
+                  <p className="truncate text-xs text-white/50">{profile.email}</p>
+                </div>
+              </Link>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                openPremiumPlans();
+              }}
+              className="mb-4 w-full rounded-xl border border-[#ff2d78]/30 bg-[#ff2d78]/10 px-4 py-3.5 text-left transition-colors hover:bg-[#ff2d78]/15"
+            >
+              <p className="flex items-center gap-2 text-sm font-bold text-white">
+                <SparkleIcon className="h-4 w-4 text-[#ff2d78]" />
+                <span className="tabular-nums">{desires.toLocaleString('en-US')}</span>
+                <span>{CURRENCY_NAME}</span>
+              </p>
+              <p className="mt-1 text-xs leading-snug text-white/60">
+                {desires < DESIRE_COSTS.image
+                  ? 'Buy more to generate images or videos.'
+                  : `Enough for ${remainingGenerationsCopy(desires)}`}
+              </p>
+              <p className="mt-2 text-xs font-semibold text-[#ff9dbe]">Get more</p>
+            </button>
+
             <nav className="flex flex-col gap-1">
-              {MENU_LINKS.map(({ href, label }) => (
+              {MENU_LINKS.filter((link) => !link.signedInOnly || signedIn).map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
@@ -174,13 +326,24 @@ export default function SiteHeader() {
                   {label}
                 </Link>
               ))}
-              <Link
-                href={signedIn ? GENERATOR_PATH : loginHref(pathname)}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-xl px-4 py-3.5 text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
-              >
-                {signedIn ? 'Account' : 'Sign in'}
-              </Link>
+              {!signedIn ? (
+                <Link
+                  href={loginHref(pathname)}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3.5 text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
+                >
+                  Sign in
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={logOut}
+                  className="flex items-center gap-2 rounded-xl px-4 py-3.5 text-left text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
+                >
+                  <LogOut className="h-4 w-4 text-white/50" />
+                  Log out
+                </button>
+              )}
             </nav>
 
             <div className="mt-auto space-y-2 border-t border-white/10 pt-5">

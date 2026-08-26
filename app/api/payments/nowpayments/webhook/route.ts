@@ -43,13 +43,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Unknown plan' }, { status: 400 });
   }
 
+  const priceAmount = Number(body.price_amount);
+  const usdAmount =
+    Number.isFinite(priceAmount) && priceAmount > 0 ? priceAmount : plan.usdPrice;
+
   const result = await creditDesires({
     clientId,
     planId,
     provider: 'nowpayments',
     chargeId: paymentId,
     orderId,
-    usdAmount: plan.usdPrice,
+    usdAmount,
   });
 
   if (!result.ok) {

@@ -2,6 +2,9 @@
 
 import { FormEvent, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { storeAuthSession } from '@/lib/auth/session';
+import { cacheUserProfile } from '@/lib/auth/profile';
+import { setDesires } from '@/lib/desires';
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -18,13 +21,29 @@ function AdminLoginForm() {
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = (await res.json()) as { message?: string };
+      const data = (await res.json()) as {
+        message?: string;
+        clientId?: string;
+        email?: string;
+        name?: string;
+        desires?: number;
+      };
       if (!res.ok) {
         setError(data.message || 'Login failed.');
         return;
+      }
+      if (data.clientId) {
+        storeAuthSession({ clientId: data.clientId });
+        cacheUserProfile({
+          email: data.email || '',
+          name: data.name || 'Admin',
+          avatarUrl: '',
+        });
+        if (typeof data.desires === 'number') setDesires(data.desires);
       }
       router.replace(search.get('next') || '/admin');
       router.refresh();

@@ -1,13 +1,26 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'erogramimages';
+const SHARED_EROGRAM_BUCKET = 'erogramimages';
+
+export function r2UploadBucket(): string {
+  const name = (process.env.R2_UPLOAD_BUCKET || process.env.R2_BUCKET_NAME || '').trim();
+  if (!name) {
+    throw new Error('R2_UPLOAD_BUCKET or R2_BUCKET_NAME is required.');
+  }
+  if (name === SHARED_EROGRAM_BUCKET) {
+    throw new Error('User uploads must not use the shared Erogram bucket. Set R2_UPLOAD_BUCKET.');
+  }
+  return name;
+}
 
 export function isR2Configured(): boolean {
-  return !!(
-    process.env.R2_ACCOUNT_ID &&
-    process.env.R2_ACCESS_KEY_ID &&
-    process.env.R2_SECRET_ACCESS_KEY &&
-    process.env.R2_PUBLIC_URL
+  try {
+    r2UploadBucket();
+  } catch {
+    return false;
+  }
+  return Boolean(
+    process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY,
   );
 }
 
@@ -23,15 +36,25 @@ function getR2Client() {
 }
 
 export async function uploadToR2(buffer: Buffer, key: string, contentType: string): Promise<string> {
-  const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
   const client = getR2Client();
+  // R2 rejects S3 canned ACLs. Privacy is a private bucket + HMAC media proxy (no public object URLs).
   await client.send(
     new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: r2UploadBucket(),
       Key: key,
       Body: buffer,
       ContentType: contentType,
     }),
   );
-  return `${R2_PUBLIC_URL}/${key}`;
+  return key;
+}
+
+export async function getR2Object(key: string) {
+  const client = getR2Client();
+  return client.send(
+    new GetObjectCommand({
+      Bucket: r2UploadBucket(),
+      Key: key,
+    }),
+  );
 }

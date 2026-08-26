@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotToken } from '@/lib/auth/slutbotAuth';
+import { setSessionCookie } from '@/lib/auth/sessionCookie';
 
 const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
 
@@ -24,12 +25,13 @@ export async function GET(req: NextRequest) {
     }
 
     const response = NextResponse.json({
-      token,
       email: user.email,
       name: user.name || '',
+      avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
       desires: user.desires ?? 0,
     });
+    setSessionCookie(response, token);
     response.cookies.set(OAUTH_LOGIN_COOKIE, '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

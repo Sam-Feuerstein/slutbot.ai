@@ -12,7 +12,6 @@ import {
   removeLocalCollectionItem,
 } from '@/lib/collectionLocal';
 import type { AiToolGenerationRecord } from '@/lib/imageToVideo/types';
-import { getAuthToken, getImageToVideoClientId } from '../tool/clientId';
 import { GENERATOR_PATH } from '@/lib/site';
 
 function formatWhen(iso: string) {
@@ -34,7 +33,7 @@ export default function ArchiveClient() {
       setLoading(true);
       setError('');
       const local = readLocalCollection();
-      const result = await listAiToolGenerations(getImageToVideoClientId(), getAuthToken());
+      const result = await listAiToolGenerations();
       if (cancelled) return;
       if (result.error && !result.items.length && !local.length) setError(result.error);
       setItems(mergeCollection(result.items, local));
@@ -47,7 +46,7 @@ export default function ArchiveClient() {
 
   const onDelete = async (item: AiToolGenerationRecord) => {
     if (!item.id.startsWith('local-')) {
-      await deleteAiToolGeneration(item.id, getImageToVideoClientId(), getAuthToken());
+      await deleteAiToolGeneration(item.id);
     }
     removeLocalCollectionItem(item.id, item.outputUrl);
     setItems((current) => current.filter((entry) => entry.id !== item.id && entry.outputUrl !== item.outputUrl));

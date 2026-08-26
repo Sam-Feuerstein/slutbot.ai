@@ -1,4 +1,12 @@
 import type { VideoModel } from '@/lib/imageToVideo/types';
+import { getStoredAuthToken } from '@/lib/auth/session';
+import { DESIRE_COSTS, getGenerationDesireCost, type VideoQuality } from '@/lib/generation/costs';
+import { checkoutHref } from '@/lib/site';
+
+export { DESIRE_COSTS, getGenerationDesireCost };
+export type { VideoQuality };
+
+export type VideoQualityTier = 'basic' | 'better' | 'better720' | 'better1080';
 
 const STORAGE_KEY = 'slutbot-desires';
 const USER_CLIENT_KEY = 'slutbot-user-client-id';
@@ -11,16 +19,6 @@ export const CURRENCY_NAME_SINGULAR = 'Slutcoin';
 export const VIDEO_DURATION_SECONDS = 5;
 
 /** Pack video counts use 480 Normal (8 Slutcoins). Image is 4 Slutcoins. */
-export const DESIRE_COSTS = {
-  image: 4,
-  videoBasic: 8,
-  videoBetter: 8,
-  videoBetter720: 12,
-  videoBetter1080: 16,
-} as const;
-
-export type VideoQualityTier = 'basic' | 'better' | 'better720' | 'better1080';
-export type VideoQuality = '480p' | '720p' | '1080p';
 
 export const VIDEO_QUALITY_TIERS: {
   id: VideoQualityTier;
@@ -73,14 +71,19 @@ export function hasEnoughDesires(amount: number): boolean {
   return getDesires() >= amount;
 }
 
-export function getGenerationDesireCost(
-  mode: 'image' | 'video',
-  videoModel: VideoModel = 'current',
-  quality: VideoQuality = '480p',
-): number {
-  if (mode === 'image') return DESIRE_COSTS.image;
-  const tier = VIDEO_QUALITY_TIERS.find((row) => row.id === videoTierFromSettings(videoModel, quality));
-  return tier?.cost ?? DESIRE_COSTS.videoBetter;
+export function remainingGenerations(amount: number): { images: number; videos: number } {
+  const coins = Math.max(0, Math.floor(amount));
+  return {
+    images: Math.floor(coins / DESIRE_COSTS.image),
+    videos: Math.floor(coins / DESIRE_COSTS.videoBetter),
+  };
+}
+
+export function remainingGenerationsCopy(amount: number): string {
+  const { images, videos } = remainingGenerations(amount);
+  const imageWord = images === 1 ? 'image' : 'images';
+  const videoWord = videos === 1 ? 'video' : 'videos';
+  return `${images.toLocaleString('en-US')} ${imageWord} or ${videos.toLocaleString('en-US')} ${videoWord}`;
 }
 
 export function formatDesireBalance(amount: number): string {
@@ -88,6 +91,7 @@ export function formatDesireBalance(amount: number): string {
 }
 
 export function formatSlutcoinBalance(amount: number): string {
+  if (amount >= 1_000_000) return '∞';
   if (amount >= 10000) return `${Math.round(amount / 1000)}K`;
   if (amount >= 1000) {
     const value = amount / 1000;
@@ -96,9 +100,16 @@ export function formatSlutcoinBalance(amount: number): string {
   return String(amount);
 }
 
-export function openPremiumPlans() {
+export function openPremiumPlans(reason?: string) {
   if (typeof window === 'undefined') return;
-  window.location.assign('/checkout?plan=flirt');
+  window.location.assign(checkoutHref({ plan: 'flirt', reason }));
+}
+
+export function openCheckoutInsufficient(needed: number, have: number) {
+  const short = Math.max(0, needed - have);
+  openPremiumPlans(
+    `You need ${short} more ${CURRENCY_NAME} (${have.toLocaleString('en-US')} available, ${needed.toLocaleString('en-US')} required).`,
+  );
 }
 
 export function notifyDesiresUpdated() {
@@ -107,8 +118,7 @@ export function notifyDesiresUpdated() {
 }
 
 export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  return getStoredAuthToken();
 }
 
 export function getWalletClientId(): string {
@@ -116,17 +126,20 @@ export function getWalletClientId(): string {
   return localStorage.getItem(USER_CLIENT_KEY) || '';
 }
 
-export async function refreshDesiresFromServer() {
+export async function refreshDesiresFromServer(_clientIdOverride?: string) {
   if (typeof window === 'undefined') return getDesires();
-  const token = getAuthToken();
+  if (!getAuthToken()) {
+    if (getDesires() !== 0) setDesires(0);
+    localStorage.removeItem('slutbot-desires-server');
+    return 0;
+  }
   try {
-    const headers: HeadersInit = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const clientId = getWalletClientId();
-    const url = clientId
-      ? `/api/wallet?clientId=${encodeURIComponent(clientId)}`
-      : '/api/wallet';
-    const res = await fetch(url, { headers });
+    const res = await fetch('/api/wallet', { credentials: 'include' });
+    if (res.status === 401) {
+      setDesires(0);
+      localStorage.removeItem('slutbot-desires-server');
+      return 0;
+    }
     const data = (await res.json()) as { desires?: number; clientId?: string };
     const server = Number(data.desires);
     if (Number.isFinite(server) && server >= 0) {
@@ -142,27 +155,6 @@ export async function refreshDesiresFromServer() {
   return getDesires();
 }
 
-export async function syncPurchasedDesires(_clientId?: string) {
-  return refreshDesiresFromServer();
-}
-
-export async function spendDesiresServer(amount: number, mode: 'image' | 'video'): Promise<boolean> {
-  const token = getAuthToken();
-  if (!token) return false;
-  try {
-    const res = await fetch('/api/wallet/spend', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ amount, mode }),
-    });
-    const data = (await res.json()) as { desires?: number };
-    if (!res.ok) return false;
-    if (typeof data.desires === 'number') setDesires(data.desires);
-    return true;
-  } catch {
-    return false;
-  }
+export async function syncPurchasedDesires(clientId?: string) {
+  return refreshDesiresFromServer(clientId);
 }

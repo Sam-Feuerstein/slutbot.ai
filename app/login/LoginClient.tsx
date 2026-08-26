@@ -2,32 +2,75 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import BrandLogo from '../components/BrandLogo';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
+import FeaturedOn from '@/app/components/FeaturedOn';
+import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
 import { safeNextPath } from '@/lib/site';
 
-const TOKEN_KEY = 'token';
-const CLIENT_ID_KEY = 'slutbot-user-client-id';
+export { storeAuthSession, clearAuthSession };
 
-export function storeAuthSession(input: { token: string; clientId: string }) {
-  localStorage.setItem(TOKEN_KEY, input.token);
-  localStorage.setItem(CLIENT_ID_KEY, input.clientId);
+const LOGIN_BG_VIDEO = '/ai-slut-porn-generator.mp4';
+const LOGIN_LOGO_SRC = '/brand/slutbot-ai-login.png?v=3';
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
 }
 
-export function clearAuthSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(CLIENT_ID_KEY);
+function loginModeHref(mode: 'signin' | 'signup', redirect: string) {
+  const params = new URLSearchParams({ redirect });
+  if (mode === 'signin') {
+    params.set('mode', 'signin');
+  }
+  return `/login?${params.toString()}`;
+}
+
+function loginBackPath(redirect: string) {
+  const pathname = redirect.split('?')[0];
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname.startsWith('/checkout') ||
+    pathname.startsWith('/account') ||
+    pathname.startsWith('/admin')
+  ) {
+    return '/';
+  }
+  return redirect || '/';
 }
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = safeNextPath(searchParams.get('redirect'));
+  const backPath = loginBackPath(redirect);
+  const isSignup = searchParams.get('mode') !== 'signin';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+
+  const googleHref = useMemo(
+    () => `/api/auth/google?redirect=${encodeURIComponent(redirect)}`,
+    [redirect],
+  );
 
   useEffect(() => {
     const oauthError = searchParams.get('error');
@@ -36,91 +79,130 @@ export default function LoginClient() {
     }
   }, [searchParams]);
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = (await res.json()) as {
-        token?: string;
-        clientId?: string;
-        desires?: number;
-        message?: string;
-      };
-      if (!res.ok || !data.token || !data.clientId) {
-        setError(data.message || 'Could not sign in.');
-        return;
-      }
-      storeAuthSession({ token: data.token, clientId: data.clientId });
-      localStorage.setItem('slutbot-desires', String(data.desires ?? 0));
-      localStorage.setItem('slutbot-desires-server', String(data.desires ?? 0));
-      window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));
-      router.push(redirect);
-    } catch {
-      setError('Could not sign in.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#090505] px-4 py-[max(1.5rem,var(--safe-top))] text-white">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-        <BrandLogo className="mb-5 h-16 w-auto" />
-        <h1 className="text-2xl font-black">Sign in</h1>
-        <p className="mt-2 text-sm text-white/55">Use your email and password to access your account.</p>
+    <div className="relative flex min-h-dvh flex-col overflow-hidden text-white">
+      <video
+        src={LOGIN_BG_VIDEO}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="absolute inset-0 h-full w-full object-cover"
+        aria-hidden
+      />
+      <div className="absolute inset-0 bg-[#0a0208]/18" aria-hidden />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.1),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_100%,rgba(120,18,72,0.1),transparent_50%),linear-gradient(180deg,rgba(74,18,44,0.28)_0%,rgba(26,6,18,0.34)_45%,rgba(10,2,8,0.4)_100%)]"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 opacity-[0.025] [background-image:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,45,120,0.65)_2px,rgba(255,45,120,0.65)_3px)]"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(10,2,8,0.18)_100%)]"
+        aria-hidden
+      />
 
-        <form className="mt-6 space-y-3" onSubmit={onSubmit}>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-white/45">
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 w-full rounded-2xl border border-white/10 bg-black/50 px-3.5 py-3 text-base outline-none focus:border-[#ff2d78]/70"
-              autoComplete="email"
-              required
-            />
-          </label>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-white/45">
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1.5 w-full rounded-2xl border border-white/10 bg-black/50 px-3.5 py-3 text-base outline-none focus:border-[#ff2d78]/70"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          {error ? <p className="text-sm text-[#ffb0c8]">{error}</p> : null}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full min-h-12 rounded-full bg-[#ff2d78] py-3 text-sm font-bold text-white hover:bg-[#ff1a6b] disabled:opacity-50"
-          >
-            {loading ? 'Signing in…' : 'Sign in with email'}
-          </button>
-        </form>
+      <button
+        type="button"
+        aria-label="Back"
+        onClick={() => router.push(backPath)}
+        className="absolute left-4 top-[max(1rem,var(--safe-top))] z-50 inline-flex h-10 items-center gap-0.5 rounded-full border border-white/15 bg-black/40 px-3 text-sm font-semibold text-white/90 backdrop-blur-md hover:bg-black/55 hover:text-white sm:left-6"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden />
+        Back
+      </button>
 
-        <div className="mt-6 space-y-2 border-t border-white/10 pt-5">
-          <Link
-            href={`/api/auth/google?redirect=${encodeURIComponent(redirect)}`}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm font-bold text-[#141414] hover:bg-white/90"
-          >
-            <span aria-hidden>G</span>
-            Continue with Google
-          </Link>
-          <button type="button" disabled className="w-full rounded-full border border-white/10 py-3 text-sm font-bold text-white/35">
-            Continue with Telegram (later)
-          </button>
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-[max(1.5rem,var(--safe-top))]">
+        <div className="mx-auto flex w-full max-w-[420px] flex-col items-center">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-[#ff2d78]/35 bg-[#140810]/75 p-6 shadow-[0_0_40px_rgba(255,45,120,0.18),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-md">
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff2d78]/80 to-transparent"
+              aria-hidden
+            />
+
+            <div className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/35 p-1">
+              <Link
+                href={loginModeHref('signup', redirect)}
+                className={`rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:text-sm ${
+                  isSignup
+                    ? 'bg-[#ff2d78] text-white shadow-[0_0_16px_rgba(255,45,120,0.35)]'
+                    : 'text-white/55 hover:text-white/80'
+                }`}
+                aria-current={isSignup ? 'page' : undefined}
+              >
+                Create free account
+              </Link>
+              <Link
+                href={loginModeHref('signin', redirect)}
+                className={`rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:text-sm ${
+                  !isSignup
+                    ? 'bg-[#ff2d78] text-white shadow-[0_0_16px_rgba(255,45,120,0.35)]'
+                    : 'text-white/55 hover:text-white/80'
+                }`}
+                aria-current={!isSignup ? 'page' : undefined}
+              >
+                Sign in
+              </Link>
+            </div>
+
+            <div>
+              <h1 className="text-center text-2xl font-black tracking-tight text-white drop-shadow-[0_0_12px_rgba(255,45,120,0.35)]">
+                {isSignup ? 'Create your account' : 'Welcome back'}
+              </h1>
+            </div>
+
+            {error ? <p className="mt-4 text-center text-sm text-[#ffb0c8]">{error}</p> : null}
+
+            <Link
+              href={googleHref}
+              className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full border border-[#dadce0] bg-white py-3.5 text-sm font-bold text-[#3c4043] shadow-[0_1px_3px_rgba(60,64,67,0.15)] transition hover:bg-[#f8f9fa] hover:shadow-[0_2px_6px_rgba(60,64,67,0.2)]"
+            >
+              <GoogleMark />
+              {isSignup ? 'Create free account with Google' : 'Continue with Google'}
+            </Link>
+
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-white/35">
+              By continuing, you agree to our{' '}
+              <Link href="/terms" className="underline underline-offset-2 hover:text-white/55">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="underline underline-offset-2 hover:text-white/55">
+                Privacy Policy
+              </Link>
+              . 18+ only.
+            </p>
+          </div>
         </div>
       </div>
+
+      <footer className="relative z-10 shrink-0 border-t border-[#ff2d78]/25 bg-gradient-to-t from-[#0a0208]/75 via-[#140810]/45 to-transparent backdrop-blur-md">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff2d78]/70 to-transparent"
+          aria-hidden
+        />
+        <div className="safe-x mx-auto flex max-w-[1280px] items-center gap-5 px-4 py-6 pb-[max(1.25rem,var(--safe-bottom))] sm:gap-8 sm:py-8">
+          <div className="min-w-0 flex-1">
+            <FeaturedOn variant="login-content" />
+          </div>
+          <div
+            className="hidden h-16 w-px shrink-0 bg-gradient-to-b from-transparent via-[#ff2d78]/30 to-transparent sm:block"
+            aria-hidden
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGIN_LOGO_SRC}
+            alt="SLUTBOT AI"
+            width={512}
+            height={512}
+            decoding="async"
+            className="h-auto w-12 shrink-0 bg-transparent object-contain opacity-100 sm:w-14"
+          />
+        </div>
+      </footer>
     </div>
   );
 }

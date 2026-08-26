@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 
 const DISMISS_KEY = 'pwa_install_dismissed';
 const DISMISS_DAYS = 14;
-const SW_URL = '/sw.js?v=1';
+const SW_URL = '/sw.js?v=2';
+const ICON_SRC = '/icons/icon-192.png?v=3';
 const AGE_CONSENT_KEY = 'slutbot-age-consent-v1';
 const AGE_CONSENT_EVENT = 'slutbot-age-consent';
 
@@ -70,6 +71,14 @@ export default function PwaInstallBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (pathname.startsWith('/admin')) return;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(SW_URL).catch(() => {});
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (!consentReady) return;
     if (pathname.startsWith('/admin')) return;
     if (isStandalone()) return;
@@ -84,10 +93,6 @@ export default function PwaInstallBanner() {
     }
 
     setIsIOS(isIosDevice());
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(SW_URL).catch(() => {});
-    }
 
     const onPrompt = (e: Event) => {
       e.preventDefault();
@@ -158,7 +163,7 @@ export default function PwaInstallBanner() {
             <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icons/icon-192.png?v=2"
+                src={ICON_SRC}
                 alt=""
                 width={44}
                 height={44}
