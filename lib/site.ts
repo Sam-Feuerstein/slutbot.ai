@@ -35,6 +35,7 @@ export function checkoutHref(input?: { plan?: string; method?: string; reason?: 
 }
 
 export function getAppUrl() {
-  const raw = (process.env.NEXT_PUBLIC_APP_URL || SITE_URL).trim();
-  return raw.replace(/\/$/, '') || SITE_URL;
+  const raw = (process.env.NEXT_PUBLIC_APP_URL || SITE_URL).trim().replace(/\/$/, '');
+  if (!raw || /localhost|127\.0\.0\.1/i.test(raw)) return SITE_URL;
+  return raw;
 }

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { envValue } from '@/lib/env';
 
 const SHARED_EROGRAM_DB = 'erogram';
 
@@ -14,7 +15,7 @@ const baseOptions: mongoose.ConnectOptions = {
 };
 
 function mongoDbName(): string {
-  const fromEnv = process.env.MONGODB_DB?.trim() || '';
+  const fromEnv = envValue('MONGODB_DB');
   const dbName = fromEnv || 'slutbot';
   if (dbName === SHARED_EROGRAM_DB) {
     throw new Error('MONGODB_DB must not be "erogram". Use a dedicated database such as "slutbot".');
@@ -37,7 +38,7 @@ if (!g.__mongoose) {
 }
 
 function mongoUri(): string {
-  const uri = process.env.MONGODB_URI;
+  const uri = envValue('MONGODB_URI');
   if (!uri) {
     throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
   }

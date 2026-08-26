@@ -406,7 +406,7 @@ export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageTo
   const auth = await requireUser();
   if (auth.error || !auth.user) return { status: 'failed', error: auth.error || 'Sign in required.' };
   if (!wavespeedApiKey()) {
-    return { status: 'failed', error: 'wavespeedApiKey() is not configured.' };
+    return { status: 'failed', error: 'WAVESPEED_API_KEY is not configured.' };
   }
 
   const trimmed = taskId?.trim();
