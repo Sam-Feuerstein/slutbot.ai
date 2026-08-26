@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { requireJwtSecret } from '@/lib/auth/secrets';
+import { envValue } from '@/lib/env';
 
 export const ADMIN_COOKIE = 'slutbot-admin';
 const MAX_AGE_SEC = 60 * 60 * 12;
@@ -80,8 +81,8 @@ export async function adminSessionOk(req: NextRequest) {
 }
 
 export function adminCredentialsOk(username: string, password: string) {
-  const expectedUser = process.env.ADMIN_USERNAME || '';
-  const expectedPass = process.env.ADMIN_PASSWORD || '';
+  const expectedUser = envValue('ADMIN_USERNAME');
+  const expectedPass = envValue('ADMIN_PASSWORD');
   if (!expectedUser || !expectedPass) return false;
   return safeEq(username.trim(), expectedUser) && safeEq(password, expectedPass);
 }

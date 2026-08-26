@@ -5,7 +5,7 @@ import { setSessionCookie } from '@/lib/auth/sessionCookie';
 import { clientIp, rateLimitAllowed } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
-  if (!rateLimitAllowed({ name: 'admin-login', key: clientIp(req), windowMs: 15 * 60_000, max: 5 })) {
+  if (!rateLimitAllowed({ name: 'admin-login', key: clientIp(req), windowMs: 15 * 60_000, max: 20 })) {
     return NextResponse.json({ message: 'Too many login attempts. Try again later.' }, { status: 429 });
   }
 

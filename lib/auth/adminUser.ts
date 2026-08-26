@@ -1,12 +1,13 @@
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser, SlutbotWallet } from '@/lib/models';
 import { newClientId, signSlutbotToken } from '@/lib/auth/slutbotAuth';
+import { envValue } from '@/lib/env';
 
 /** Display / wallet balance used for the linked admin app user. */
 export const ADMIN_INFINITE_DESIRES = 9_999_999;
 
 export function adminAppUserEmail(): string {
-  const username = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+  const username = (envValue('ADMIN_USERNAME') || 'admin').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
   return `${username || 'admin'}@aislutbot.local`;
 }
 

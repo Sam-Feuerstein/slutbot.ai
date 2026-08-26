@@ -5,6 +5,7 @@ import { SlutbotUser } from '@/lib/models';
 import { getAppUrl } from '@/lib/site';
 import { newClientId } from '@/lib/auth/slutbotAuth';
 import { requireJwtSecret } from '@/lib/auth/secrets';
+import { envValue } from '@/lib/env';
 
 type GoogleOAuthConfig = {
   clientId: string;
@@ -19,14 +20,6 @@ export type GoogleProfile = {
   picture?: string;
   verified_email?: boolean;
 };
-
-function envValue(name: string): string {
-  let value = process.env[name]?.trim() || '';
-  value = value.replace(/^['"]|['"]$/g, '').trim();
-  const prefix = new RegExp(`^${name}\\s*=\\s*`, 'i');
-  value = value.replace(prefix, '').trim();
-  return value.replace(/^['"]|['"]$/g, '').trim();
-}
 
 export function isGoogleOAuthConfigured() {
   return Boolean(envValue('GOOGLE_CLIENT_ID') && envValue('GOOGLE_CLIENT_SECRET'));
