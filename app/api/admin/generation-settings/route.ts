@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import {
   DEFAULT_IMAGE_PROMPT,
+  DEFAULT_VIDEO_ENGINE,
   DEFAULT_VIDEO_PROMPT,
-  getImagePrompt,
-  getVideoPrompt,
-  setGenerationPrompts,
+  VIDEO_ENGINE_OPTIONS,
+  getGenerationSettings,
+  setGenerationSettings,
 } from '@/lib/generationSettings';
 
 async function denyAdmin(req: NextRequest) {
@@ -18,26 +19,34 @@ async function denyAdmin(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const denied = await denyAdmin(req);
   if (denied) return denied;
-  const [videoPrompt, imagePrompt] = await Promise.all([getVideoPrompt(), getImagePrompt()]);
+  const settings = await getGenerationSettings();
   return NextResponse.json({
-    videoPrompt,
-    imagePrompt,
+    ...settings,
     defaultVideoPrompt: DEFAULT_VIDEO_PROMPT,
     defaultImagePrompt: DEFAULT_IMAGE_PROMPT,
+    defaultVideoEngine: DEFAULT_VIDEO_ENGINE,
+    videoEngines: VIDEO_ENGINE_OPTIONS,
   });
 }
 
 export async function PUT(req: NextRequest) {
   const denied = await denyAdmin(req);
   if (denied) return denied;
-  const body = (await req.json()) as { videoPrompt?: string; imagePrompt?: string };
-  const saved = await setGenerationPrompts({
+  const body = (await req.json()) as {
+    videoPrompt?: string;
+    imagePrompt?: string;
+    videoEngine?: string;
+  };
+  const saved = await setGenerationSettings({
     videoPrompt: body.videoPrompt,
     imagePrompt: body.imagePrompt,
+    videoEngine: body.videoEngine,
   });
   return NextResponse.json({
     ...saved,
     defaultVideoPrompt: DEFAULT_VIDEO_PROMPT,
     defaultImagePrompt: DEFAULT_IMAGE_PROMPT,
+    defaultVideoEngine: DEFAULT_VIDEO_ENGINE,
+    videoEngines: VIDEO_ENGINE_OPTIONS,
   });
 }

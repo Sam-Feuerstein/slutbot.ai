@@ -119,6 +119,12 @@ const platformSettingsSchema = new Schema(
     key: { type: String, required: true, unique: true, default: 'platform' },
     videoPrompt: { type: String, default: '' },
     imagePrompt: { type: String, default: '' },
+    /** WaveSpeed video engine used for all public video generations. */
+    videoEngine: {
+      type: String,
+      enum: ['wan_ultra_fast', 'ltx_spicy'],
+      default: 'wan_ultra_fast',
+    },
     starsGeoEnabled: { type: Boolean, default: true },
     starsGeoRoundUpTo: { type: Number, default: 50 },
   },

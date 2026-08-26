@@ -7,7 +7,7 @@ import { AiToolGeneration } from '@/lib/models';
 import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
 import { userFromSession } from '@/lib/auth/requestUser';
 import type { SlutbotAuthUser } from '@/lib/auth/slutbotAuth';
-import { getImagePrompt, getVideoPrompt } from '@/lib/generationSettings';
+import { getImagePrompt, getVideoEngine, getVideoPrompt } from '@/lib/generationSettings';
 import {
   attachJobTaskId,
   createChargedJob,
@@ -236,20 +236,23 @@ export async function submitWavespeedImageToVideo(
   resolution?: string,
   duration?: number,
   preset?: string,
-  videoModel: VideoModel = 'current',
+  _videoModel: VideoModel = 'current',
 ): Promise<{ taskId?: string; desires?: number; error?: string }> {
   const auth = await requireUser();
   if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
 
-  const quality = normalizeResolution(resolution);
+  // Admin-selected WaveSpeed engine wins over the public quality picker.
+  const engine = await getVideoEngine();
+  const videoModel: VideoModel = engine === 'wan_ultra_fast' ? 'cheap' : 'current';
+  const quality = engine === 'wan_ultra_fast' ? '480p' : normalizeResolution(resolution);
   const normalizedDuration =
     videoModel === 'cheap' ? normalizeCheapDuration(duration) : normalizeDuration(duration);
   const cost = getGenerationDesireCost('video', videoModel, quality);
   const trimmedPrompt = await getVideoPrompt();
   const image = wavespeedFetchUrl(sourceKey.trim());
-  const submitUrl = videoModel === 'cheap' ? WAN_ULTRA_FAST_SUBMIT_URL : LTX_SPICY_SUBMIT_URL;
+  const submitUrl = engine === 'wan_ultra_fast' ? WAN_ULTRA_FAST_SUBMIT_URL : LTX_SPICY_SUBMIT_URL;
   const body =
-    videoModel === 'cheap'
+    engine === 'wan_ultra_fast'
       ? {
           image,
           prompt: trimmedPrompt,

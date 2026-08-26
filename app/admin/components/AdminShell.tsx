@@ -16,7 +16,7 @@ const NAV = [
       { href: '/admin/users', label: 'Users', match: 'prefix' as const },
       { href: '/admin/wallet', label: 'Slutcoin cost', match: 'exact' as const },
       { href: '/admin/coupons', label: 'Coupons', match: 'exact' as const },
-      { href: '/admin/prompts', label: 'Prompts', match: 'exact' as const },
+      { href: '/admin/prompts', label: 'Prompts & models', match: 'exact' as const },
     ],
   },
   {
