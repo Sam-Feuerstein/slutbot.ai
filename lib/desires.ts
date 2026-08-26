@@ -105,11 +105,8 @@ export function openPremiumPlans(reason?: string) {
   window.location.assign(checkoutHref({ plan: 'flirt', reason }));
 }
 
-export function openCheckoutInsufficient(needed: number, have: number) {
-  const short = Math.max(0, needed - have);
-  openPremiumPlans(
-    `You need ${short} more ${CURRENCY_NAME} (${have.toLocaleString('en-US')} available, ${needed.toLocaleString('en-US')} required).`,
-  );
+export function openCheckoutInsufficient(_needed?: number, _have?: number) {
+  openPremiumPlans('low_balance');
 }
 
 export function notifyDesiresUpdated() {

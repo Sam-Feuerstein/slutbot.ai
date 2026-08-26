@@ -7,7 +7,7 @@ import { rememberBalanceBeforePayment } from '@/app/components/PaymentSuccessBan
 import { CURRENCY_NAME, getAuthToken, getDesires, setDesires, syncPurchasedDesires } from '@/lib/desires';
 import { storeAuthSession } from '@/lib/auth/session';
 import { cacheUserProfile } from '@/lib/auth/profile';
-import { loginHref, HELLO_EMAIL } from '@/lib/site';
+import { loginHref, HELLO_EMAIL, checkoutBannerCopy } from '@/lib/site';
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
 import { formatUsdPrice, usdFromStars, CRYPTO_DISCOUNT_PERCENT, PREMIUM_PLANS, planBonusGenerationCopy, planBonusPercentLabel, planGenerationCopy, type PremiumPlan } from '@/lib/premiumPlans';
@@ -387,6 +387,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutReason = searchParams.get('reason')?.trim() || '';
+  const checkoutBanner = checkoutBannerCopy(checkoutReason);
   const [authReady, setAuthReady] = useState(false);
   const [planId, setPlanId] = useState(plan.id);
   const [method, setMethod] = useState<CheckoutMethod>(initialMethod);
@@ -898,12 +899,12 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
           </h1>
 
           <p className="mt-1 hidden text-sm text-[#6b6f7a] sm:mt-3 sm:block">
-            Sign-in required. Slutcoins are added to your account after payment.
+            Slutcoins are added to your account right after payment.
           </p>
 
-          {checkoutReason ? (
+          {checkoutBanner ? (
             <p className="mt-2 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2 text-xs text-[#854d0e] sm:mt-3 sm:px-3.5 sm:py-3 sm:text-sm">
-              {checkoutReason}
+              {checkoutBanner}
             </p>
           ) : null}
 

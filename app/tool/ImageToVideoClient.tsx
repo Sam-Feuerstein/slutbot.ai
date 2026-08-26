@@ -271,10 +271,8 @@ export default function ImageToVideoClient({
       return;
     }
     if (getDesires() < desireCost) {
-      setError(
-        `Not enough Slutcoins. You need ${desireCost.toLocaleString('en-US')} but have ${getDesires().toLocaleString('en-US')}. Redirecting to checkout…`,
-      );
-      window.setTimeout(() => openCheckoutInsufficient(desireCost, getDesires()), 1600);
+      setError('Not enough Slutcoins. Opening packs…');
+      window.setTimeout(() => openCheckoutInsufficient(desireCost, getDesires()), 700);
       return;
     }
 

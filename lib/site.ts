@@ -23,15 +23,36 @@ export function loginHref(next?: string | null): string {
   return `/login?redirect=${encodeURIComponent(safeNextPath(next))}`;
 }
 
-export function checkoutHref(input?: { plan?: string; method?: string; reason?: string }) {
+export function checkoutHref(input?: {
+  plan?: string;
+  method?: string;
+  /** Short machine code, e.g. low_balance — never put long sentences in the URL. */
+  reason?: string;
+}) {
   const params = new URLSearchParams({ plan: input?.plan?.trim() || 'flirt' });
   if (input?.method === 'crypto' || input?.method === 'stars') {
     params.set('method', input.method);
   }
-  if (input?.reason?.trim()) {
-    params.set('reason', input.reason.trim());
+  const reason = input?.reason?.trim();
+  if (reason) {
+    // Keep codes short so login → checkout redirects stay readable.
+    params.set('reason', reason.slice(0, 40));
   }
   return `/checkout?${params.toString()}`;
+}
+
+export function checkoutBannerCopy(reason?: string | null): string | null {
+  const value = (reason || '').trim();
+  if (!value) return null;
+  if (value === 'low_balance' || /available|required|more .+coins/i.test(value)) {
+    return 'You’re out of Slutcoins for this generation. Pick a pack below — coins land on your account right after payment.';
+  }
+  if (value === 'sign_in') {
+    return 'Sign in, then choose a pack. Coins are added to your account after payment.';
+  }
+  // Unknown short codes / legacy — keep only if it isn’t the old accounting dump.
+  if (value.length <= 80 && !/\d+\s+available/i.test(value)) return value;
+  return 'Pick a pack below to add Slutcoins and keep generating.';
 }
 
 export function getAppUrl() {
