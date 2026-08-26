@@ -20,13 +20,21 @@ export type GoogleProfile = {
   verified_email?: boolean;
 };
 
+function envValue(name: string): string {
+  let value = process.env[name]?.trim() || '';
+  value = value.replace(/^['"]|['"]$/g, '').trim();
+  const prefix = new RegExp(`^${name}\\s*=\\s*`, 'i');
+  value = value.replace(prefix, '').trim();
+  return value.replace(/^['"]|['"]$/g, '').trim();
+}
+
 export function isGoogleOAuthConfigured() {
-  return Boolean(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
+  return Boolean(envValue('GOOGLE_CLIENT_ID') && envValue('GOOGLE_CLIENT_SECRET'));
 }
 
 export function getGoogleOAuthConfig(origin?: string): GoogleOAuthConfig {
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  const clientId = envValue('GOOGLE_CLIENT_ID');
+  const clientSecret = envValue('GOOGLE_CLIENT_SECRET');
   if (!clientId || !clientSecret) {
     throw new Error('Google OAuth is not configured.');
   }
