@@ -8,6 +8,8 @@ import { generatorPresetPath } from '@/lib/site';
 
 type Props = { params: Promise<{ preset: string }> };
 
+export const maxDuration = 60;
+
 export async function generateStaticParams() {
   return getHomePresetIds().map((preset) => ({ preset }));
 }

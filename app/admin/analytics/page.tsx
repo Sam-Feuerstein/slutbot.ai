@@ -72,7 +72,7 @@ export default function AdminAnalyticsPage() {
         {[
           { label: 'Total clicks', value: totals?.clicks ?? 0 },
           { label: 'Total interactions', value: totals?.interactions ?? 0 },
-          { label: 'Page views', value: totals?.pageViews ?? 0 },
+          { label: 'Total visits', value: totals?.pageViews ?? 0 },
           { label: 'Checkout views', value: totals?.checkoutView ?? 0 },
           { label: 'Pay clicks', value: totals?.checkoutPay ?? 0 },
           { label: 'Plan / method / tutorial', value: `${totals?.checkoutPlan ?? 0} / ${totals?.checkoutMethod ?? 0} / ${totals?.checkoutTutorial ?? 0}` },
@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
                 <th className="pb-2 font-semibold">Day</th>
                 <th className="pb-2 font-semibold">Clicks</th>
                 <th className="pb-2 font-semibold">Interactions</th>
-                <th className="pb-2 font-semibold">Views</th>
+                <th className="pb-2 font-semibold">Visits</th>
                 <th className="pb-2 font-semibold">Pay</th>
               </tr>
             </thead>

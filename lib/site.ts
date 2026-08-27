@@ -1,6 +1,7 @@
 export const SITE_DOMAIN = 'aislutbot.com';
 export const SITE_URL = `https://${SITE_DOMAIN}`;
 export const GENERATOR_PATH = '/ai-porn-generator';
+export const EXPLORE_PATH = '/explore';
 export const ACCOUNT_PATH = '/account';
 export const GENERATOR_CANONICAL = `${SITE_URL}${GENERATOR_PATH}`;
 
@@ -12,6 +13,10 @@ export const OFFERS_EMAIL = 'offers@aislutbot.com';
 
 export function generatorPresetPath(presetId: string): string {
   return `${GENERATOR_PATH}/${presetId}`;
+}
+
+export function generatorModePath(mode: 'image' | 'video'): string {
+  return `${GENERATOR_PATH}?mode=${mode}`;
 }
 
 export function safeNextPath(path?: string | null): string {
@@ -44,6 +49,9 @@ export function checkoutHref(input?: {
 export function checkoutBannerCopy(reason?: string | null): string | null {
   const value = (reason || '').trim();
   if (!value) return null;
+  if (value === 'unlock_preview') {
+    return 'Pay for a pack to unlock your video. Coins land on your account right after payment.';
+  }
   if (value === 'low_balance' || /available|required|more .+coins/i.test(value)) {
     return 'You’re out of Slutcoins for this generation. Pick a pack below — coins land on your account right after payment.';
   }

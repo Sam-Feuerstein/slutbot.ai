@@ -62,6 +62,14 @@ export async function recordTrackEvent(input: TrackPayload) {
   ]);
 }
 
+export async function getTotalVisits(): Promise<number> {
+  await connectDB();
+  const row = (await AnalyticsStat.findOne({ day: '', name: 'page_views' }).select('count').lean()) as {
+    count?: number;
+  } | null;
+  return Math.max(0, Math.round(row?.count ?? 0));
+}
+
 export async function getAnalyticsSummary() {
   await connectDB();
   const [totals, daily, recent] = await Promise.all([

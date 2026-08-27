@@ -1,6 +1,6 @@
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotCoupon, SlutbotCouponRedemption, SlutbotPayment, SlutbotUser } from '@/lib/models';
-import { adjustUserDesires } from '@/lib/users/wallet';
+import { adjustUserDesires, getSpendableCredits } from '@/lib/users/wallet';
 import { CRYPTO_DISCOUNT_PERCENT } from '@/lib/premiumPlans';
 import { CRYPTO_COUPON_CODE, normalizeCryptoCouponCode } from '@/lib/payments/cryptoCoupon';
 import {
@@ -308,10 +308,10 @@ export async function redeemCouponForUser(input: {
   }
 
   await SlutbotCoupon.findByIdAndUpdate(coupon.id, { $inc: { redemptionCount: 1 } });
-  const desires = await adjustUserDesires(input.userId, coupon.creditsAmount);
-  if (desires == null) throw new Error('Could not credit Slutcoins.');
+  const credited = await adjustUserDesires(input.userId, coupon.creditsAmount);
+  if (credited == null) throw new Error('Could not credit Slutcoins.');
 
-  return { coupon, desires, creditsGranted: coupon.creditsAmount };
+  return { coupon, desires: await getSpendableCredits(input.userId), creditsGranted: coupon.creditsAmount };
 }
 
 async function assertPriceCouponUsable(coupon: Coupon, userId?: string | null) {

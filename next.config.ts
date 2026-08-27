@@ -29,6 +29,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
+  serverExternalPackages: ['web-push', 'ffmpeg-static'],
   images: {
     remotePatterns: mediaRemotePatterns(),
     formats: ['image/avif', 'image/webp'],
@@ -46,6 +47,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/brand/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/examples/:path*',
         headers: [
           {
             key: 'Cache-Control',

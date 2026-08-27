@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { getImageToVideoClientId } from '@/app/tool/clientId';
 
 const DISMISS_KEY = 'pwa_install_dismissed';
+const RECORDED_KEY = 'pwa_install_recorded';
 const DISMISS_DAYS = 14;
-const SW_URL = '/sw.js?v=2';
+const SW_URL = '/sw.js?v=3';
 const ICON_SRC = '/icons/icon-192.png?v=3';
 const AGE_CONSENT_KEY = 'slutbot-age-consent-v1';
 const AGE_CONSENT_EVENT = 'slutbot-age-consent';
@@ -50,6 +52,31 @@ function hasAgeConsent(): boolean {
   }
 }
 
+function recordInstall() {
+  try {
+    const clientId = getImageToVideoClientId();
+    if (!clientId) return;
+    const recorded = localStorage.getItem(RECORDED_KEY) === '1';
+    const signedIn = localStorage.getItem('slutbot-signed-in') === '1';
+    const linked = localStorage.getItem('pwa_install_user_linked') === '1';
+    if (recorded && (!signedIn || linked)) return;
+    void fetch('/api/pwa/install', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId }),
+    })
+      .then((res) => {
+        if (!res.ok) return;
+        localStorage.setItem(RECORDED_KEY, '1');
+        if (signedIn) localStorage.setItem('pwa_install_user_linked', '1');
+      })
+      .catch(() => {});
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function PwaInstallBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -71,11 +98,25 @@ export default function PwaInstallBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (pathname.startsWith('/admin')) return;
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(SW_URL).catch(() => {});
     }
-  }, [pathname]);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isStandalone()) {
+      recordInstall();
+      return;
+    }
+
+    const onInstalled = () => {
+      recordInstall();
+      setVisible(false);
+    };
+    window.addEventListener('appinstalled', onInstalled);
+    return () => window.removeEventListener('appinstalled', onInstalled);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -83,13 +124,8 @@ export default function PwaInstallBanner() {
     if (pathname.startsWith('/admin')) return;
     if (isStandalone()) return;
 
-    const onInstalled = () => {
-      setVisible(false);
-    };
-    window.addEventListener('appinstalled', onInstalled);
-
     if (!isMobileUa() || wasDismissedRecently()) {
-      return () => window.removeEventListener('appinstalled', onInstalled);
+      return;
     }
 
     setIsIOS(isIosDevice());
@@ -108,7 +144,6 @@ export default function PwaInstallBanner() {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
       if (iosTimer) clearTimeout(iosTimer);
     };
   }, [consentReady, pathname]);
@@ -127,6 +162,7 @@ export default function PwaInstallBanner() {
       const choice = await deferredPrompt.userChoice;
       setDeferredPrompt(null);
       if (choice.outcome === 'accepted') {
+        recordInstall();
         setVisible(false);
         return;
       }

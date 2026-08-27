@@ -1,6 +1,6 @@
 import { getHomePresetById } from '@/lib/homePresets';
 import { absoluteUrl } from '@/lib/seo';
-import { GENERATOR_PATH, SITE_URL } from '@/lib/site';
+import { EXPLORE_PATH, GENERATOR_PATH, SITE_URL } from '@/lib/site';
 
 export type BreadcrumbItem = {
   name: string;
@@ -25,6 +25,7 @@ const LANDING_NAMES: Record<string, string> = {
 
 const STATIC_TRAILS: Record<string, BreadcrumbItem[]> = {
   [GENERATOR_PATH]: [HOME, GENERATOR],
+  [EXPLORE_PATH]: [HOME, { name: 'Explore', path: EXPLORE_PATH }],
   '/tool': [HOME, { name: 'AI Nude Generator', path: '/tool' }],
   '/archive': [HOME, { name: 'My Collection', path: '/archive' }],
   '/terms': [HOME, { name: 'Terms of Service', path: '/terms' }],

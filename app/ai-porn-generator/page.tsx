@@ -13,21 +13,25 @@ export const metadata: Metadata = buildPageMetadata({
   ogTitle: 'AI Nude Generator Online | AI SLUTBOT',
 });
 
+export const maxDuration = 60;
+
 export default async function AiPornGeneratorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ preset?: string }>;
+  searchParams: Promise<{ preset?: string; mode?: string }>;
 }) {
-  const { preset } = await searchParams;
+  const { preset, mode } = await searchParams;
   if (preset) {
     redirect(generatorPresetPath(preset));
   }
+
+  const initialMode = mode === 'image' || mode === 'video' ? mode : undefined;
 
   return (
     <>
       <JsonLd data={softwareApplicationJsonLd()} />
       <h1 className="sr-only">AI porn generator</h1>
-      <ImageToVideoClient />
+      <ImageToVideoClient initialMode={initialMode} />
     </>
   );
 }

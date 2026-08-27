@@ -1,25 +1,32 @@
 'use server';
 
 import { randomUUID } from 'crypto';
+import { headers } from 'next/headers';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import { AiToolGeneration } from '@/lib/models';
-import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
 import { userFromSession } from '@/lib/auth/requestUser';
 import type { SlutbotAuthUser } from '@/lib/auth/slutbotAuth';
 import { getImagePrompt, getVideoEngine, getVideoPrompt } from '@/lib/generationSettings';
 import {
   attachJobTaskId,
+  claimJobForIngest,
+  completeLockedJob,
   createChargedJob,
   findOwnedJobByTaskId,
+  listActiveJobsForUser,
   markJobCompleted,
   refundChargedJob,
+  revertJobToCharged,
 } from '@/lib/generation/jobs';
 import { refundIfWavespeedFailed } from '@/lib/generation/refundFailed';
-import { getGenerationDesireCost } from '@/lib/generation/costs';
+import { resolveRequestCountry } from '@/lib/geo/tier1';
+import { publicGenerationOutput } from '@/lib/media/generationUrl';
 import { displayMediaUrl, isUserUploadKey, wavespeedFetchUrl } from '@/lib/media/sign';
 import { uploadToR2, isR2Configured } from '@/lib/r2';
-import { adjustUserDesires, recordUserGeneration, spendUserDesires } from '@/lib/users/wallet';
+import { planGenerationCharge } from '@/lib/trial/plan';
+import { ingestLockedTrialVideo } from '@/lib/trial/ingest';
+import { recordUserGeneration, reverseGenerationSpend, spendGenerationCredits, type CreditSource } from '@/lib/users/wallet';
 import type { AiToolGenerationRecord, VideoModel } from '@/lib/imageToVideo/types';
 import { envValue } from '@/lib/env';
 
@@ -50,6 +57,9 @@ type ImageToVideoResolution = (typeof ALLOWED_RESOLUTIONS)[number];
 type ImageToVideoPollResult = {
   status: 'created' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'timeout' | 'unknown';
   outputUrl?: string;
+  locked?: boolean;
+  id?: string;
+  archived?: boolean;
   error?: string;
   desires?: number;
 };
@@ -124,14 +134,6 @@ async function requireUser(): Promise<{ user?: SlutbotAuthUser; error?: string }
   return { user };
 }
 
-async function chargeGeneration(user: SlutbotAuthUser, cost: number) {
-  if (isAdminAppUserEmail(user.email)) {
-    return { ok: true as const, desires: ADMIN_INFINITE_DESIRES, charged: false };
-  }
-  const spent = await spendUserDesires(user.id, cost);
-  return { ok: spent.ok, desires: spent.desires, charged: spent.ok };
-}
-
 export async function uploadImageToVideoSource(
   formData: FormData,
 ): Promise<{ key?: string; error?: string }> {
@@ -169,6 +171,8 @@ async function startWavespeedJob(input: {
   duration?: number | null;
   submitUrl: string;
   body: Record<string, unknown>;
+  paidWith: CreditSource;
+  lockVideo: boolean;
 }): Promise<{ taskId?: string; desires?: number; error?: string }> {
   if (!wavespeedApiKey()) {
     return { error: 'WAVESPEED_API_KEY is not configured.' };
@@ -177,7 +181,7 @@ async function startWavespeedJob(input: {
     return { error: 'Invalid source image.' };
   }
 
-  const spent = await chargeGeneration(input.user, input.cost);
+  const spent = await spendGenerationCredits(input.user.id, input.cost, input.paidWith);
   if (!spent.ok) {
     return { error: 'Not enough Slutcoins.', desires: spent.desires };
   }
@@ -192,10 +196,12 @@ async function startWavespeedJob(input: {
       quality: input.quality,
       duration: input.duration,
       sourceKey: input.sourceKey,
+      paidWith: input.paidWith,
+      locked: input.lockVideo,
     });
   } catch {
     if (spent.charged) {
-      await adjustUserDesires(input.user.id, input.cost);
+      await reverseGenerationSpend(input.user.id, input.cost, input.paidWith);
     }
     return { error: 'Could not start generation.' };
   }
@@ -208,25 +214,28 @@ async function startWavespeedJob(input: {
     });
     const raw = await res.json().catch(() => null);
     if (!res.ok) {
-      await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
+      const refunded = await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
       const message =
         (raw && typeof raw === 'object' && 'message' in raw && String(raw.message)) ||
         `WaveSpeed request failed (${res.status}).`;
-      return { error: message, desires: spent.charged ? spent.desires + input.cost : spent.desires };
+      return { error: message, desires: refunded.desires ?? spent.desires };
     }
 
     const task = unwrapData<WavespeedTask>(raw);
     const taskId = task.id;
     if (!taskId || !TASK_ID_RE.test(taskId)) {
-      await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
-      return { error: 'WaveSpeed did not return a task id.' };
+      const refunded = await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
+      return { error: 'WaveSpeed did not return a task id.', desires: refunded.desires };
     }
 
     await attachJobTaskId(String(job._id), taskId);
     return { taskId, desires: spent.desires };
   } catch (err) {
-    await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
-    return { error: err instanceof Error ? err.message : 'Submit failed.' };
+    const refunded = await refundChargedJob({ userId: input.user.id, jobId: String(job._id) });
+    return {
+      error: err instanceof Error ? err.message : 'Submit failed.',
+      desires: refunded.desires,
+    };
   }
 }
 
@@ -244,10 +253,22 @@ export async function submitWavespeedImageToVideo(
   // Admin-selected WaveSpeed engine wins over the public quality picker.
   const engine = await getVideoEngine();
   const videoModel: VideoModel = engine === 'wan_ultra_fast' ? 'cheap' : 'current';
-  const quality = engine === 'wan_ultra_fast' ? '480p' : normalizeResolution(resolution);
+  const requestedQuality = engine === 'wan_ultra_fast' ? '480p' : normalizeResolution(resolution);
+  const plan = await planGenerationCharge({
+    userId: auth.user.id,
+    email: auth.user.email,
+    mode: 'video',
+    videoModel,
+    quality: requestedQuality,
+    currentCountry: resolveRequestCountry(await headers()),
+  });
+  if (plan.error) {
+    return { error: 'Not enough Slutcoins.', desires: plan.spendable };
+  }
+
+  const quality = plan.quality;
   const normalizedDuration =
     videoModel === 'cheap' ? normalizeCheapDuration(duration) : normalizeDuration(duration);
-  const cost = getGenerationDesireCost('video', videoModel, quality);
   const trimmedPrompt = await getVideoPrompt();
   const image = wavespeedFetchUrl(sourceKey.trim());
   const submitUrl = engine === 'wan_ultra_fast' ? WAN_ULTRA_FAST_SUBMIT_URL : LTX_SPICY_SUBMIT_URL;
@@ -272,12 +293,14 @@ export async function submitWavespeedImageToVideo(
     user: auth.user,
     mode: 'video',
     sourceKey: sourceKey.trim(),
-    cost,
+    cost: plan.cost,
     videoModel,
     quality,
     duration: normalizedDuration,
     submitUrl,
     body,
+    paidWith: plan.paidWith,
+    lockVideo: plan.lockVideo,
   });
 }
 
@@ -287,7 +310,18 @@ export async function submitWavespeedImageEdit(
   const auth = await requireUser();
   if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
 
-  const cost = getGenerationDesireCost('image');
+  const plan = await planGenerationCharge({
+    userId: auth.user.id,
+    email: auth.user.email,
+    mode: 'image',
+    videoModel: 'current',
+    quality: '480p',
+    currentCountry: resolveRequestCountry(await headers()),
+  });
+  if (plan.error) {
+    return { error: 'Not enough Slutcoins.', desires: plan.spendable };
+  }
+
   const trimmedPrompt = await getImagePrompt();
   const image = wavespeedFetchUrl(sourceKey.trim());
 
@@ -295,7 +329,7 @@ export async function submitWavespeedImageEdit(
     user: auth.user,
     mode: 'image',
     sourceKey: sourceKey.trim(),
-    cost,
+    cost: plan.cost,
     submitUrl: SEEDREAM_EDIT_URL,
     body: {
       prompt: trimmedPrompt,
@@ -304,6 +338,8 @@ export async function submitWavespeedImageEdit(
       output_format: 'jpeg',
       prompt_optimization_mode: 'fast',
     },
+    paidWith: plan.paidWith,
+    lockVideo: false,
   });
 }
 
@@ -387,22 +423,80 @@ export async function listAiToolGenerations(): Promise<{
       .limit(100)
       .lean();
 
-    const items: AiToolGenerationRecord[] = docs.map((doc) => ({
-      id: String(doc._id),
-      mode: doc.mode as 'image' | 'video',
-      videoModel: (doc.videoModel as VideoModel | null) || null,
-      sourceImageUrl: displayMediaUrl(String(doc.sourceImageUrl || '')),
-      outputUrl: String(doc.outputUrl || ''),
-      prompt: String(doc.prompt || ''),
-      quality: String(doc.quality || ''),
-      duration: typeof doc.duration === 'number' ? doc.duration : null,
-      createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
-    }));
+    const items: AiToolGenerationRecord[] = docs.map((doc) => {
+      const visible = publicGenerationOutput({
+        locked: Boolean(doc.locked),
+        outputKey: String(doc.outputKey || ''),
+        previewKey: String(doc.previewKey || ''),
+        outputUrl: String(doc.outputUrl || ''),
+      });
+      return {
+        id: String(doc._id),
+        mode: doc.mode as 'image' | 'video',
+        videoModel: (doc.videoModel as VideoModel | null) || null,
+        sourceImageUrl: displayMediaUrl(String(doc.sourceImageUrl || '')),
+        outputUrl: visible.outputUrl,
+        locked: visible.locked,
+        prompt: String(doc.prompt || ''),
+        quality: String(doc.quality || ''),
+        duration: typeof doc.duration === 'number' ? doc.duration : null,
+        createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+      };
+    });
 
     return { items };
   } catch {
     return { items: [], error: 'Could not load archive.' };
   }
+}
+
+export type ActiveGenerationJobClient = {
+  taskId: string;
+  mode: 'image' | 'video';
+  videoModel: VideoModel | null;
+  quality: string;
+  duration: number | null;
+  sourceKey: string;
+  sourceUrl: string;
+  startedAt: number;
+};
+
+export async function listActiveGenerationJobs(): Promise<{ jobs: ActiveGenerationJobClient[] }> {
+  const auth = await requireUser();
+  if (auth.error || !auth.user) return { jobs: [] };
+
+  try {
+    const rows = await listActiveJobsForUser(auth.user.id);
+    return {
+      jobs: rows.map((row) => ({
+        taskId: row.taskId,
+        mode: row.mode,
+        videoModel: row.videoModel,
+        quality: row.quality,
+        duration: row.duration,
+        sourceKey: row.sourceKey,
+        sourceUrl: row.sourceKey ? displayMediaUrl(row.sourceKey) : '',
+        startedAt: row.createdAt.getTime(),
+      })),
+    };
+  } catch {
+    return { jobs: [] };
+  }
+}
+
+function jobLocksVideo(job: { mode?: string; locked?: boolean; paidWith?: string }): boolean {
+  return job.mode === 'video' && (Boolean(job.locked) || job.paidWith === 'trial');
+}
+
+function lockedJobClientResult(job: { previewKey?: string; generationId?: string }): ImageToVideoPollResult {
+  const previewKey = String(job.previewKey || '');
+  return {
+    status: 'completed',
+    outputUrl: previewKey ? displayMediaUrl(previewKey) : '',
+    locked: true,
+    id: job.generationId || undefined,
+    archived: Boolean(job.generationId),
+  };
 }
 
 export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageToVideoPollResult> {
@@ -422,7 +516,10 @@ export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageTo
   if (job.status === 'refunded') {
     return { status: 'failed', error: 'Job was refunded.' };
   }
-  if (job.status !== 'charged' && job.status !== 'completed') {
+  if (job.status === 'completed' && jobLocksVideo(job)) {
+    return lockedJobClientResult(job);
+  }
+  if (job.status !== 'charged' && job.status !== 'completed' && job.status !== 'ingesting') {
     return { status: 'failed', error: 'Job is not active.' };
   }
 
@@ -454,11 +551,64 @@ export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageTo
   if (status === 'completed') {
     const outputUrl = task.outputs?.[0];
     if (!outputUrl) return { status: 'failed', error: 'Task completed but no output URL was returned.' };
+
+    if (jobLocksVideo(job)) {
+      if (job.status === 'ingesting') {
+        const claimed = await claimJobForIngest(String(job._id));
+        if (!claimed) return { status: 'processing' };
+      } else if (job.status === 'charged') {
+        const claimed = await claimJobForIngest(String(job._id));
+        if (!claimed) {
+          const latest = await findOwnedJobByTaskId(auth.user.id, trimmed);
+          if (latest?.status === 'completed') return lockedJobClientResult(latest);
+          return { status: 'processing' };
+        }
+      } else if (job.status === 'completed') {
+        return lockedJobClientResult(job);
+      }
+
+      try {
+        const ingested = await ingestLockedTrialVideo(outputUrl, auth.user.id);
+        const doc = await AiToolGeneration.create({
+          clientId: auth.user.clientId,
+          userId: auth.user.id,
+          mode: 'video',
+          videoModel: job.videoModel || 'current',
+          sourceImageUrl: job.sourceKey,
+          outputUrl: ingested.previewKey ? `r2:${ingested.previewKey}` : '',
+          outputKey: ingested.outputKey,
+          previewKey: ingested.previewKey,
+          locked: true,
+          paidWith: 'trial',
+          prompt: '',
+          quality: job.quality || '',
+          duration: typeof job.duration === 'number' ? job.duration : null,
+        });
+        await completeLockedJob(String(job._id), {
+          outputKey: ingested.outputKey,
+          previewKey: ingested.previewKey,
+          generationId: String(doc._id),
+        });
+        await recordUserGeneration(auth.user.id, 'video');
+        return {
+          status: 'completed',
+          outputUrl: ingested.previewKey ? displayMediaUrl(ingested.previewKey) : '',
+          locked: true,
+          id: String(doc._id),
+          archived: true,
+        };
+      } catch (err) {
+        console.error('Could not lock trial video; original was not sent to the client.', err);
+        await revertJobToCharged(String(job._id));
+        return { status: 'processing' };
+      }
+    }
+
     if (job.status === 'charged') {
       await markJobCompleted(String(job._id));
       await recordUserGeneration(auth.user.id, job.mode === 'image' ? 'image' : 'video');
     }
-    return { status, outputUrl };
+    return { status, outputUrl, locked: false };
   }
 
   if (status === 'failed' || status === 'cancelled' || status === 'timeout') {

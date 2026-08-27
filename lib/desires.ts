@@ -9,6 +9,7 @@ export type { VideoQuality };
 export type VideoQualityTier = 'basic' | 'better' | 'better720' | 'better1080';
 
 const STORAGE_KEY = 'slutbot-desires';
+const TRIAL_STORAGE_KEY = 'slutbot-trial-credits';
 const USER_CLIENT_KEY = 'slutbot-user-client-id';
 export const OPEN_PREMIUM_EVENT = 'slutbot:open-premium';
 export const DESIRES_UPDATED_EVENT = 'slutbot:desires-updated';
@@ -67,22 +68,40 @@ export function deductDesires(amount: number): boolean {
   return true;
 }
 
-export function hasEnoughDesires(amount: number): boolean {
-  return getDesires() >= amount;
+export function getTrialCredits(): number {
+  if (typeof window === 'undefined') return 0;
+  const raw = localStorage.getItem(TRIAL_STORAGE_KEY);
+  const parsed = raw ? Number(raw) : 0;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-export function remainingGenerations(amount: number): { images: number; videos: number } {
+export function setTrialCredits(amount: number) {
+  localStorage.setItem(TRIAL_STORAGE_KEY, String(Math.max(0, Math.round(amount))));
+}
+
+export function getPaidDesires(): number {
+  return Math.max(0, getDesires() - getTrialCredits());
+}
+
+export function remainingGenerations(amount: number, paidAmount = amount): { images: number; videos: number } {
   const coins = Math.max(0, Math.floor(amount));
+  const paid = Math.max(0, Math.floor(paidAmount));
   return {
     images: Math.floor(coins / DESIRE_COSTS.image),
-    videos: Math.floor(coins / DESIRE_COSTS.videoBetter),
+    videos: Math.floor(paid / DESIRE_COSTS.videoBetter),
   };
 }
 
-export function remainingGenerationsCopy(amount: number): string {
-  const { images, videos } = remainingGenerations(amount);
+export function remainingGenerationsCopy(amount: number, paidAmount = amount): string {
+  const { images, videos } = remainingGenerations(amount, paidAmount);
   const imageWord = images === 1 ? 'image' : 'images';
   const videoWord = videos === 1 ? 'video' : 'videos';
+  if (videos <= 0) {
+    return `${images.toLocaleString('en-US')} ${imageWord}`;
+  }
+  if (images <= 0) {
+    return `${videos.toLocaleString('en-US')} ${videoWord}`;
+  }
   return `${images.toLocaleString('en-US')} ${imageWord} or ${videos.toLocaleString('en-US')} ${videoWord}`;
 }
 
@@ -128,6 +147,7 @@ export async function refreshDesiresFromServer(_clientIdOverride?: string) {
   if (!getAuthToken()) {
     if (getDesires() !== 0) setDesires(0);
     localStorage.removeItem('slutbot-desires-server');
+    localStorage.removeItem(TRIAL_STORAGE_KEY);
     return 0;
   }
   try {
@@ -135,9 +155,18 @@ export async function refreshDesiresFromServer(_clientIdOverride?: string) {
     if (res.status === 401) {
       setDesires(0);
       localStorage.removeItem('slutbot-desires-server');
+      localStorage.removeItem(TRIAL_STORAGE_KEY);
       return 0;
     }
-    const data = (await res.json()) as { desires?: number; clientId?: string };
+    const data = (await res.json()) as {
+      desires?: number;
+      trialCredits?: number;
+      clientId?: string;
+    };
+    const trial = Number(data.trialCredits);
+    if (Number.isFinite(trial) && trial >= 0) {
+      setTrialCredits(trial);
+    }
     const server = Number(data.desires);
     if (Number.isFinite(server) && server >= 0) {
       setDesires(server);

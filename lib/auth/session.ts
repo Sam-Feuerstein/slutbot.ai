@@ -26,6 +26,7 @@ export function signOutClient() {
   clearAuthSession();
   localStorage.removeItem('slutbot-desires');
   localStorage.removeItem('slutbot-desires-server');
+  localStorage.removeItem('slutbot-trial-credits');
   window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));
   resetPosthog();
 }

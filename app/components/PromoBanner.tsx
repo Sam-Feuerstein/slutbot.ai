@@ -1,12 +1,74 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { GENERATOR_PATH } from '@/lib/site';
-import { uiMediaUrl } from '@/lib/presetMedia';
+import { prefersReducedMedia } from '@/lib/media/autoplay';
+import { generatorModePath } from '@/lib/site';
 
-const BANNER_VIDEO = uiMediaUrl('ui/banner-bg.mp4') || '/mock/spicybox/banner-bg-new.mp4';
-const BANNER_POSTER = '/brand/banner-poster.webp';
+const DEMO_1_POSTER = '/examples/example-ex-1.jpg';
+const DEMO_1_VIDEO = '/examples/example-ex-1.mp4';
+const DEMO_2_POSTER = '/examples/example-ex-2.jpg';
+const DEMO_2_VIDEO = '/examples/example-ex-2.mp4';
+
+const STEPS = ['Upload photo', 'Generate video or image', 'Save it.'] as const;
+
+function DemoVideo({
+  poster,
+  videoSrc,
+  priority = false,
+  autoplay = false,
+}: {
+  poster: string;
+  videoSrc: string;
+  priority?: boolean;
+  autoplay?: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playVideo, setPlayVideo] = useState(false);
+
+  useEffect(() => {
+    if (!videoSrc || !autoplay || prefersReducedMedia()) return;
+    setPlayVideo(true);
+  }, [videoSrc, autoplay]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !playVideo) return;
+    video.play().catch(() => undefined);
+  }, [playVideo]);
+
+  return (
+    <figure className="min-w-0 flex-1">
+      <div className="relative overflow-hidden rounded-lg border-[4px] border-[#ff2d78] bg-[#ff2d78] p-1 shadow-[5px_5px_0_0_#000] sm:rounded-xl sm:border-[5px] sm:p-1.5 sm:shadow-[6px_6px_0_0_#000]">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-black sm:rounded-lg">
+          <Image
+            src={poster}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 42vw, 280px"
+            priority={priority}
+            className="object-cover object-top"
+          />
+          {playVideo ? (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              poster={poster}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="none"
+              className="absolute inset-0 h-full w-full object-cover object-top"
+              aria-hidden
+            />
+          ) : null}
+        </div>
+      </div>
+    </figure>
+  );
+}
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -27,83 +89,70 @@ function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
-function canAutoplayBanner() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-  if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return false;
-  if (window.matchMedia('(max-width: 767px)').matches) return false;
-  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-}
-
 export default function PromoBanner() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [loadVideo, setLoadVideo] = useState(false);
+  const [playSecond, setPlaySecond] = useState(false);
 
   useEffect(() => {
-    if (!canAutoplayBanner()) return;
-    const root = sectionRef.current;
-    if (!root) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setLoadVideo(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 },
-    );
-    io.observe(root);
-    return () => io.disconnect();
+    if (prefersReducedMedia()) return;
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const update = () => setPlaySecond(desktop.matches);
+    update();
+    desktop.addEventListener('change', update);
+    return () => desktop.removeEventListener('change', update);
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden rounded-2xl border border-white/10 bg-black sm:rounded-[28px]"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={BANNER_POSTER}
-        alt=""
-        width={900}
-        height={502}
-        decoding="async"
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
+    <section className="overflow-hidden rounded-2xl border border-black/10 bg-white px-4 py-6 sm:rounded-[28px] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <DemoVideo poster={DEMO_1_POSTER} videoSrc={DEMO_1_VIDEO} priority autoplay />
+          <DemoVideo poster={DEMO_2_POSTER} videoSrc={DEMO_2_VIDEO} autoplay={playSecond} />
+        </div>
 
-      {loadVideo ? (
-        <video
-          src={BANNER_VIDEO}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="none"
-          poster={BANNER_POSTER}
-          className="absolute inset-0 h-full w-full object-cover object-center"
-          aria-hidden
-        />
-      ) : null}
+        <div className="min-w-0">
+          <h1 className="text-[1.28rem] font-extrabold leading-[1.18] tracking-tight text-white sm:text-[1.75rem] lg:text-[2rem]">
+            <span className="relative inline-block">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -left-1 -right-1 bottom-[0.08em] top-[0.22em] -skew-y-1 rounded-[3px] bg-black shadow-[2px_3px_0_rgba(0,0,0,0.28)] sm:-left-1.5 sm:-right-1.5 sm:bottom-[0.1em] sm:top-[0.2em]"
+              />
+              <span className="relative px-0.5">#1 Nude image and Video Generator</span>
+            </span>
+          </h1>
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/15" aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" aria-hidden />
+          <div className="mt-5 sm:mt-6">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#ff2d78]">
+              Easy steps
+            </p>
+            <ol className="mt-2.5 space-y-2">
+              {STEPS.map((step, index) => (
+                <li key={step} className="flex items-center gap-2.5 text-sm text-black/80 sm:text-base">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ff2d78] text-[11px] font-black text-white">
+                    {index + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
 
-      <div className="relative z-10 flex min-h-[200px] flex-col justify-center px-4 py-6 sm:min-h-[260px] sm:px-10 sm:py-10 lg:min-h-[300px] lg:max-w-[62%] lg:px-12">
-        <h1 className="text-[1.28rem] font-extrabold uppercase leading-[1.12] tracking-tight text-white sm:text-[1.75rem] lg:text-[2rem]">
-          Upload any photo of her and get a hot 18+ video in just 2 minutes 🔥
-        </h1>
-
-        <p className="mt-3 max-w-lg text-sm text-white/75 sm:text-base">
-          Give it a try. Generate your AI Slut Bot!
-        </p>
-
-        <Link
-          href={GENERATOR_PATH}
-          className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-full bg-white px-6 py-3 text-sm font-extrabold uppercase tracking-wide text-[#ff2d78] shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-transform hover:bg-white/95 active:scale-[0.99] sm:mt-6 sm:w-fit sm:hover:scale-[1.02]"
-        >
-          <SparkleIcon className="h-5 w-5 shrink-0" />
-          Generate now
-        </Link>
+          <div className="mt-6 flex flex-col gap-3 sm:mt-7 sm:flex-row sm:flex-wrap">
+            <Link
+              href={generatorModePath('video')}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ffe600] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:w-auto"
+            >
+              <SparkleIcon className="h-4 w-4 shrink-0" />
+              Try Undress AI Videos
+            </Link>
+            <Link
+              href={generatorModePath('image')}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ff2d78] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:w-auto"
+            >
+              <SparkleIcon className="h-4 w-4 shrink-0" />
+              Try Undress AI Images
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );

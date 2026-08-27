@@ -4,6 +4,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
+import { publicBalanceFields } from '@/lib/users/wallet';
 
 function planLabel(planId: string) {
   return PREMIUM_PLANS.find((plan) => plan.id === planId)?.tier ?? planId;
@@ -35,10 +36,13 @@ export async function GET(req: NextRequest) {
     createdAt?: Date;
   }>;
 
+  const balance = publicBalanceFields(user);
   return NextResponse.json({
     email: user.email,
     name: user.name || '',
-    desires: user.desires ?? 0,
+    desires: balance.desires,
+    paidDesires: balance.paidDesires,
+    trialCredits: balance.trialCredits,
     clientId: user.clientId,
     avatarUrl: user.avatarUrl || '',
     hasPassword: Boolean(user.passwordHash),
@@ -99,10 +103,11 @@ export async function PATCH(req: NextRequest) {
 
   await user.save();
 
+  const balance = publicBalanceFields(user);
   return NextResponse.json({
     email: user.email,
     name: user.name || '',
-    desires: user.desires ?? 0,
+    desires: balance.desires,
   });
 }
 

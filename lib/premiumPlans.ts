@@ -105,17 +105,27 @@ function definePlan(input: {
   stars: number;
   badge?: PremiumPlan['badge'];
   bonusPercent?: number;
+  desires?: number;
+  imageGenerations?: number;
+  videoGenerations?: number;
   features: PremiumPlan['features'];
 }): PremiumPlan {
   const price = usdFromStars(input.stars);
   const baseCoins = slutcoinsForUsd(price);
   const bonusPercent = input.bonusPercent ?? 0;
-  const desires =
+  const formulaCoins =
     bonusPercent > 0 ? Math.round((baseCoins * (100 + bonusPercent)) / 100) : baseCoins;
+  const imageGenerations =
+    input.imageGenerations ?? Math.floor((input.desires ?? formulaCoins) / DESIRE_COSTS.image);
+  const videoGenerations =
+    input.videoGenerations ?? Math.floor((input.desires ?? formulaCoins) / DESIRE_COSTS.videoBetter);
+  const desires = Math.max(
+    input.desires ?? formulaCoins,
+    imageGenerations * DESIRE_COSTS.image,
+    videoGenerations * DESIRE_COSTS.videoBetter,
+  );
   const baseImageGenerations = Math.floor(baseCoins / DESIRE_COSTS.image);
   const baseVideoGenerations = Math.floor(baseCoins / DESIRE_COSTS.videoBetter);
-  const imageGenerations = Math.floor(desires / DESIRE_COSTS.image);
-  const videoGenerations = Math.floor(desires / DESIRE_COSTS.videoBetter);
   return {
     ...input,
     price,
@@ -183,9 +193,28 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
     id: 'flirt',
     tier: 'Flirt',
-    subtitle: 'Starter',
     stars: 1000,
     badge: 'Most chosen',
+    imageGenerations: 60,
+    videoGenerations: 30,
+    features: features({
+      proExports: 'check',
+      ultraHd: 'check',
+      history48h: 'check',
+      faster: 'check',
+      fullVideo: 'check',
+      highQuality: 'check',
+      priority: 'check',
+    }),
+  }),
+  definePlan({
+    id: 'mini',
+    tier: 'Mini',
+    subtitle: 'Starter',
+    stars: 500,
+    desires: 60,
+    imageGenerations: 15,
+    videoGenerations: 4,
     features: features({
       proExports: 'check',
       ultraHd: 'check',

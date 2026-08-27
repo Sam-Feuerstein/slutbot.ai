@@ -15,6 +15,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function HomePage() {
   return (
     <>
+      <link rel="preload" as="image" href="/examples/example-ex-1.jpg" />
       <JsonLd data={softwareApplicationJsonLd()} />
       <HomeClient />
       <HomeSeoSection />

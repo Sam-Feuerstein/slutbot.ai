@@ -26,7 +26,7 @@ const CARDS = [
   {
     href: '/admin/analytics',
     title: 'Analytics',
-    copy: 'Total clicks, page views, and checkout Pay / pack / method totals.',
+    copy: 'Total visits, clicks, and checkout Pay / pack / method totals.',
     key: 'users' as const,
   },
   {
@@ -42,6 +42,8 @@ type Overview = {
   totalUsers: number;
   paidUsers: number;
   freeUsers: number;
+  pwaInstalls: number;
+  totalVisits: number;
   daily: Array<{ day: string; paid: number; free: number }>;
 };
 
@@ -136,7 +138,7 @@ export default function AdminOverviewPage() {
 
       {error ? <p className="mb-4 text-sm text-rose-300">{error}</p> : null}
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="!p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total paid</p>
           <p className="mt-3 text-3xl font-black tracking-tight">
@@ -151,6 +153,20 @@ export default function AdminOverviewPage() {
           <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalUsers : '—'}</p>
           <p className="mt-1 text-xs text-white/40">
             {data ? `${data.freeUsers} free` : ''}
+          </p>
+        </Panel>
+        <Panel className="!p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total visits</p>
+          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalVisits.toLocaleString('en-US') : '—'}</p>
+          <p className="mt-1 text-xs text-white/40">
+            <Link href="/admin/analytics" className="text-[#ff6b9d] hover:text-white">Open analytics →</Link>
+          </p>
+        </Panel>
+        <Panel className="!p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">App installs</p>
+          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.pwaInstalls : '—'}</p>
+          <p className="mt-1 text-xs text-white/40">
+            <Link href="/admin/app" className="text-[#ff6b9d] hover:text-white">Open list →</Link>
           </p>
         </Panel>
       </div>

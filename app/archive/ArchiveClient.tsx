@@ -4,6 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Download, ImageIcon, Loader2, Trash2, Video } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
+import LockedVideoCard from '../components/LockedVideoCard';
+import {
+  GENERATION_COMPLETE_EVENT,
+  useOptionalGenerationJobs,
+} from '../components/GenerationJobsProvider';
 import { deleteAiToolGeneration, listAiToolGenerations } from '@/lib/actions/wavespeedImageToVideo';
 import {
   downloadResult,
@@ -26,6 +31,9 @@ export default function ArchiveClient() {
   const [items, setItems] = useState<AiToolGenerationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const generationJobs = useOptionalGenerationJobs();
+  const inFlight =
+    generationJobs?.jobs.filter((job) => job.phase === 'uploading' || job.phase === 'generating') ?? [];
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +47,15 @@ export default function ArchiveClient() {
       setItems(mergeCollection(result.items, local));
       setLoading(false);
     })();
+    const onComplete = (event: Event) => {
+      const item = (event as CustomEvent<AiToolGenerationRecord>).detail;
+      if (!item?.id) return;
+      setItems((current) => mergeCollection([item], current));
+    };
+    window.addEventListener(GENERATION_COMPLETE_EVENT, onComplete);
     return () => {
       cancelled = true;
+      window.removeEventListener(GENERATION_COMPLETE_EVENT, onComplete);
     };
   }, []);
 
@@ -69,14 +84,14 @@ export default function ArchiveClient() {
           </Link>
         </div>
 
-        {loading ? (
+        {loading && items.length === 0 && inFlight.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-20 text-white/60">
             <Loader2 className="h-5 w-5 animate-spin" />
             Loading...
           </div>
-        ) : error ? (
+        ) : error && items.length === 0 && inFlight.length === 0 ? (
           <p className="text-sm font-medium text-red-400">{error}</p>
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && inFlight.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
             <p className="text-sm text-white/60">No generations yet.</p>
             <Link href={GENERATOR_PATH} className="mt-4 inline-block text-sm font-semibold text-[#ff2d78] hover:underline">
@@ -85,10 +100,32 @@ export default function ArchiveClient() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {inFlight.map((job) => (
+              <article
+                key={job.localId}
+                className="overflow-hidden rounded-2xl border border-[#ff2d78]/30 bg-white/[0.03]"
+              >
+                <div className="relative aspect-[3/4] bg-black">
+                  {job.previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={job.previewUrl} alt="" className="h-full w-full scale-105 object-cover blur-[2px]" />
+                  ) : null}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/55 px-4 text-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#ff2d78]" />
+                    <p className="mt-3 text-sm font-bold text-white">
+                      {job.mode === 'image' ? 'Generating image' : 'Generating video'}
+                    </p>
+                    <p className="mt-1 text-xs text-white/55">This stays here when it finishes</p>
+                  </div>
+                </div>
+              </article>
+            ))}
             {items.map((item) => (
               <article key={item.id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
                 <div className="relative aspect-[3/4] bg-black">
-                  {item.mode === 'video' ? (
+                  {item.mode === 'video' && item.locked ? (
+                    <LockedVideoCard previewUrl={item.outputUrl} className="h-full w-full" />
+                  ) : item.mode === 'video' ? (
                     <video
                       src={item.outputUrl}
                       className="h-full w-full object-contain"
@@ -102,7 +139,7 @@ export default function ArchiveClient() {
                   )}
                   <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                     {item.mode === 'video' ? <Video className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                    {item.mode}
+                    {item.locked ? 'locked' : item.mode}
                   </div>
                 </div>
                 <div className="space-y-3 p-4">
@@ -121,19 +158,21 @@ export default function ArchiveClient() {
                     </p>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void downloadResult(
-                          item.outputUrl,
-                          `slutbot-${item.mode}.${item.mode === 'video' ? 'mp4' : 'jpg'}`,
-                        )
-                      }
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#ff2d78] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#ff1a6b]"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Download
-                    </button>
+                    {!item.locked ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadResult(
+                            item.outputUrl,
+                            `slutbot-${item.mode}.${item.mode === 'video' ? 'mp4' : 'jpg'}`,
+                          )
+                        }
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#ff2d78] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#ff1a6b]"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => void onDelete(item)}

@@ -25,6 +25,7 @@ export default function OauthCompleteClient() {
           name?: string;
           avatarUrl?: string;
           desires?: number;
+          trialCredits?: number;
           message?: string;
         };
 
@@ -43,6 +44,9 @@ export default function OauthCompleteClient() {
         });
         localStorage.setItem('slutbot-desires', String(data.desires ?? 0));
         localStorage.setItem('slutbot-desires-server', String(data.desires ?? 0));
+        if (typeof data.trialCredits === 'number') {
+          localStorage.setItem('slutbot-trial-credits', String(Math.max(0, data.trialCredits)));
+        }
         window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));
         router.replace(redirect);
       } catch {

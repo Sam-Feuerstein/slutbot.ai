@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Flame, ImagePlus, RefreshCw, X } from 'lucide-react';
+import Image from 'next/image';
 import type { HomePreset } from '@/lib/homePresets';
 import {
   getPresetMainImageUrl,
@@ -142,16 +143,13 @@ export default function HomePresetCard({
 
   const mainVisual = presetHasVideo(preset) ? (
     <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={posterSrc}
         alt=""
-        width={320}
-        height={420}
-        loading={eager ? 'eager' : 'lazy'}
-        fetchPriority={eager ? 'high' : 'auto'}
-        decoding="async"
-        className="pointer-events-none relative h-full w-full select-none object-cover transition-[filter] duration-500"
+        fill
+        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+        priority={eager}
+        className="pointer-events-none select-none object-cover transition-[filter] duration-500"
       />
       {active && previewSrc ? (
         <video
@@ -162,17 +160,19 @@ export default function HomePresetCard({
           muted
           playsInline
           autoPlay
-          preload="metadata"
+          preload="none"
           className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
         />
       ) : null}
     </>
   ) : (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={mainImageSrc}
       alt=""
-      className="pointer-events-none relative h-full w-full select-none object-cover transition-[filter] duration-500"
+      fill
+      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+      priority={eager}
+      className="pointer-events-none select-none object-cover transition-[filter] duration-500"
     />
   );
 
@@ -202,9 +202,8 @@ export default function HomePresetCard({
         }`}
       >
         <div className="flex w-full flex-col gap-[16cqi]">
-          <div className="card-thumb-swing aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={sourceSrc} alt="" className="h-full w-full object-cover" />
+          <div className="card-thumb-swing relative aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
+            <Image src={sourceSrc} alt="" fill sizes="80px" className="object-cover" />
           </div>
           <ArrowCurve />
         </div>

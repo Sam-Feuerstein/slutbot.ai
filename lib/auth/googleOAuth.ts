@@ -6,6 +6,7 @@ import { getAppUrl } from '@/lib/site';
 import { newClientId } from '@/lib/auth/slutbotAuth';
 import { requireJwtSecret } from '@/lib/auth/secrets';
 import { envValue } from '@/lib/env';
+import { trialGrantFields } from '@/lib/trial/grant';
 
 type GoogleOAuthConfig = {
   clientId: string;
@@ -121,7 +122,7 @@ export async function fetchGoogleProfile(accessToken: string): Promise<GooglePro
   };
 }
 
-export async function findOrCreateGoogleUser(profile: GoogleProfile) {
+export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '') {
   await connectDB();
 
   let user = await SlutbotUser.findOne({ googleId: profile.id });
@@ -132,6 +133,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     user.lastLoginAt = new Date();
     if (!user.name && profile.name) user.name = profile.name;
     if (profile.picture) user.avatarUrl = profile.picture;
+    if (!user.signupCountry && country) user.signupCountry = country;
     await user.save();
     return user;
   }
@@ -145,10 +147,12 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     user.lastLoginAt = new Date();
     if (!user.name && profile.name) user.name = profile.name;
     if (profile.picture) user.avatarUrl = profile.picture;
+    if (!user.signupCountry && country) user.signupCountry = country;
     await user.save();
     return user;
   }
 
+  const trial = trialGrantFields(country);
   return SlutbotUser.create({
     email: profile.email,
     name: profile.name,
@@ -158,5 +162,6 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile) {
     desires: 0,
     banned: false,
     lastLoginAt: new Date(),
+    ...trial,
   });
 }

@@ -1,6 +1,7 @@
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser, SlutbotWallet } from '@/lib/models';
 import { getCheckoutPlan } from '@/lib/payments/catalog';
+import { unlockLockedGenerationsForUser } from '@/lib/trial/unlock';
 
 function isDupKey(err: unknown) {
   return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: number }).code === 11000);
@@ -69,6 +70,28 @@ export async function creditDesires(input: {
     const linkedUser = await creditClientWallet(input.clientId, plan.desires, input.chargeId);
     if (linkedUser) {
       await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { userId: linkedUser._id } });
+      try {
+        await unlockLockedGenerationsForUser(String(linkedUser._id));
+      } catch (err) {
+        console.error('Could not unlock trial videos after payment:', err);
+      }
+    }
+
+    try {
+      const { notifyAdminsOfSale } = await import('@/lib/notifyAdmins');
+      const user = linkedUser;
+      const username =
+        user?.name?.trim() ||
+        (typeof user?.email === 'string' ? user.email.split('@')[0] : '') ||
+        undefined;
+      await notifyAdminsOfSale({
+        planId: input.planId,
+        method: input.provider === 'telegram_stars' ? 'stars' : 'crypto',
+        username,
+        usd: input.usdAmount,
+      });
+    } catch (err) {
+      console.error('Could not notify admins of sale:', err);
     }
   } catch (err) {
     await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { walletCredited: false } });

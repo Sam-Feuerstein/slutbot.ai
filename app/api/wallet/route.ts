@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/lib/db/mongodb';
+import { SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
-import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
+import { isAdminAppUserEmail } from '@/lib/auth/adminUser';
+import { publicBalanceFields } from '@/lib/users/wallet';
 
 export async function GET(req: NextRequest) {
   const user = await authenticateSlutbotUser(req);
   if (!user) return NextResponse.json({ message: 'Sign in required.' }, { status: 401 });
 
-  const desires = isAdminAppUserEmail(user.email) ? ADMIN_INFINITE_DESIRES : user.desires;
+  await connectDB();
+  const doc = (await SlutbotUser.findById(user.id).select('desires trialCredits email').lean()) as {
+    desires?: number;
+    trialCredits?: number;
+    email?: string;
+  } | null;
+  const balance = publicBalanceFields(doc || user);
+
   return NextResponse.json({
-    desires,
+    ...balance,
     clientId: user.clientId,
     source: 'user',
-    ...(isAdminAppUserEmail(user.email) ? { infinite: true, isAdmin: true } : {}),
+    ...(isAdminAppUserEmail(user.email) ? { isAdmin: true } : {}),
   });
 }

@@ -1,9 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { LogOut, User, X } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import Breadcrumbs from './Breadcrumbs';
 import UserAvatar from './UserAvatar';
@@ -22,11 +23,12 @@ import {
   formatDesireBalance,
   getAuthToken,
   getDesires,
+  getPaidDesires,
   openPremiumPlans,
   refreshDesiresFromServer,
   remainingGenerationsCopy,
 } from '@/lib/desires';
-import { GENERATOR_PATH, loginHref, ACCOUNT_PATH } from '@/lib/site';
+import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -48,7 +50,7 @@ function SparkleIcon({ className }: { className?: string }) {
 }
 
 const MENU_LINKS = [
-  { href: '/', label: 'Explore' },
+  { href: EXPLORE_PATH, label: 'Explore' },
   { href: GENERATOR_PATH, label: 'AI porn generator' },
   { href: '/archive', label: 'My Collection' },
   { href: ACCOUNT_PATH, label: 'Account', signedInOnly: true },
@@ -58,11 +60,10 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [desires, setDesires] = useState(0);
   const [signedIn, setSignedIn] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const refreshAuth = useCallback(() => {
     const token = getAuthToken();
@@ -105,34 +106,13 @@ export default function SiteHeader() {
   }, [menuOpen]);
 
   useEffect(() => {
-    if (!accountOpen) return;
-
-    function onPointerDown(event: MouseEvent) {
-      if (!accountMenuRef.current?.contains(event.target as Node)) {
-        setAccountOpen(false);
-      }
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setAccountOpen(false);
-    }
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [accountOpen]);
-
-  useEffect(() => {
-    setAccountOpen(false);
-  }, [pathname]);
-
-  const userLabel = profile ? displayName(profile) : 'Account';
+    const onScroll = () => setScrolled(window.scrollY > 6);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   function logOut() {
-    setAccountOpen(false);
     setMenuOpen(false);
     signOutClient();
     router.push('/');
@@ -140,114 +120,55 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className="relative sticky top-0 z-50 border-b border-[#ff2d78]/25 bg-[#4a122c] pt-[var(--safe-top)] md:bg-[#4a122c]/95 md:backdrop-blur-md">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-[min(52%,28rem)] bg-[linear-gradient(90deg,#000_0%,#000_38%,transparent_100%)]"
-        />
-        <div className="safe-x relative mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-2 sm:h-20 sm:gap-4">
-          <Link href="/" aria-label="AI SLUTBOT home" className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo className="h-[44px] w-auto sm:h-[56px]" />
+      <header
+        className={`relative sticky top-0 z-50 border-b border-[#ff2d78]/20 bg-[#4a122c] bg-[linear-gradient(90deg,#000_0%,#4a122c_72%)] pt-[calc(var(--safe-top)+0.375rem)] transition-shadow duration-200 sm:pt-[calc(var(--safe-top)+0.5rem)] ${
+          scrolled ? 'shadow-[0_10px_28px_rgba(0,0,0,0.38)]' : ''
+        }`}
+      >
+        <div className="safe-x relative mx-auto flex min-h-[4.5rem] max-w-[1600px] items-center justify-between gap-2 py-2 sm:min-h-[5.5rem] sm:gap-4 sm:py-2.5">
+          <Link href="/" aria-label="AI SLUTBOT home" className="flex min-w-0 translate-y-0.5 items-center gap-3 sm:gap-4">
+            <BrandLogo className="h-[57px] w-auto sm:h-[73px]" priority />
 
             <div className="hidden h-7 w-px shrink-0 bg-white/20 sm:block" />
 
-            <span className="hidden truncate text-[11px] font-medium uppercase tracking-[0.14em] text-white/55 sm:block">
-              #1 Adult Video Generator
+            <span className="hidden truncate text-[11px] font-semibold tracking-[0.06em] text-white/65 sm:block">
+              #1 Nude image and Video Generator
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-2 md:flex">
-            <Link
-              href="/"
-              className={`inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
-                pathname === '/'
-                  ? 'border-[#ff2d78]/50 bg-[#ff2d78]/15 text-white'
-                  : 'border-white/15 bg-white/[0.06] text-white/80 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              Explore
-            </Link>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <Link
               href={GENERATOR_PATH}
-              className={`inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
+              className={`inline-flex h-9 items-center rounded-md border-[2.5px] border-black bg-[#ff2d78] px-2.5 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
                 pathname === GENERATOR_PATH || pathname.startsWith(`${GENERATOR_PATH}/`)
-                  ? 'border-[#ff2d78]/50 bg-[#ff2d78]/15 text-white'
-                  : 'border-white/15 bg-white/[0.06] text-white/80 hover:bg-white/10 hover:text-white'
+                  ? 'bg-[#ff4d90]'
+                  : ''
               }`}
             >
-              AI porn generator
+              Undress Anyone
             </Link>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-            {signedIn ? (
-              <div ref={accountMenuRef} className="relative z-[60]">
-                <button
-                  type="button"
-                  aria-haspopup="menu"
-                  aria-expanded={accountOpen}
-                  aria-label={`${userLabel} account menu`}
-                  title={userLabel}
-                  onClick={() => setAccountOpen((open) => !open)}
-                  className="inline-flex h-10 min-h-10 max-w-[11rem] items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] py-1 pl-1 pr-2 text-white transition-colors hover:bg-white/10 sm:h-9 sm:max-w-[13rem] sm:pr-2.5"
-                >
-                  <UserAvatar
-                    name={profile?.name || ''}
-                    email={profile?.email || ''}
-                    avatarUrl={profile?.avatarUrl}
-                    size={30}
-                  />
-                  <span className="hidden min-w-0 truncate text-xs font-bold text-white/90 sm:inline">
-                    {userLabel}
-                  </span>
-                  <ChevronDown className={`hidden h-3.5 w-3.5 shrink-0 text-white/55 sm:block ${accountOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {accountOpen ? (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-[calc(100%+0.5rem)] z-[100] w-52 overflow-hidden rounded-2xl border border-white/10 bg-[#141414] py-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
-                  >
-                    <p className="truncate px-3.5 pb-1.5 pt-1 text-[11px] font-semibold text-white/45">
-                      {userLabel}
-                    </p>
-                    <Link
-                      href={ACCOUNT_PATH}
-                      role="menuitem"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3.5 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/[0.06]"
-                    >
-                      Account
-                    </Link>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={logOut}
-                      className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm font-semibold text-white/90 hover:bg-white/[0.06]"
-                    >
-                      <LogOut className="h-3.5 w-3.5 text-white/50" />
-                      Log out
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <Link
-                href={loginHref(pathname)}
-                className="hidden h-9 items-center rounded-full border border-white/15 bg-white/[0.06] px-3 text-xs font-bold text-white/80 hover:bg-white/10 sm:inline-flex"
-              >
-                Sign in
-              </Link>
-            )}
 
             <button
               type="button"
               aria-label={`Open menu, ${formatDesireBalance(desires)} ${CURRENCY_NAME}`}
               onClick={() => setMenuOpen(true)}
-              className="inline-flex h-10 min-h-10 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-2.5 text-white transition-colors hover:bg-white/10 sm:h-9 sm:gap-2 sm:px-3"
+              className="inline-flex h-10 min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] py-1 pl-2.5 pr-1 text-white transition-colors hover:bg-white/10 sm:h-9 sm:gap-2 sm:pl-3"
             >
               <SparkleIcon className="h-4 w-4 text-[#ff2d78] sm:h-[18px] sm:w-[18px]" />
               <span className="text-sm font-semibold tabular-nums">{formatDesireBalance(desires)}</span>
-              <Menu className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
+              {signedIn ? (
+                <UserAvatar
+                  name={profile?.name || ''}
+                  email={profile?.email || ''}
+                  avatarUrl={profile?.avatarUrl}
+                  size={28}
+                  className="ring-1 ring-white/30"
+                />
+              ) : (
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+                  <User className="h-3.5 w-3.5 text-white/80" />
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -262,16 +183,16 @@ export default function SiteHeader() {
             className="absolute inset-0 bg-black/70 md:backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="absolute right-0 top-0 flex h-full w-[min(100%,360px)] flex-col border-l border-white/10 bg-[#0a0a0a] px-5 pb-[max(1.25rem,var(--safe-bottom))] pt-[max(1.25rem,var(--safe-top))] shadow-2xl">
-            <div className="mb-6 flex items-center justify-between">
-              <span className="text-lg font-bold text-white">Menu</span>
+          <aside className="absolute right-0 top-0 flex h-full w-[min(82vw,280px)] flex-col overflow-visible border-l border-[#ff2d78]/25 bg-[#4a122c] px-3 pb-[max(1rem,var(--safe-bottom))] pt-[max(0.875rem,var(--safe-top))] shadow-2xl sm:w-[min(100%,300px)]">
+            <div className="relative mb-3 flex items-center justify-between">
+              <span className="text-[12px] font-bold uppercase tracking-[0.14em] text-white/50">Menu</span>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMenuOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
 
@@ -279,17 +200,17 @@ export default function SiteHeader() {
               <Link
                 href={ACCOUNT_PATH}
                 onClick={() => setMenuOpen(false)}
-                className="mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.06]"
+                className="relative mb-2.5 flex items-center gap-2 rounded-lg border border-white/12 bg-black/20 px-2 py-1.5 transition-colors hover:bg-black/30"
               >
                 <UserAvatar
                   name={profile.name}
                   email={profile.email}
                   avatarUrl={profile.avatarUrl}
-                  size={40}
+                  size={28}
                 />
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-white">{displayName(profile)}</p>
-                  <p className="truncate text-xs text-white/50">{profile.email}</p>
+                  <p className="truncate text-[13px] font-semibold text-white">{displayName(profile)}</p>
+                  <p className="truncate text-[10px] text-white/45">{profile.email}</p>
                 </div>
               </Link>
             ) : null}
@@ -300,28 +221,37 @@ export default function SiteHeader() {
                 setMenuOpen(false);
                 openPremiumPlans();
               }}
-              className="mb-4 w-full rounded-xl border border-[#ff2d78]/30 bg-[#ff2d78]/10 px-4 py-3.5 text-left transition-colors hover:bg-[#ff2d78]/15"
+              className="relative mb-2 w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2 text-left transition-colors hover:bg-black/35"
             >
-              <p className="flex items-center gap-2 text-sm font-bold text-white">
-                <SparkleIcon className="h-4 w-4 text-[#ff2d78]" />
+              <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
+                <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78]" />
                 <span className="tabular-nums">{desires.toLocaleString('en-US')}</span>
-                <span>{CURRENCY_NAME}</span>
+                <span className="truncate font-semibold text-white/70">{CURRENCY_NAME}</span>
+                <span className="ml-auto shrink-0 text-[10px] font-semibold text-[#ff9dbe]">Get more</span>
               </p>
-              <p className="mt-1 text-xs leading-snug text-white/60">
+              <p className="mt-1 text-[10px] leading-snug text-white/50">
                 {desires < DESIRE_COSTS.image
                   ? 'Buy more to generate images or videos.'
-                  : `Enough for ${remainingGenerationsCopy(desires)}`}
+                  : `Enough for ${remainingGenerationsCopy(desires, getPaidDesires())}`}
               </p>
-              <p className="mt-2 text-xs font-semibold text-[#ff9dbe]">Get more</p>
             </button>
 
-            <nav className="flex flex-col gap-1">
+            <Link
+              href={GENERATOR_PATH}
+              onClick={() => setMenuOpen(false)}
+              className="relative mb-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-[#ff2d78] px-3 text-[12px] font-bold text-white shadow-[0_0_16px_rgba(255,45,120,0.4)] transition-opacity hover:opacity-95"
+            >
+              <SparkleIcon className="h-3.5 w-3.5" />
+              Generate now
+            </Link>
+
+            <nav className="relative flex flex-1 flex-col gap-0.5 overflow-y-auto border-t border-white/15 pb-[min(34vh,16rem)] pt-2">
               {MENU_LINKS.filter((link) => !link.signedInOnly || signedIn).map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-4 py-3.5 text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
+                  className="rounded-lg px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
                 >
                   {label}
                 </Link>
@@ -330,7 +260,7 @@ export default function SiteHeader() {
                 <Link
                   href={loginHref(pathname)}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-4 py-3.5 text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
+                  className="rounded-lg px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
                 >
                   Sign in
                 </Link>
@@ -338,23 +268,31 @@ export default function SiteHeader() {
                 <button
                   type="button"
                   onClick={logOut}
-                  className="flex items-center gap-2 rounded-xl px-4 py-3.5 text-left text-base font-semibold text-white/85 transition-colors hover:bg-white/[0.06]"
+                  className="mt-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[12px] font-semibold text-white/55 transition-colors hover:bg-black/25 hover:text-white"
                 >
-                  <LogOut className="h-4 w-4 text-white/50" />
+                  <LogOut className="h-3.5 w-3.5" />
                   Log out
                 </button>
               )}
             </nav>
 
-            <div className="mt-auto space-y-2 border-t border-white/10 pt-5">
-              <Link
-                href={GENERATOR_PATH}
-                onClick={() => setMenuOpen(false)}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ff2d78] px-4 py-3 text-sm font-bold text-white shadow-[0_0_20px_rgba(255,45,120,0.45)]"
-              >
-                <SparkleIcon className="h-[18px] w-[18px]" />
-                Generate now
-              </Link>
+            <div className="pointer-events-none absolute inset-x-0 bottom-[max(0.25rem,var(--safe-bottom))] z-10 flex justify-center overflow-visible">
+              <div
+                aria-hidden
+                className="absolute bottom-6 left-1/2 h-28 w-[88%] -translate-x-1/2 rounded-full bg-[#ff2d78]/30 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="absolute bottom-2 left-1/2 h-10 w-[70%] -translate-x-1/2 rounded-full bg-[#ff2d78]/45 blur-xl"
+              />
+              <Image
+                src="/brand/menu-mascot.png"
+                alt=""
+                width={504}
+                height={994}
+                className="relative h-[min(42vh,26rem)] w-auto max-w-none translate-x-2 select-none object-contain object-bottom drop-shadow-[0_18px_36px_rgba(255,45,120,0.42)] sm:h-[min(46vh,29rem)] sm:translate-x-3"
+                priority={false}
+              />
             </div>
           </aside>
         </div>

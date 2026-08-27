@@ -3,6 +3,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotToken } from '@/lib/auth/slutbotAuth';
 import { setSessionCookie } from '@/lib/auth/sessionCookie';
+import { publicBalanceFields } from '@/lib/users/wallet';
 
 const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
       name: user.name || '',
       avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
-      desires: user.desires ?? 0,
+      ...publicBalanceFields(user),
     });
     setSessionCookie(response, token);
     response.cookies.set(OAUTH_LOGIN_COOKIE, '', {

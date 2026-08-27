@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import JsonLd from './JsonLd';
 import { faqJsonLd } from '@/lib/seo';
-import { GENERATOR_PATH } from '@/lib/site';
+import { EXPLORE_PATH, GENERATOR_PATH } from '@/lib/site';
 
 const COMPETITOR_LINKS: { label: string; href: string }[] = [
   { label: 'Undress AI', href: '/undress-ai' },
@@ -59,7 +59,11 @@ export default function HomeSeoSection() {
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-white/65 sm:text-base">
         <p>
           AI SLUTBOT lets you upload any photo and generate uncensored adult AI images and short videos in your browser.
-          Browse 160+ presets — blowjob, cumshot, doggy, missionary, and more — or open the{' '}
+          Browse 160+ presets — blowjob, cumshot, doggy, missionary, and more — in{' '}
+          <Link href={EXPLORE_PATH} className="text-white underline underline-offset-2 hover:text-white/80">
+            Explore
+          </Link>{' '}
+          or open the{' '}
           <Link href={GENERATOR_PATH} className="text-white underline underline-offset-2 hover:text-white/80">
             AI porn generator
           </Link>{' '}

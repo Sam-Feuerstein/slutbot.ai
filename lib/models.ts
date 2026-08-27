@@ -8,12 +8,18 @@ const aiToolGenerationSchema = new Schema(
     videoModel: { type: String, enum: ['cheap', 'current'], default: null },
     sourceImageUrl: { type: String, required: true },
     outputUrl: { type: String, required: true },
+    outputKey: { type: String, default: '' },
+    previewKey: { type: String, default: '' },
+    locked: { type: Boolean, default: false, index: true },
+    paidWith: { type: String, enum: ['paid', 'trial', 'admin'], default: 'paid' },
     prompt: { type: String, default: '' },
     quality: { type: String, default: '' },
     duration: { type: Number, default: null },
   },
   { timestamps: true, collection: 'aitoolgenerations' },
 );
+
+aiToolGenerationSchema.index({ outputKey: 1 });
 
 export const AiToolGeneration =
   models.AiToolGeneration || model('AiToolGeneration', aiToolGenerationSchema);
@@ -27,10 +33,15 @@ const slutbotUserSchema = new Schema(
     avatarUrl: { type: String, default: '' },
     clientId: { type: String, required: true, unique: true, index: true },
     desires: { type: Number, default: 0 },
+    trialCredits: { type: Number, default: 0 },
+    trialGranted: { type: Boolean, default: false },
+    trialGrantedAt: { type: Date, default: null },
+    signupCountry: { type: String, default: '', uppercase: true, index: true },
     banned: { type: Boolean, default: false },
     imageGens: { type: Number, default: 0 },
     videoGens: { type: Number, default: 0 },
     lastLoginAt: { type: Date, default: null },
+    pwaInstalledAt: { type: Date, default: null },
   },
   { timestamps: true, collection: 'slutbotusers' },
 );
@@ -89,11 +100,16 @@ const generationJobSchema = new Schema(
     cost: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['charged', 'completed', 'failed', 'refunded'],
+      enum: ['charged', 'ingesting', 'completed', 'failed', 'refunded'],
       default: 'charged',
       index: true,
     },
     sourceKey: { type: String, default: '' },
+    paidWith: { type: String, enum: ['paid', 'trial', 'admin'], default: 'paid' },
+    locked: { type: Boolean, default: false },
+    outputKey: { type: String, default: '' },
+    previewKey: { type: String, default: '' },
+    generationId: { type: String, default: '' },
   },
   { timestamps: true, collection: 'generationjobs' },
 );
@@ -223,3 +239,29 @@ slutbotCouponRedemptionSchema.index({ couponId: 1, userId: 1 }, { unique: true }
 
 export const SlutbotCouponRedemption =
   models.SlutbotCouponRedemption || model('SlutbotCouponRedemption', slutbotCouponRedemptionSchema);
+
+const adminPushSubscriptionSchema = new Schema(
+  {
+    endpoint: { type: String, required: true, unique: true },
+    keys: {
+      p256dh: { type: String, required: true },
+      auth: { type: String, required: true },
+    },
+  },
+  { timestamps: true, collection: 'adminpushsubscriptions' },
+);
+
+export const AdminPushSubscription =
+  models.AdminPushSubscription || model('AdminPushSubscription', adminPushSubscriptionSchema);
+
+const pwaInstallSchema = new Schema(
+  {
+    clientId: { type: String, required: true, unique: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'SlutbotUser', default: null, index: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { timestamps: false, collection: 'pwainstalls' },
+);
+pwaInstallSchema.index({ createdAt: -1 });
+
+export const PwaInstall = models.PwaInstall || model('PwaInstall', pwaInstallSchema);

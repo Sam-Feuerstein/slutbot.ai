@@ -13,6 +13,7 @@ const NAV = [
     items: [
       { href: '/admin', label: 'Overview', match: 'exact' as const },
       { href: '/admin/analytics', label: 'Analytics', match: 'exact' as const },
+      { href: '/admin/app', label: 'App installs', match: 'exact' as const },
       { href: '/admin/users', label: 'Users', match: 'prefix' as const },
       { href: '/admin/wallet', label: 'Slutcoin cost', match: 'exact' as const },
       { href: '/admin/coupons', label: 'Coupons', match: 'exact' as const },
@@ -97,10 +98,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(900px_420px_at_0%_0%,rgba(255,45,120,0.16),transparent_55%),radial-gradient(700px_280px_at_100%_0%,rgba(120,40,80,0.12),transparent_50%)]" />
       <div className="relative mx-auto flex min-h-screen max-w-[1440px]">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/8 bg-black/40 px-4 py-6 backdrop-blur-xl lg:flex">
-          <div className="px-2">
+          <div className="relative px-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">{SITE_DOMAIN}</p>
-            <BrandLogo className="mt-2 h-[45px] w-auto" />
-            <p className="text-xs text-white/40">Admin</p>
+              <div className="relative mt-1">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -left-6 -top-7 h-24 w-40 bg-[radial-gradient(closest-side,rgba(255,45,120,0.18),transparent)]"
+                />
+                <BrandLogo className="h-[48px] w-auto" />
+              </div>
+            <p className="mt-1 text-xs text-white/40">Admin</p>
           </div>
           <nav className="mt-8 flex-1 space-y-6 overflow-y-auto">
             {NAV.map((group) => (

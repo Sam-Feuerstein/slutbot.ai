@@ -5,6 +5,7 @@ import { SlutbotUser } from '@/lib/models';
 import { signSlutbotToken } from '@/lib/auth/slutbotAuth';
 import { setSessionCookie } from '@/lib/auth/sessionCookie';
 import { clientIp, rateLimitAllowed } from '@/lib/rateLimit';
+import { publicBalanceFields } from '@/lib/users/wallet';
 
 export async function POST(req: NextRequest) {
   if (!rateLimitAllowed({ name: 'login', key: clientIp(req), windowMs: 15 * 60_000, max: 10 })) {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       name: user.name || '',
       avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
-      desires: user.desires ?? 0,
+      ...publicBalanceFields(user),
     });
     setSessionCookie(res, token);
     return res;

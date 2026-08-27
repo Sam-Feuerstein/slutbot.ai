@@ -1,5 +1,5 @@
 import { findOwnedJobByTaskId, refundChargedJob } from '@/lib/generation/jobs';
-import { getUserDesires } from '@/lib/users/wallet';
+import { getSpendableCredits } from '@/lib/users/wallet';
 import { envValue } from '@/lib/env';
 
 function wavespeedApiKey() {
@@ -57,7 +57,7 @@ export async function refundIfWavespeedFailed(
   const job = await findOwnedJobByTaskId(userId, trimmed);
   if (!job) return { ok: false, error: 'Unknown job.' };
   if (job.status === 'refunded') {
-    return { ok: true, desires: await getUserDesires(userId) };
+    return { ok: true, desires: await getSpendableCredits(userId) };
   }
   if (job.status !== 'charged') return { ok: false, error: 'Job is not refundable.' };
 

@@ -6,6 +6,7 @@ export type AiToolGenerationRecord = {
   videoModel: VideoModel | null;
   sourceImageUrl: string;
   outputUrl: string;
+  locked?: boolean;
   prompt: string;
   quality: string;
   duration: number | null;

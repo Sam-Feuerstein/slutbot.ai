@@ -13,6 +13,8 @@ export type SlutbotAuthUser = {
   avatarUrl: string;
   clientId: string;
   desires: number;
+  trialCredits: number;
+  signupCountry: string;
   banned: boolean;
 };
 
@@ -39,6 +41,8 @@ export async function authenticateSlutbotToken(token?: string | null): Promise<S
       avatarUrl?: string;
       clientId: string;
       desires?: number;
+      trialCredits?: number;
+      signupCountry?: string;
       banned?: boolean;
     } | null;
     if (!user || user.banned) return null;
@@ -50,6 +54,8 @@ export async function authenticateSlutbotToken(token?: string | null): Promise<S
       avatarUrl: user.avatarUrl || '',
       clientId: user.clientId,
       desires: user.desires ?? 0,
+      trialCredits: user.trialCredits ?? 0,
+      signupCountry: user.signupCountry || '',
       banned: !!user.banned,
     };
   } catch {
