@@ -130,7 +130,7 @@ export default function SiteHeader() {
   return (
     <>
       <header
-        className={`relative sticky top-0 z-50 border-b border-[#ff2d78]/20 bg-[#4a122c] pt-[calc(var(--safe-top)+0.375rem)] transition-shadow duration-200 sm:pt-[calc(var(--safe-top)+0.5rem)] ${
+        className={`relative sticky top-0 z-50 border-b border-[#ff2d78]/20 bg-[#4a122c] bg-[linear-gradient(90deg,#000_0%,#4a122c_72%)] pt-[calc(var(--safe-top)+0.375rem)] transition-shadow duration-200 sm:pt-[calc(var(--safe-top)+0.5rem)] ${
           scrolled ? 'shadow-[0_10px_28px_rgba(0,0,0,0.38)]' : ''
         }`}
       >
