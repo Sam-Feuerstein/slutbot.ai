@@ -14,12 +14,12 @@ const USER_CLIENT_KEY = 'slutbot-user-client-id';
 export const OPEN_PREMIUM_EVENT = 'slutbot:open-premium';
 export const DESIRES_UPDATED_EVENT = 'slutbot:desires-updated';
 
-export const CURRENCY_NAME = 'Slutcoins';
-export const CURRENCY_NAME_SINGULAR = 'Slutcoin';
+export const CURRENCY_NAME = 'Stars';
+export const CURRENCY_NAME_SINGULAR = 'Star';
 
 export const VIDEO_DURATION_SECONDS = 5;
 
-/** Pack video counts use 480 Normal (8 Slutcoins). Image is 4 Slutcoins. */
+/** Pack video counts use 480 Normal. Image and video costs are in Stars. */
 
 export const VIDEO_QUALITY_TIERS: {
   id: VideoQualityTier;

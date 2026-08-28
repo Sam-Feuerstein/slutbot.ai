@@ -196,11 +196,11 @@ export default function AdminCouponsPage() {
               >
                 <option value="percent_off">% off price (Stars + crypto)</option>
                 <option value="amount_off">$ off price (Stars + crypto)</option>
-                <option value="credits">Credits (free Slutcoins)</option>
+                <option value="credits">Credits (free Stars)</option>
               </select>
             </Field>
             {form.type === 'credits' ? (
-              <Field label="Slutcoins granted">
+              <Field label="Stars granted">
                 <input
                   type="number"
                   min={1}

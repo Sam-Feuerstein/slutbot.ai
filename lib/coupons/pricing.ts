@@ -1,5 +1,5 @@
 import { MAX_DISCOUNT_PERCENT, roundStarsUp } from '@/lib/starsGeo/pricing';
-import { starsFromUsd, usdFromStars } from '@/lib/premiumPlans';
+import { cryptoInvoiceUsd, starsFromListUsd, usdListFromStars } from '@/lib/premiumPlans';
 import type { PriceCoupon } from './types';
 
 export { MAX_DISCOUNT_PERCENT };
@@ -39,8 +39,8 @@ export function applyCouponToStars(input: {
   if (input.coupon.type === 'amount_off') {
     const off = Math.max(0, Number(input.coupon.discountUsd) || 0);
     if (off <= 0) return geo;
-    const nextUsd = Math.max(usdFromStars(1), usdFromStars(geo) - off);
-    const nextStars = roundStarsUp(starsFromUsd(nextUsd), input.roundUpTo);
+    const nextUsd = Math.max(usdListFromStars(1), usdListFromStars(geo) - off);
+    const nextStars = roundStarsUp(starsFromListUsd(nextUsd), input.roundUpTo);
     return Math.min(geo, Math.max(1, nextStars));
   }
 
@@ -49,17 +49,17 @@ export function applyCouponToStars(input: {
 }
 
 export function applyCouponToUsd(catalogUsd: number, coupon: PriceCoupon | null): number {
-  const price = Math.max(0, Number(catalogUsd) || 0);
-  if (!coupon) return Math.round(price * 100) / 100;
+  const price = cryptoInvoiceUsd(catalogUsd);
+  if (!coupon) return price;
 
   if (coupon.type === 'amount_off') {
     const off = Math.max(0, Number(coupon.discountUsd) || 0);
-    return Math.round(Math.max(0.5, price - off) * 100) / 100;
+    return cryptoInvoiceUsd(price - off);
   }
 
   const pct = Math.min(MAX_DISCOUNT_PERCENT, Math.max(0, Number(coupon.discountPercent) || 0));
-  if (pct <= 0) return Math.round(price * 100) / 100;
-  return Math.round(price * (100 - pct)) / 100;
+  if (pct <= 0) return price;
+  return cryptoInvoiceUsd((price * (100 - pct)) / 100);
 }
 
 export function couponRewardLabel(coupon: {
@@ -73,7 +73,7 @@ export function couponRewardLabel(coupon: {
     return `$${usd.toFixed(2)} off`;
   }
   if (coupon.type === 'credits') {
-    return `${Math.round(Number(coupon.creditsAmount) || 0).toLocaleString('en-US')} Slutcoins`;
+    return `${Math.round(Number(coupon.creditsAmount) || 0).toLocaleString('en-US')} Stars`;
   }
   return `${Math.round(Number(coupon.discountPercent) || 0)}% off`;
 }

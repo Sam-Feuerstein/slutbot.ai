@@ -243,7 +243,7 @@ export default function AccountClient() {
         ) : account ? (
           <div className="space-y-6">
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <h2 className="text-lg font-bold">Slutcoin balance</h2>
+              <h2 className="text-lg font-bold">Stars balance</h2>
               <p className="mt-2 text-3xl font-black tabular-nums text-[#ff2d78]">
                 {account.desires.toLocaleString('en-US')}
                 <span className="ml-2 text-base font-semibold text-white/55">{CURRENCY_NAME}</span>
@@ -257,7 +257,7 @@ export default function AccountClient() {
                   href="/checkout?plan=flirt"
                   className="inline-flex min-h-11 items-center rounded-full bg-[#ff2d78] px-5 text-sm font-bold text-white hover:bg-[#ff1a6b]"
                 >
-                  Buy Slutcoins
+                  Buy Stars
                 </Link>
                 <Link
                   href={GENERATOR_PATH}
@@ -295,7 +295,7 @@ export default function AccountClient() {
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <h2 className="text-lg font-bold">Redeem coupon</h2>
               <p className="mt-2 text-sm text-white/55">
-                Have a promo code? Apply it on checkout for % or $ off. Free Slutcoin codes still redeem here.
+                Have a promo code? Apply it on checkout for % or $ off. Free Stars codes still redeem here.
               </p>
               <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={(event) => void redeemCoupon(event)}>
                 <input
@@ -412,7 +412,7 @@ export default function AccountClient() {
                         <th className="pb-2 pr-3 font-semibold">Date</th>
                         <th className="pb-2 pr-3 font-semibold">Plan</th>
                         <th className="pb-2 pr-3 font-semibold">Method</th>
-                        <th className="pb-2 pr-3 font-semibold">Slutcoins</th>
+                        <th className="pb-2 pr-3 font-semibold">Stars</th>
                         <th className="pb-2 font-semibold">USD</th>
                       </tr>
                     </thead>
@@ -435,7 +435,7 @@ export default function AccountClient() {
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <h2 className="text-lg font-bold">Session</h2>
               <p className="mt-2 text-sm text-white/55">
-                Sign out to switch accounts on this device. Your Slutcoins stay on your account.
+                Sign out to switch accounts on this device. Your Stars stay on your account.
               </p>
               <button
                 type="button"

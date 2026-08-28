@@ -183,7 +183,7 @@ async function startWavespeedJob(input: {
 
   const spent = await spendGenerationCredits(input.user.id, input.cost, input.paidWith);
   if (!spent.ok) {
-    return { error: 'Not enough Slutcoins.', desires: spent.desires };
+    return { error: 'Not enough Stars.', desires: spent.desires };
   }
 
   let job: { _id: mongoose.Types.ObjectId };
@@ -263,7 +263,7 @@ export async function submitWavespeedImageToVideo(
     currentCountry: resolveRequestCountry(await headers()),
   });
   if (plan.error) {
-    return { error: 'Not enough Slutcoins.', desires: plan.spendable };
+    return { error: 'Not enough Stars.', desires: plan.spendable };
   }
 
   const quality = plan.quality;
@@ -319,7 +319,7 @@ export async function submitWavespeedImageEdit(
     currentCountry: resolveRequestCountry(await headers()),
   });
   if (plan.error) {
-    return { error: 'Not enough Slutcoins.', desires: plan.spendable };
+    return { error: 'Not enough Stars.', desires: plan.spendable };
   }
 
   const trimmedPrompt = await getImagePrompt();

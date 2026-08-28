@@ -7,6 +7,7 @@ import SiteChrome from './components/SiteChrome';
 import SiteFooter from './components/SiteFooter';
 import { PRESET_MEDIA_BASE } from '@/lib/presetMedia';
 import { DEFAULT_OG_IMAGE, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
+import { AGE_GATE_BOOT_SCRIPT } from '@/lib/ageConsent';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -64,8 +65,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+            <script dangerouslySetInnerHTML={{ __html: AGE_GATE_BOOT_SCRIPT }} />
             {PRESET_MEDIA_BASE ? (
               <>
                 <link rel="preconnect" href={PRESET_MEDIA_BASE} />

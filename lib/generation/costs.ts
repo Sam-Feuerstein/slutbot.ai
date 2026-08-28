@@ -2,11 +2,11 @@ import type { VideoModel } from '@/lib/imageToVideo/types';
 
 /** Server billing table. Client UI must use the same numbers; never trust a client-supplied amount. */
 export const DESIRE_COSTS = {
-  image: 4,
-  videoBasic: 8,
-  videoBetter: 8,
-  videoBetter720: 12,
-  videoBetter1080: 16,
+  image: 16,
+  videoBasic: 32,
+  videoBetter: 32,
+  videoBetter720: 48,
+  videoBetter1080: 64,
 } as const;
 
 export type VideoQuality = '480p' | '720p' | '1080p';

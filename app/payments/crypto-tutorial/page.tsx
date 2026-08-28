@@ -6,7 +6,7 @@ import { CRYPTO_PAYMENT_TUTORIAL } from '@/lib/paymentTutorials';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Crypto Payment Tutorial',
   description:
-    'Step-by-step guide to paying for AI SLUTBOT Slutcoins with cryptocurrency via NOWPayments and Trust Wallet.',
+    'Step-by-step guide to paying for AI SLUTBOT Stars with cryptocurrency via NOWPayments and Trust Wallet.',
   path: '/payments/crypto-tutorial',
 });
 

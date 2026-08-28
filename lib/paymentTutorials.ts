@@ -60,7 +60,7 @@ export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 3 — Place Your Order with Cryptocurrency',
       paragraphs: [
-        'On AI SLUTBOT, choose your Slutcoin pack, open checkout, select Crypto (USDT TRC20 only), and click Pay. You will be redirected to the NOWPayments page.',
+        'On AI SLUTBOT, choose your Stars pack, open checkout, select Crypto (USDT TRC20 only), and click Pay. You will be redirected to the NOWPayments page.',
       ],
     },
     {
@@ -69,7 +69,7 @@ export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
         'On the NOWPayments page, pay with USDT on the TRC20 (Tron) network only. Do not switch coin or network.',
         'Copy the payment amount and the wallet address shown on the order page.',
         'In Trust Wallet, select USDT (TRC20), tap “Send”, paste the payment address, enter the exact amount, and confirm the transaction.',
-        'Once the payment is successfully sent, your AI SLUTBOT Slutcoins will be activated right away! 🔥',
+        'Once the payment is successfully sent, your AI SLUTBOT Stars will be activated right away! 🔥',
       ],
       images: [
         '/payments/tutorials/crypto/8crypto.avif',
@@ -97,13 +97,13 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
   badge: 'Telegram Stars',
   title: 'How to pay for subscription using Bank Card via Telegram',
   intro: [
-    'Purchasing Slutcoins with a bank card is done through Telegram in a simple two-step process. Follow the guide below for screenshots and troubleshooting tips.',
+    'Purchasing Stars with a bank card is done through Telegram in a simple two-step process. Follow the guide below for screenshots and troubleshooting tips.',
   ],
   steps: [
     {
       title: 'Step 1 — Select your plan and click Buy now',
       paragraphs: [
-        'Go to the subscription page, select the Slutcoin pack you want, and click Buy now. On checkout, choose Telegram Stars and click Pay.',
+        'Go to the subscription page, select the Stars pack you want, and click Buy now. On checkout, choose Telegram Stars and click Pay.',
       ],
     },
     {
@@ -129,7 +129,7 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 5 — Credits activated automatically',
       paragraphs: [
-        'Right after the purchase, Stars will be automatically deducted and your AI SLUTBOT Slutcoins will be activated! 🔥',
+        'Right after the purchase, Stars are added to your AI SLUTBOT account automatically! 🔥',
       ],
     },
     {

@@ -6,6 +6,7 @@ import PostHogPageView from './PostHogPageView';
 import SessionSync from './SessionSync';
 import GenerationJobsProvider from './GenerationJobsProvider';
 
+/** Client-only so first paint can read localStorage; black cover from head script blocks NSFW until then. */
 const AgeConsentGate = dynamic(() => import('./AgeConsentGate'), {
   ssr: false,
 });

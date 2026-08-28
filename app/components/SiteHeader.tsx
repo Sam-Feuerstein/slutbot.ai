@@ -18,14 +18,13 @@ import {
 import { signOutClient } from '@/lib/auth/session';
 import {
   CURRENCY_NAME,
-  DESIRE_COSTS,
   DESIRES_UPDATED_EVENT,
-  formatDesireBalance,
   getAuthToken,
   getDesires,
   getPaidDesires,
   openPremiumPlans,
   refreshDesiresFromServer,
+  remainingGenerations,
   remainingGenerationsCopy,
 } from '@/lib/desires';
 import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH } from '@/lib/site';
@@ -112,11 +111,21 @@ export default function SiteHeader() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    void refreshDesiresFromServer().then((amount) => {
+      setDesires(amount);
+    });
+  }, [menuOpen]);
+
   function logOut() {
     setMenuOpen(false);
     signOutClient();
     router.push('/');
   }
+
+  const paidDesires = getPaidDesires();
+  const generations = remainingGenerations(desires, paidDesires);
 
   return (
     <>
@@ -141,25 +150,38 @@ export default function SiteHeader() {
           </Link>
 
           <div className="relative z-10 flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-            <Link
-              href={GENERATOR_PATH}
-              className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-[#ff2d78] px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
-                pathname === GENERATOR_PATH || pathname.startsWith(`${GENERATOR_PATH}/`)
-                  ? 'bg-[#ff4d90]'
-                  : ''
-              }`}
-            >
-              Undress Anyone
-            </Link>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link
+                href={GENERATOR_PATH}
+                className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-[#ff2d78] px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+                  pathname === GENERATOR_PATH || pathname.startsWith(`${GENERATOR_PATH}/`)
+                    ? 'bg-[#ff4d90]'
+                    : ''
+                }`}
+              >
+                Undress Anyone
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => openPremiumPlans()}
+                className="inline-flex h-9 min-h-9 max-w-[9.5rem] shrink-0 items-center gap-1 rounded-full border border-[#ff2d78]/35 bg-black/25 px-2 text-white transition-colors hover:bg-black/35 sm:h-10 sm:max-w-none sm:gap-1.5 sm:px-2.5"
+                aria-label={`${desires.toLocaleString('en-US')} ${CURRENCY_NAME}, get more`}
+              >
+                <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78] sm:h-4 sm:w-4" />
+                <span className="min-w-0 truncate text-xs font-bold tabular-nums sm:text-sm">
+                  {desires.toLocaleString('en-US')}
+                </span>
+                <span className="shrink-0 text-[10px] font-semibold text-white/70 sm:text-[11px]">{CURRENCY_NAME}</span>
+              </button>
+            </div>
 
             <button
               type="button"
-              aria-label={`Open menu, ${formatDesireBalance(desires)} ${CURRENCY_NAME}`}
+              aria-label="Open menu"
               onClick={() => setMenuOpen(true)}
-              className="inline-flex h-10 min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] py-1 pl-2.5 pr-1 text-white transition-colors hover:bg-white/10 sm:h-9 sm:gap-2 sm:pl-3"
+              className="inline-flex h-10 min-h-10 shrink-0 items-center rounded-full border border-white/15 bg-white/[0.06] p-1 text-white transition-colors hover:bg-white/10 sm:h-9"
             >
-              <SparkleIcon className="h-4 w-4 text-[#ff2d78] sm:h-[18px] sm:w-[18px]" />
-              <span className="text-sm font-semibold tabular-nums">{formatDesireBalance(desires)}</span>
               {signedIn ? (
                 <UserAvatar
                   name={profile?.name || ''}
@@ -225,18 +247,20 @@ export default function SiteHeader() {
                 setMenuOpen(false);
                 openPremiumPlans();
               }}
-              className="relative mb-2 w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2 text-left transition-colors hover:bg-black/35"
+              className="relative mb-2.5 w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2.5 text-left transition-colors hover:bg-black/35"
             >
               <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
                 <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78]" />
                 <span className="tabular-nums">{desires.toLocaleString('en-US')}</span>
-                <span className="truncate font-semibold text-white/70">{CURRENCY_NAME}</span>
+                <span className="font-semibold text-white/75">{CURRENCY_NAME} available</span>
                 <span className="ml-auto shrink-0 text-[10px] font-semibold text-[#ff9dbe]">Get more</span>
               </p>
-              <p className="mt-1 text-[10px] leading-snug text-white/50">
-                {desires < DESIRE_COSTS.image
-                  ? 'Buy more to generate images or videos.'
-                  : `Enough for ${remainingGenerationsCopy(desires, getPaidDesires())}`}
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">Possible generations</p>
+              <p className="mt-0.5 text-[12px] font-semibold leading-snug text-white/85">
+                {remainingGenerationsCopy(desires, paidDesires)}
+              </p>
+              <p className="mt-1 text-[10px] leading-snug text-white/45">
+                {generations.images.toLocaleString('en-US')} images · {generations.videos.toLocaleString('en-US')} videos (480p)
               </p>
             </button>
 

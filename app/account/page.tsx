@@ -5,7 +5,7 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Account',
-  description: 'Manage your AI SLUTBOT account, Slutcoin balance, and purchase history.',
+  description: 'Manage your AI SLUTBOT account, Stars balance, and purchase history.',
   path: '/account',
   noIndex: true,
 });

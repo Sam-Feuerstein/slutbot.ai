@@ -59,3 +59,8 @@ export function uiMediaUrl(path: string): string {
   if (!PRESET_MEDIA_BASE) return path;
   return `${PRESET_MEDIA_BASE}/${PRESET_MEDIA_PREFIX}/${path}`;
 }
+
+export function checkoutPromoMediaUrl(file: string, localFallback: string): string {
+  const remote = uiMediaUrl(`checkout/${file}`);
+  return PRESET_MEDIA_BASE ? remote : localFallback;
+}

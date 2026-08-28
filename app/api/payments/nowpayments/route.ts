@@ -3,6 +3,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment } from '@/lib/models';
 import { getCheckoutPlan } from '@/lib/payments/catalog';
 import { applyCouponToUsd, couponRewardLabel } from '@/lib/coupons/pricing';
+import { CRYPTO_MIN_USD, cryptoInvoiceUsd } from '@/lib/premiumPlans';
 import { resolveCheckoutPriceCoupon } from '@/lib/coupons/store';
 import { paymentAuthRequiredResponse, requireSlutbotUser } from '@/lib/payments/requireAuth';
 import { getAppUrl } from '@/lib/site';
@@ -40,7 +41,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const usdPrice = applyCouponToUsd(plan.usdPrice, coupon);
+  const usdPrice = cryptoInvoiceUsd(applyCouponToUsd(plan.usdPrice, coupon));
+  if (usdPrice < CRYPTO_MIN_USD) {
+    return NextResponse.json(
+      { message: `Crypto checkout is $${CRYPTO_MIN_USD.toFixed(2)} minimum.` },
+      { status: 400 },
+    );
+  }
   const orderId = `sb1__${clientId}__${plan.id}__${Date.now()}`;
   const siteUrl = getAppUrl();
 
@@ -93,7 +100,8 @@ export async function POST(req: NextRequest) {
       provider: 'nowpayments',
       status: 'pending',
       usdAmount: usdPrice,
-      starsAmount: 0,
+      starsAmount: plan.starsAmount,
+      // Coupon only reduces usdAmount. Wallet always gets full pack Stars.
       desires: plan.desires,
       orderId,
       invoiceUrl: data.invoice_url,

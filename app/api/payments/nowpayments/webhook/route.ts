@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
     chargeId: paymentId,
     orderId,
     usdAmount,
+    starsAmount: plan.starsAmount,
   });
 
   if (!result.ok) {

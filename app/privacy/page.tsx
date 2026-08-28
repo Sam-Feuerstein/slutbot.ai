@@ -77,14 +77,14 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <strong className="text-white/80">Registered users:</strong> individuals who create an account to access
-                generation, Slutcoins, and other features.
+                generation, Stars, and other features.
               </li>
               <li>
                 <strong className="text-white/80">Uploaders:</strong> individuals who submit source images, prompts, or
                 other content for generation.
               </li>
               <li>
-                <strong className="text-white/80">Purchasers:</strong> users who buy Slutcoin packs or other paid
+                <strong className="text-white/80">Purchasers:</strong> users who buy Star packs or other paid
                 features.
               </li>
               <li>
@@ -160,7 +160,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-white/80">Account and usage data:</strong> username, password or authentication
-                tokens, preferences, generation history, prompts, source images, output URLs, Slutcoin balances, and
+                tokens, preferences, generation history, prompts, source images, output URLs, Star balances, and
                 activity logs.
               </li>
               <li>
@@ -187,7 +187,7 @@ export default function PrivacyPage() {
                 6(1)(b) GDPR).
               </li>
               <li>
-                Processing Slutcoin purchases and related transactions — performance of a contract (Article 6(1)(b)
+                Processing Star purchases and related transactions — performance of a contract (Article 6(1)(b)
                 GDPR) and legal obligation for tax or accounting records (Article 6(1)(c) GDPR).
               </li>
               <li>
@@ -416,7 +416,7 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <strong className="text-white/80">Platform:</strong> the AI SLUTBOT image and video generation services
-                operated at aislutbot.com, including related features such as Slutcoins, generation history, and
+                operated at aislutbot.com, including related features such as Stars, generation history, and
                 affiliate tools.
               </li>
               <li>

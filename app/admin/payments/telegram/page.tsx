@@ -1,6 +1,6 @@
 'use client';
 
-import { PREMIUM_PLANS, formatUsdPrice, usdFromStars } from '@/lib/premiumPlans';
+import { PREMIUM_PLANS, formatStarsWithUsd } from '@/lib/premiumPlans';
 import {
   Field,
   PageHeader,
@@ -47,7 +47,7 @@ export default function TelegramStarsPage() {
             <div className="rounded-2xl border border-dashed border-white/12 bg-black/20 px-4 py-3 text-xs leading-relaxed text-white/40">
               One bot for all Stars. Invoice titles are <span className="text-white/70">AI SLUTBOT Passion</span>, not
               Erogram VIP. Money and the Telegram charge stay on the VIP bot. Erogram does not turn the buyer into a
-              VIP member. Slutcoins are added to the AI SLUTBOT wallet after Telegram confirms.
+              VIP member. Stars are added to the AI SLUTBOT wallet after Telegram confirms.
             </div>
           </div>
         </Panel>
@@ -55,13 +55,13 @@ export default function TelegramStarsPage() {
         <Panel>
           <h2 className="text-lg font-black">Stars pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            These fields are a local preview. Live Telegram invoices use catalog Stars, then the country rules on
-            Stars by country. USD is Stars × ($9.99 / 660) so crypto matches the same consumer value.
+            These fields are a local preview. Live Telegram invoices use catalog Stars. List USD is 1,000 Stars = $25.
+            Crypto still uses the NOWPayments USD prices.
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {
               const meta = PREMIUM_PLANS.find((p) => p.id === plan.id);
-              const usdGuide = formatUsdPrice(usdFromStars(plan.starsPrice));
+              const usdGuide = formatStarsWithUsd(plan.starsPrice);
               return (
                 <div
                   key={plan.id}
@@ -70,7 +70,7 @@ export default function TelegramStarsPage() {
                   <div>
                     <p className="font-black">{meta?.tier ?? plan.id}</p>
                     <p className="text-xs text-white/40">
-                      {plan.desires.toLocaleString()} Slutcoins · {usdGuide}
+                      {plan.desires.toLocaleString()} Stars · {usdGuide}
                     </p>
                   </div>
                   <div className="w-32">

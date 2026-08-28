@@ -9,6 +9,7 @@ import { useGenerationJobs } from '../components/GenerationJobsProvider';
 import { deleteAiToolGeneration } from '@/lib/actions/wavespeedImageToVideo';
 import { downloadResult, removeLocalCollectionItem } from '@/lib/collectionLocal';
 import {
+  CURRENCY_NAME,
   DESIRE_COSTS,
   DESIRES_UPDATED_EVENT,
   getAuthToken,
@@ -239,7 +240,7 @@ export default function ImageToVideoClient({
     }
     const available = mode === 'video' ? getPaidDesires() : getDesires();
     if (available < desireCost) {
-      setError('Not enough Slutcoins. Opening packs…');
+      setError(`Not enough ${CURRENCY_NAME}. Opening packs…`);
       window.setTimeout(() => openCheckoutInsufficient(desireCost, available), 700);
       return;
     }
@@ -373,8 +374,8 @@ export default function ImageToVideoClient({
                         className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#ff2d78] py-3.5 text-sm font-extrabold text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {activeCount > 0
-                          ? `Generate another · ${DESIRE_COSTS.image} Slutcoins`
-                          : `Generate image · ${DESIRE_COSTS.image} Slutcoins${
+                          ? `Generate another · ${DESIRE_COSTS.image} ${CURRENCY_NAME}`
+                          : `Generate image · ${DESIRE_COSTS.image} ${CURRENCY_NAME}${
                               signedIn && balance < DESIRE_COSTS.image ? ' · buy credits' : ''
                             }`}
                       </button>
@@ -390,7 +391,7 @@ export default function ImageToVideoClient({
                         >
                           {VIDEO_OUTPUT_TIERS.map((tier) => (
                             <option key={tier.id} value={tier.quality} className="bg-[#1c1c1c] text-white">
-                              {tier.label} · {tier.hint} · {tier.cost} Slutcoins
+                              {tier.label} · {tier.hint} · {tier.cost} {CURRENCY_NAME}
                             </option>
                           ))}
                         </select>

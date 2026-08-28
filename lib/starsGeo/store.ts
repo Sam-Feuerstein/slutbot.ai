@@ -48,7 +48,7 @@ export async function getStarsGeoConfig(): Promise<StarsGeoConfig> {
     starsGeoRoundUpTo?: number;
   } | null;
   return {
-    enabled: doc?.starsGeoEnabled !== false,
+    enabled: false,
     roundUpTo: clampRoundUpTo(doc?.starsGeoRoundUpTo, DEFAULT_ROUND_UP_TO),
   };
 }

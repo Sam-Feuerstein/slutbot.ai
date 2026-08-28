@@ -6,7 +6,7 @@ import { TELEGRAM_STARS_PAYMENT_TUTORIAL } from '@/lib/paymentTutorials';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Telegram Stars Payment Tutorial',
   description:
-    'Step-by-step guide to paying for AI SLUTBOT Slutcoins with a bank card, Apple Pay, or Google Pay through Telegram Stars.',
+    'Step-by-step guide to paying for AI SLUTBOT Stars with a bank card, Apple Pay, or Google Pay through Telegram Stars.',
   path: '/payments/telegram-stars-tutorial',
 });
 

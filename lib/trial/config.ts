@@ -1,5 +1,7 @@
-/** 4 Slutcoins = 1 image. Trial cannot run video. */
-export const TRIAL_CREDITS = 4;
+import { DESIRE_COSTS } from '@/lib/generation/costs';
+
+/** One free image. Trial cannot run video. */
+export const TRIAL_CREDITS = DESIRE_COSTS.image;
 
 /**
  * ffmpeg gblur sigma for locked trial videos. Higher = more blur.

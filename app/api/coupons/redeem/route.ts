@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   try {
     const result = await redeemCouponForUser({ code: body?.code || '', userId: user.id });
     return NextResponse.json({
-      message: `Added ${result.creditsGranted.toLocaleString('en-US')} Slutcoins.`,
+      message: `Added ${result.creditsGranted.toLocaleString('en-US')} Stars.`,
       desires: result.desires,
       creditsGranted: result.creditsGranted,
       code: result.coupon.code,

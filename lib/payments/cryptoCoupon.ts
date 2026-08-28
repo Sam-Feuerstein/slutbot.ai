@@ -1,4 +1,4 @@
-import { CRYPTO_DISCOUNT_PERCENT, cryptoUsdPrice } from '@/lib/premiumPlans';
+import { CRYPTO_DISCOUNT_PERCENT, cryptoInvoiceUsd, cryptoUsdPrice } from '@/lib/premiumPlans';
 import type { PriceCoupon } from '@/lib/coupons/types';
 
 export const CRYPTO_COUPON_CODE = 'I-DESERVE-IT483';
@@ -33,7 +33,7 @@ export function validateCryptoCoupon(input: { code?: string }): boolean {
 }
 
 export function cryptoCheckoutUsd(usd: number, discountApplied: boolean): number {
-  return discountApplied ? cryptoUsdPrice(usd) : usd;
+  return cryptoInvoiceUsd(discountApplied ? cryptoUsdPrice(usd) : usd);
 }
 
 export function formatCouponCountdown(totalSeconds: number): string {

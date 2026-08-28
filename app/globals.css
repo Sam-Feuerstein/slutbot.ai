@@ -33,6 +33,19 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Block NSFW paint until age consent is accepted (set by head boot script). */
+html[data-age-gate="1"] body {
+  overflow: hidden !important;
+}
+
+html[data-age-gate="1"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: #000;
+}
+
 @media (min-width: 768px) {
   body {
     background:

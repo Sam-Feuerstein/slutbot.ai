@@ -19,7 +19,7 @@ const BENEFITS = [
   { title: 'Simple workflow', body: 'Upload, pick your settings, and let AI SLUTBOT handle the rest.' },
   { title: 'Private by design', body: 'Your uploads stay on your terms. We keep the flow discreet.' },
   { title: 'High quality', body: 'Modern neural models deliver sharp, realistic AI outputs.' },
-  { title: 'Start free', body: 'Try the generator with Slutcoins — no complicated signup traps.' },
+  { title: 'Start free', body: 'Try the generator with Stars — no complicated signup traps.' },
 ];
 
 export const SEO_LANDING_BENEFITS = BENEFITS;
@@ -65,7 +65,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'undress-ai',
     'Undress AI',
     'Undress AI Online — Photo to Nude Video',
-    'Use Undress AI on AI SLUTBOT to turn a clothed photo into uncensored adult AI images and 5-second videos. Fast browser workflow, Slutcoin pricing, adults 18+ only.',
+    'Use Undress AI on AI SLUTBOT to turn a clothed photo into uncensored adult AI images and 5-second videos. Fast browser workflow, Star pricing, adults 18+ only.',
     'Technology that works for you',
     'Want to transform a photo without spending hours in an editor? Undress AI on AI SLUTBOT turns the process into a few clicks — fast, anonymous, and built for adults only.',
     'Undress AI uses advanced machine learning to reinterpret your uploaded photo into a new adult AI image or short clip. No complicated software: open the generator from any device, upload, adjust your prompt, and generate. AI SLUTBOT is built for speed, privacy, and uncensored creative control.',
@@ -73,7 +73,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       'For beginners and power users alike — the workflow stays simple.',
       'Works in the browser: phone, tablet, or desktop.',
       'Pair still outputs with our video tools for motion in minutes.',
-      'Slutcoins keep pricing transparent before you generate.',
+      'Stars keep pricing transparent before you generate.',
     ],
     'Undress any photo with AI',
     'Upload your image and let AI SLUTBOT do the work. Fast, secure, and anonymous.',
@@ -87,7 +87,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       {
         question: 'Is Undress AI free to try?',
         answer:
-          'You can start with Slutcoins on AI SLUTBOT. Pack pricing and generation costs are shown before you confirm each run.',
+          'You can start with Stars on AI SLUTBOT. Pack pricing and generation costs are shown before you confirm each run.',
       },
       {
         question: 'Who can use Undress AI?',
@@ -100,14 +100,14 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'deepnude-ai',
     'DeepNude AI',
     'DeepNude AI Generator — Uncensored Online',
-    'DeepNude AI on AI SLUTBOT: upload a photo and generate realistic uncensored adult AI images and short videos in your browser. No legacy app, transparent Slutcoin costs, 18+ only.',
+    'DeepNude AI on AI SLUTBOT: upload a photo and generate realistic uncensored adult AI images and short videos in your browser. No legacy app, transparent Star costs, 18+ only.',
     'Next-gen adult AI generation',
     'DeepNude AI on AI SLUTBOT brings neural image synthesis to your browser. Upload once, generate in seconds, and iterate until the output matches your vision.',
     'DeepNude AI refers to deep-learning models that transform reference photos into new adult visuals. AI SLUTBOT hosts the pipeline online so you do not need local installs or technical setup — just upload, configure, and generate realistic outputs powered by modern AI.',
     [
       'High-detail outputs from current-generation models.',
       'Combine with AI SLUTBOT video tools for animated results.',
-      'Clear Slutcoin pricing before every generation.',
+      'Clear Star pricing before every generation.',
       'Built for adults who want speed without sacrificing quality.',
     ],
     'Try DeepNude AI online',
@@ -154,7 +154,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       },
       {
         question: 'Do I need an account?',
-        answer: 'You can explore the Platform and purchase Slutcoins with an account. Sign-in keeps your history and balance in sync.',
+        answer: 'You can explore the Platform and purchase Stars with an account. Sign-in keeps your history and balance in sync.',
       },
       {
         question: 'Is my upload stored forever?',
@@ -169,11 +169,11 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'Muke AI on AI SLUTBOT is a streamlined adult generator: upload once, pick settings, download uncensored AI images or 5-second videos. Works on mobile and desktop. Adults only.',
     'Your shortcut to AI adult content',
     'Muke AI on AI SLUTBOT is built for users searching a fast, no-frills AI adult maker. Upload your photo and generate without wrestling with complex tools.',
-    'Muke AI on AI SLUTBOT is our streamlined adult AI generation experience: one upload flow, transparent Slutcoin costs, and outputs you can download or extend into video. Whether you are experimenting or producing regularly, the platform keeps the steps minimal and the results high quality.',
+    'Muke AI on AI SLUTBOT is our streamlined adult AI generation experience: one upload flow, transparent Star costs, and outputs you can download or extend into video. Whether you are experimenting or producing regularly, the platform keeps the steps minimal and the results high quality.',
     [
       'Minimal steps from upload to download.',
       'Works alongside AI SLUTBOT presets and prompts.',
-      'Scale up with larger Slutcoin packs when you need volume.',
+      'Scale up with larger Star packs when you need volume.',
       'Adults-only platform with strict prohibited-content rules.',
     ],
     'Make adult AI content with Muke AI',
@@ -199,14 +199,14 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'nude-ai',
     'Nude AI',
     'Nude AI Maker — Realistic Adult Images Online',
-    'Nude AI on AI SLUTBOT creates realistic synthetic adult images and videos from your photo. Upload, generate in seconds, extend to motion. Try with Slutcoins. Strictly 18+ entertainment.',
+    'Nude AI on AI SLUTBOT creates realistic synthetic adult images and videos from your photo. Upload, generate in seconds, extend to motion. Try with Stars. Strictly 18+ entertainment.',
     'Technology that plays for you',
     'You want to edit a photo but lack the time or skills. Nude AI on AI SLUTBOT turns that into a couple of clicks — realistic adult results, quickly, anonymously, and without extra fuss.',
     'Nude AI is an artificial-intelligence tool that transforms your uploaded photo into a new adult visual in moments. Whether you are new to AI or experienced with prompts, the flow is the same: upload, select parameters, generate. Nude AI runs entirely online on AI SLUTBOT — log in from phone or desktop and create immediately.',
     [
       'For fun experiments or serious creative sessions.',
       'Intuitive controls — no Photoshop degree required.',
-      'Free-to-try entry via Slutcoins on the Platform.',
+      'Free-to-try entry via Stars on the Platform.',
       'Extend stills into short AI videos when you want motion.',
     ],
     'Create with Nude AI for free',
@@ -220,7 +220,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       },
       {
         question: 'Is Nude AI free to use?',
-        answer: 'You can start with Slutcoins. Each generation shows its cost before you confirm.',
+        answer: 'You can start with Stars. Each generation shows its cost before you confirm.',
       },
       {
         question: 'Is Nude AI suitable for beginners?',
@@ -238,7 +238,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'An AI clothes remover interprets clothing regions in a photo and synthesizes a new adult version of the subject. AI SLUTBOT provides this capability through our uncensored generator: upload a clear full-body or portrait image, adjust settings, and receive an AI-generated result. All outputs are synthetic and intended for adult entertainment only.',
     [
       'Handles varied poses and lighting when the source is clear.',
-      'Iterate quickly with Slutcoin refills.',
+      'Iterate quickly with Star refills.',
       'Combine with video generation for animated outputs.',
       'Strict 18+ and consent policies apply to all uploads.',
     ],
@@ -269,7 +269,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'Looking for Deepsukebe AI? AI SLUTBOT offers a modern English-language alternative: uncensored adult photo-to-AI generation, video tools, legal pages, and content reporting. 18+ only.',
     'Modern AI for adult photo edits',
     'Looking for a Deepsukebe-style workflow? AI SLUTBOT delivers similar AI photo transformation with a current web stack and transparent pricing.',
-    'Deepsukebe AI searches often refer to Japanese-market AI undress tools. AI SLUTBOT offers a comparable adult photo-to-AI pipeline in English, with Slutcoin packs, video extensions, and platform policies built for global users. Upload your image, generate, and download — all in the browser.',
+    'Deepsukebe AI searches often refer to Japanese-market AI undress tools. AI SLUTBOT offers a comparable adult photo-to-AI pipeline in English, with Star packs, video extensions, and platform policies built for global users. Upload your image, generate, and download — all in the browser.',
     [
       'No legacy plugins or risky downloads.',
       'English-language support and legal pages.',
@@ -332,14 +332,14 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     'face-swap-video-ai',
     'Face Swap Video AI',
     'Face Swap Video AI — Photo to 5s Clips',
-    'Face Swap Video AI animates your upload into short adult AI videos on AI SLUTBOT. Still-to-video workflow, ~5 second clips, Slutcoin pricing shown upfront. Authorized use only. 18+.',
+    'Face Swap Video AI animates your upload into short adult AI videos on AI SLUTBOT. Still-to-video workflow, ~5 second clips, Star pricing shown upfront. Authorized use only. 18+.',
     'Faces that move the way you want',
     'Face Swap Video AI combines AI SLUTBOT still generation with our video pipeline so reference likeness can carry into motion — subject to consent rules.',
     'Face Swap Video AI extends face-guided generation from stills into short clips. Upload your source image, generate a base result, then animate it with AI SLUTBOT video tools. All face-related features require lawful, consensual use; non-consensual deepfakes are strictly banned.',
     [
       'Typical clips around 5 seconds; longer on eligible tiers.',
       'Iterate from still to video in one session.',
-      'Slutcoin costs shown before each video render.',
+      'Star costs shown before each video render.',
       'Built for creators who need motion, not just frames.',
     ],
     'Animate with Face Swap Video AI',
@@ -356,7 +356,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       },
       {
         question: 'What if my video looks wrong?',
-        answer: 'Try a clearer source photo, adjust prompts, or regenerate. Used Slutcoins are generally non-refundable per our Terms.',
+        answer: 'Try a clearer source photo, adjust prompts, or regenerate. Used Stars are generally non-refundable per our Terms.',
       },
     ],
   ),
@@ -372,7 +372,7 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
       'Uncensored adult outputs for eligible users.',
       'Zero tolerance for non-consensual deepfakes.',
       'Reporting and removal tools on every page.',
-      'Slutcoins for transparent pay-per-generation pricing.',
+      'Stars for transparent pay-per-generation pricing.',
     ],
     'Generate adult AI content legally',
     'Use Face Swap Porn AI on AI SLUTBOT only with proper consent and authorization.',

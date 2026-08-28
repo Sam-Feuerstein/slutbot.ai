@@ -114,7 +114,7 @@ export default function AdminUserPage() {
 
       <div className="grid gap-3 sm:grid-cols-4">
         {[
-          { label: 'Slutcoins', value: String(user.desires) },
+          { label: 'Stars', value: String(user.desires) },
           { label: 'Image gens', value: String(user.imageGens) },
           { label: 'Video gens', value: String(user.videoGens) },
           { label: 'Purchases', value: String(purchases.length) },
@@ -138,7 +138,7 @@ export default function AdminUserPage() {
           <Field label="New password" hint="Leave blank to keep current.">
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className={inputClass} />
           </Field>
-          <Field label="Set Slutcoins balance">
+          <Field label="Set Stars balance">
             <input value={desires} onChange={(e) => setDesires(e.target.value)} type="number" className={inputClass} />
           </Field>
         </div>
@@ -152,7 +152,7 @@ export default function AdminUserPage() {
       </Panel>
 
       <Panel>
-        <h2 className="text-lg font-black">Add / revoke Slutcoins</h2>
+        <h2 className="text-lg font-black">Add / revoke Stars</h2>
         <form
           className="mt-4 flex flex-wrap gap-2"
           onSubmit={(e) => {
@@ -180,7 +180,7 @@ export default function AdminUserPage() {
                 <th className="px-5 py-3 font-semibold">Plan</th>
                 <th className="px-5 py-3 font-semibold">Provider</th>
                 <th className="px-5 py-3 font-semibold">Amount</th>
-                <th className="px-5 py-3 font-semibold">Slutcoins</th>
+                <th className="px-5 py-3 font-semibold">Stars</th>
               </tr>
             </thead>
             <tbody>

@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { getImageToVideoClientId } from '@/app/tool/clientId';
+import { AGE_CONSENT_EVENT, hasAgeConsent } from '@/lib/ageConsent';
 
 const DISMISS_KEY = 'pwa_install_dismissed';
 const RECORDED_KEY = 'pwa_install_recorded';
 const DISMISS_DAYS = 14;
 const SW_URL = '/sw.js?v=3';
 const ICON_SRC = '/icons/icon-192.png?v=3';
-const AGE_CONSENT_KEY = 'slutbot-age-consent-v1';
-const AGE_CONSENT_EVENT = 'slutbot-age-consent';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -39,14 +38,6 @@ function wasDismissedRecently(): boolean {
     const until = Number(raw);
     if (!Number.isFinite(until)) return true;
     return Date.now() < until;
-  } catch {
-    return false;
-  }
-}
-
-function hasAgeConsent(): boolean {
-  try {
-    return localStorage.getItem(AGE_CONSENT_KEY) === '1';
   } catch {
     return false;
   }

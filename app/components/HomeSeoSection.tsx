@@ -71,7 +71,7 @@ export default function HomeSeoSection() {
         </p>
         <p>
           Pick a preset, upload your image, and generate in minutes. AI SLUTBOT uses modern neural models for sharp
-          stills and motion clips. Slutcoin packs keep pricing transparent: you see the cost before each run. Outputs
+          stills and motion clips. Stars packs keep pricing transparent: you see the cost before each run. Outputs
           are AI-generated entertainment for adults 18+ only.
         </p>
         <p>

@@ -14,6 +14,7 @@ export type PremiumPlan = {
   bonusPercent?: number;
   bonusImageGenerations?: number;
   bonusVideoGenerations?: number;
+  concurrentGenerations?: number;
   imageGenerations: number;
   videoGenerations: number;
   features: {
@@ -22,18 +23,47 @@ export type PremiumPlan = {
   }[];
 };
 
-/** Consumer Stars ↔ USD: 660 Stars = $9.99. All pack USD and NOWPayments invoices use this. */
-export const BASE_STARS = 660;
-export const BASE_USD = 9.99;
-export const STARS_USD_RATE = BASE_USD / BASE_STARS;
+/** Pack USD: 1,000 Stars = $25, rounded up to a whole dollar. Crypto invoices this same USD. NOWPayments cannot go below CRYPTO_MIN_USD. */
+export const LIST_STARS = 1000;
+export const LIST_USD = 25;
+export const BASE_STARS = LIST_STARS;
+export const BASE_USD = LIST_USD;
+export const STARS_USD_RATE = LIST_USD / LIST_STARS;
+export const MINI_STARS = 500;
+export const MINI_IMAGES = 30;
+/** NOWPayments USDT minimum. Invoices below this fail. Coupons cannot go under it. */
+export const CRYPTO_MIN_USD = 8.5;
+/** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
+export const CRYPTO_DISCOUNT_PERCENT = 40;
+
+function usdCeilCents(value: number): number {
+  return Math.ceil(Math.max(0, Number(value) || 0) * 100 - 1e-9) / 100;
+}
+
+function usdCeilDollars(value: number): number {
+  return Math.max(0, Math.ceil((Number(value) || 0) - 1e-9));
+}
+
+export function usdListFromStars(stars: number): number {
+  return usdCeilCents((Math.max(0, Number(stars) || 0) * LIST_USD) / LIST_STARS);
+}
+
+export function usdMinFromStars(stars: number): number {
+  const amount = Math.max(1, Math.round(Number(stars) || 0));
+  return usdCeilCents((amount * CRYPTO_MIN_USD) / MINI_STARS);
+}
+
+export function starsFromListUsd(usd: number): number {
+  const amount = Math.max(0, Number(usd) || 0);
+  return Math.max(1, Math.round((amount * LIST_STARS) / LIST_USD));
+}
 
 export function usdFromStars(stars: number): number {
-  return Math.round((stars * BASE_USD * 100) / BASE_STARS) / 100;
+  return usdListFromStars(stars);
 }
 
 export function starsFromUsd(usd: number): number {
-  const amount = Math.max(0, Number(usd) || 0);
-  return Math.max(1, Math.round((amount * BASE_STARS) / BASE_USD));
+  return starsFromListUsd(usd);
 }
 
 export function formatUsdPrice(usd: number): string {
@@ -41,25 +71,65 @@ export function formatUsdPrice(usd: number): string {
 }
 
 export function formatStarsCount(stars: number): string {
-  return `${Math.round(stars).toLocaleString('en-US')} Stars`;
+  return `${Math.round(stars).toLocaleString('en-US')} Telegram Stars`;
 }
 
-/** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
-export const CRYPTO_DISCOUNT_PERCENT = 20;
+export function formatUsdWhole(usd: number): string {
+  return `$${usdCeilDollars(usd)}`;
+}
+
+/** High list USD for a Stars invoice: 1,000 Stars = $25, rounded up to a whole dollar. */
+export function usdHighFromStars(stars: number): number {
+  return usdCeilDollars(usdListFromStars(stars));
+}
+
+export function formatAroundUsd(stars: number): string {
+  return `Around $${usdHighFromStars(stars)} USD`;
+}
+
+export function formatStarsUsdRange(stars: number): string {
+  const min = usdCeilDollars(usdMinFromStars(stars));
+  const max = usdCeilDollars(usdListFromStars(stars));
+  if (min >= max) return formatUsdWhole(max);
+  return `${formatUsdWhole(min)} to ${formatUsdWhole(max)}`;
+}
+
+export function formatStarsWithUsd(stars: number): string {
+  return `${formatStarsCount(stars)} ≈ ${formatStarsUsdRange(stars)}`;
+}
+
+export function cryptoInvoiceUsd(usd: number): number {
+  return Math.round(Math.max(CRYPTO_MIN_USD, Number(usd) || 0) * 100) / 100;
+}
 
 export function cryptoUsdPrice(usd: number): number {
-  return Math.round(usd * (100 - CRYPTO_DISCOUNT_PERCENT)) / 100;
+  const discounted = Math.round(usd * (100 - CRYPTO_DISCOUNT_PERCENT)) / 100;
+  return cryptoInvoiceUsd(discounted);
 }
 
 export function planGenerationCopy(plan: PremiumPlan): string {
   const images = plan.imageGenerations.toLocaleString('en-US');
   const videos = plan.videoGenerations.toLocaleString('en-US');
-  const videoWord = plan.videoGenerations === 1 ? 'video' : 'videos';
-  return `You get ${images} image generations or ${videos} ${videoWord}`;
+  return `GET ${images} IMG OR ${videos} SPICY VIDEOS`;
+}
+
+export function planInvoiceCopy(plan: PremiumPlan): string {
+  const images = plan.imageGenerations.toLocaleString('en-US');
+  const videos = plan.videoGenerations.toLocaleString('en-US');
+  return `${images} IMG OR ${videos} SPICY VIDEO GENERATION / Never expires.`;
+}
+
+export function planMoreGenerationsCopy(plan: PremiumPlan): string | null {
+  const baselineImages = Math.round((plan.stars * MINI_IMAGES) / MINI_STARS);
+  if (baselineImages < 1) return null;
+  const morePercent = Math.round((plan.imageGenerations / baselineImages - 1) * 100);
+  if (morePercent < 1) return null;
+  return `GET ${morePercent}% more generations`;
 }
 
 export function planBonusPercentLabel(plan: PremiumPlan): string | null {
-  return plan.bonusPercent ? `+${plan.bonusPercent}%` : null;
+  if (!plan.bonusPercent) return null;
+  return `+${plan.bonusPercent}%`;
 }
 
 export function planBonusGenerationCopy(plan: PremiumPlan): string | null {
@@ -68,13 +138,6 @@ export function planBonusGenerationCopy(plan: PremiumPlan): string | null {
   const videos = plan.bonusVideoGenerations.toLocaleString('en-US');
   const videoWord = plan.bonusVideoGenerations === 1 ? 'video' : 'videos';
   return `+${images} images or +${videos} ${videoWord}`;
-}
-
-/** Linear coin rate: $9.99 → 80 Slutcoins (20 images or 10 videos). Pack USD/Stars are unchanged. */
-const RATE_SLUTCOINS = 20 * DESIRE_COSTS.image;
-
-function slutcoinsForUsd(usd: number): number {
-  return Math.max(1, Math.round((RATE_SLUTCOINS * usd) / BASE_USD));
 }
 
 const BASE_FEATURES = {
@@ -106,27 +169,19 @@ function definePlan(input: {
   price?: number;
   badge?: PremiumPlan['badge'];
   bonusPercent?: number;
-  desires?: number;
   imageGenerations?: number;
   videoGenerations?: number;
+  concurrentGenerations?: number;
   features: PremiumPlan['features'];
 }): PremiumPlan {
-  const price = input.price ?? usdFromStars(input.stars);
-  const baseCoins = slutcoinsForUsd(price);
-  const bonusPercent = input.bonusPercent ?? 0;
-  const formulaCoins =
-    bonusPercent > 0 ? Math.round((baseCoins * (100 + bonusPercent)) / 100) : baseCoins;
-  const imageGenerations =
-    input.imageGenerations ?? Math.floor((input.desires ?? formulaCoins) / DESIRE_COSTS.image);
-  const videoGenerations =
-    input.videoGenerations ?? Math.floor((input.desires ?? formulaCoins) / DESIRE_COSTS.videoBetter);
+  const price = input.price ?? usdHighFromStars(input.stars);
+  const imageGenerations = input.imageGenerations ?? Math.round((input.stars * MINI_IMAGES) / MINI_STARS);
+  const videoGenerations = input.videoGenerations ?? imageGenerations / 2;
   const desires = Math.max(
-    input.desires ?? formulaCoins,
+    input.stars,
     imageGenerations * DESIRE_COSTS.image,
     videoGenerations * DESIRE_COSTS.videoBetter,
   );
-  const baseImageGenerations = Math.floor(baseCoins / DESIRE_COSTS.image);
-  const baseVideoGenerations = Math.floor(baseCoins / DESIRE_COSTS.videoBetter);
   return {
     ...input,
     price,
@@ -134,10 +189,6 @@ function definePlan(input: {
     pricePerDesire: Number((price / desires).toFixed(4)),
     imageGenerations,
     videoGenerations,
-    bonusImageGenerations:
-      bonusPercent > 0 ? Math.max(0, imageGenerations - baseImageGenerations) : undefined,
-    bonusVideoGenerations:
-      bonusPercent > 0 ? Math.max(0, videoGenerations - baseVideoGenerations) : undefined,
   };
 }
 
@@ -147,7 +198,9 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     tier: 'Ecstasy',
     stars: 10000,
     badge: 'Best value',
-    bonusPercent: 50,
+    imageGenerations: 1200,
+    videoGenerations: 600,
+    concurrentGenerations: 20,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -163,7 +216,9 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'passion',
     tier: 'Passion',
     stars: 5000,
-    bonusPercent: 40,
+    imageGenerations: 400,
+    videoGenerations: 200,
+    concurrentGenerations: 20,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -179,7 +234,6 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'desire',
     tier: 'Desire',
     stars: 2500,
-    bonusPercent: 30,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -196,8 +250,6 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     tier: 'Flirt',
     stars: 1000,
     badge: 'Most chosen',
-    imageGenerations: 60,
-    videoGenerations: 30,
     features: features({
       proExports: 'check',
       ultraHd: 'check',
@@ -212,11 +264,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'mini',
     tier: 'Mini',
     subtitle: 'Starter',
-    stars: starsFromUsd(8),
+    stars: MINI_STARS,
     price: 8,
-    desires: 60,
-    imageGenerations: 15,
-    videoGenerations: 4,
     features: features({
       proExports: 'check',
       ultraHd: 'check',

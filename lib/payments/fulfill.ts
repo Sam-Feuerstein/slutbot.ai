@@ -41,6 +41,9 @@ export async function creditDesires(input: {
 
   await connectDB();
 
+  // Coupons change what the user pays. Wallet always gets the full pack Stars.
+  const creditedStars = plan.desires;
+
   const fields = {
     clientId: input.clientId,
     planId: input.planId,
@@ -48,7 +51,7 @@ export async function creditDesires(input: {
     status: 'paid' as const,
     usdAmount: input.usdAmount,
     starsAmount: input.starsAmount ?? 0,
-    desires: plan.desires,
+    desires: creditedStars,
     orderId: input.orderId ?? '',
     chargeId: input.chargeId,
     walletCredited: false,
@@ -67,7 +70,7 @@ export async function creditDesires(input: {
   if (!claimed) return { ok: true, already: true };
 
   try {
-    const linkedUser = await creditClientWallet(input.clientId, plan.desires, input.chargeId);
+    const linkedUser = await creditClientWallet(input.clientId, creditedStars, input.chargeId);
     if (linkedUser) {
       await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { userId: linkedUser._id } });
       try {

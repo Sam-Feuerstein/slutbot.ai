@@ -113,7 +113,7 @@ function sanitizeInput(input: CouponInput) {
   const discountUsd = Math.max(0, Math.round((Number(input.discountUsd) || 0) * 100) / 100);
 
   if (type === 'credits' && creditsAmount < 1) {
-    throw new Error('Credits coupons need at least 1 Slutcoin.');
+    throw new Error('Credits coupons need at least 1 Star.');
   }
   if (type === 'percent_off' && discountPercent < 1) {
     throw new Error('Percent coupons need at least 1% off.');
@@ -309,7 +309,7 @@ export async function redeemCouponForUser(input: {
 
   await SlutbotCoupon.findByIdAndUpdate(coupon.id, { $inc: { redemptionCount: 1 } });
   const credited = await adjustUserDesires(input.userId, coupon.creditsAmount);
-  if (credited == null) throw new Error('Could not credit Slutcoins.');
+  if (credited == null) throw new Error('Could not credit Stars.');
 
   return { coupon, desires: await getSpendableCredits(input.userId), creditsGranted: coupon.creditsAmount };
 }
@@ -343,7 +343,7 @@ export async function resolveCheckoutPriceCoupon(input: {
   const coupon = await getCouponByCode(input.code);
   if (!coupon) throw new Error('Invalid coupon code.');
   if (coupon.type === 'credits') {
-    throw new Error('This coupon adds Slutcoins on the Account page, not a checkout discount.');
+    throw new Error('This coupon adds Stars on the Account page, not a checkout discount.');
   }
   await assertPriceCouponUsable(coupon, input.userId);
   const priced = toPriceCoupon(coupon);

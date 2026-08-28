@@ -1,4 +1,10 @@
-import { CRYPTO_DISCOUNT_PERCENT, cryptoUsdPrice, PREMIUM_PLANS, type PremiumPlan } from '@/lib/premiumPlans';
+import {
+  cryptoInvoiceUsd,
+  cryptoUsdPrice,
+  planInvoiceCopy,
+  PREMIUM_PLANS,
+  type PremiumPlan,
+} from '@/lib/premiumPlans';
 
 export type CheckoutPlan = {
   id: string;
@@ -30,13 +36,13 @@ function toCheckoutPlan(plan: PremiumPlan): CheckoutPlan {
     desires: plan.desires,
     usdPrice: plan.price,
     starsAmount: plan.stars,
-    label: `AI SLUTBOT ${plan.tier}`,
-    description: `${plan.desires.toLocaleString()} Slutcoins · ${plan.imageGenerations.toLocaleString()} images or ${plan.videoGenerations.toLocaleString()} videos`,
+    label: 'AI SLUTBOT',
+    description: planInvoiceCopy(plan),
   };
 }
 
 export function cryptoUsdForPlan(plan: CheckoutPlan, discountApplied = false): number {
-  return discountApplied ? cryptoUsdPrice(plan.usdPrice) : plan.usdPrice;
+  return cryptoInvoiceUsd(discountApplied ? cryptoUsdPrice(plan.usdPrice) : plan.usdPrice);
 }
 
 export function isClientId(value: string): boolean {

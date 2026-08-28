@@ -4,7 +4,7 @@ import { envValue } from '@/lib/env';
 
 /**
  * High-income allowlist for the free trial. Everyone else (including unknown)
- * pays for Slutcoins with no trial grant.
+ * pays for Stars with no trial grant.
  */
 export const TIER1_COUNTRIES = new Set([
   'US',

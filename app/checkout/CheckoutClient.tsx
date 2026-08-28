@@ -10,7 +10,8 @@ import { cacheUserProfile } from '@/lib/auth/profile';
 import { loginHref, HELLO_EMAIL, checkoutBannerCopy } from '@/lib/site';
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
-import { formatUsdPrice, CRYPTO_DISCOUNT_PERCENT, PREMIUM_PLANS, planBonusGenerationCopy, planBonusPercentLabel, planGenerationCopy, type PremiumPlan } from '@/lib/premiumPlans';
+import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
+import { formatUsdPrice, formatAroundUsd, CRYPTO_DISCOUNT_PERCENT, CRYPTO_MIN_USD, PREMIUM_PLANS, planBonusPercentLabel, planGenerationCopy, planMoreGenerationsCopy, type PremiumPlan } from '@/lib/premiumPlans';
 import {
   CRYPTO_COUPON_APPLIED_KEY,
   CRYPTO_COUPON_CODE,
@@ -18,11 +19,14 @@ import {
   CHECKOUT_COUPON_KEY,
   formatCouponCountdown,
   isCouponOfferDisplayExpired,
+  isCryptoCouponCode,
   normalizeCryptoCouponCode,
   resolveCheckoutCoupon,
 } from '@/lib/payments/cryptoCoupon';
-import { applyCouponToUsd, couponRewardLabel } from '@/lib/coupons/pricing';
+import { applyCouponToStars, applyCouponToUsd, couponRewardLabel } from '@/lib/coupons/pricing';
 import type { PriceCoupon } from '@/lib/coupons/types';
+
+export type CheckoutMethod = 'stars' | 'crypto';
 
 function readAppliedCoupon(): PriceCoupon | null {
   if (typeof window === 'undefined') return null;
@@ -58,10 +62,12 @@ function CryptoOfferPromoBanner({
   secondsLeft,
   onCopyCode,
   copyLabel,
+  className,
 }: {
   secondsLeft: number;
   onCopyCode: () => void;
   copyLabel: string;
+  className?: string;
 }) {
   const offerExpired = isCouponOfferDisplayExpired(secondsLeft);
 
@@ -71,7 +77,7 @@ function CryptoOfferPromoBanner({
         offerExpired
           ? 'border-[#a3a3a3]/30 bg-gradient-to-r from-[#e5e5e5] via-[#d4d4d4] to-[#c9c9c9]'
           : 'border-[#c9a000]/40 bg-gradient-to-r from-[#fff176] via-[#ffea00] to-[#ffc400] shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]'
-      }`}
+      } ${className ?? ''}`}
     >
       <div
         className={`mx-auto flex max-w-6xl items-stretch overflow-hidden rounded-xl border border-dashed ${
@@ -95,12 +101,12 @@ function CryptoOfferPromoBanner({
               </>
             ) : (
               <>
-                <span className="shrink-0">Get</span>
+                <span className="shrink-0">SAVE</span>
                 <span className="shrink-0 rounded-md bg-[#ff5a00] px-1.5 py-0.5 text-[11px] font-black uppercase leading-none tracking-wide text-white shadow-[0_2px_8px_rgba(255,90,0,0.45)] sm:px-2 sm:py-1 sm:text-xs">
-                  {CRYPTO_DISCOUNT_PERCENT}% OFF
+                  {CRYPTO_DISCOUNT_PERCENT}%
                 </span>
                 <span className="min-w-0">
-                  with crypto payment. using ={' '}
+                  BY PAYING WITH USDT USING ={' '}
                   <button
                     type="button"
                     onClick={onCopyCode}
@@ -177,8 +183,8 @@ function CryptoCouponApplyField({
             aria-readonly={couponApplied}
             className={`w-full rounded-md border px-2 py-1.5 text-xs uppercase outline-none placeholder:normal-case focus:ring-1 ${
               couponApplied
-                ? 'border-[#86efac]/50 bg-[#f0fdf4]/95 pr-8 text-[#14532d] focus:border-[#86efac] focus:ring-[#86efac]/20'
-                : 'border-white/30 bg-white/10 text-white placeholder:text-white/45 focus:border-white focus:ring-white/20'
+                ? 'border-[#86efac]/50 bg-[#f0fdf4] pr-8 text-[#14532d] focus:border-[#86efac] focus:ring-[#86efac]/20'
+                : 'border-white/80 bg-white text-[#1a1a1a] placeholder:text-[#6b6f7a] focus:border-white focus:ring-white/40'
             }`}
           />
           {couponApplied ? (
@@ -199,7 +205,7 @@ function CryptoCouponApplyField({
           <button
             type="button"
             onClick={onApply}
-            className="shrink-0 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-[#635bff] hover:bg-white/90"
+            className="shrink-0 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-[#ff2d78] hover:bg-white/90"
           >
             Apply
           </button>
@@ -207,6 +213,8 @@ function CryptoCouponApplyField({
       </div>
       {couponApplied && savingsLabel ? (
         <p className="mt-1 text-[10px] font-medium leading-tight text-[#86efac]">{savingsLabel}</p>
+      ) : savingsLabel ? (
+        <p className="mt-1 text-[10px] font-medium leading-tight text-[#fde68a]">{savingsLabel}</p>
       ) : couponNote ? (
         <p className="mt-1 text-[10px] leading-tight text-[#fecaca]">{couponNote}</p>
       ) : null}
@@ -216,10 +224,72 @@ function CryptoCouponApplyField({
 
 type Props = {
   plan: PremiumPlan;
+  initialMethod: CheckoutMethod;
 };
 
 const PACKS = [...PREMIUM_PLANS].sort((a, b) => a.price - b.price);
-const PRODUCT_THUMB = '/checkout/product.jpg';
+const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
+const CHECKOUT_PROMO_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
+
+function CheckoutPromoVideo({ className }: { className?: string }) {
+  return (
+    <div
+      className={`-mx-3 -mt-2.5 sm:-mx-6 sm:-mt-5 lg:-mx-8 lg:-mt-6 ${className ?? ''}`}
+    >
+      <div className="relative aspect-[16/8.1] overflow-hidden bg-[#090505]">
+        <video
+          src={CHECKOUT_PROMO_VIDEO}
+          poster={CHECKOUT_PROMO_POSTER}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          className="h-full w-full object-cover object-top"
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-[#090505]/85 to-transparent px-3 pb-6 pt-2.5 sm:px-4 sm:pt-3" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#090505] via-[#090505]/80 to-transparent px-3 pb-2.5 pt-10 sm:px-4 sm:pb-3 sm:pt-12">
+          <p className="text-center text-[9px] font-black uppercase leading-tight tracking-[0.08em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:text-[10px] sm:tracking-[0.1em] lg:text-[11px] lg:leading-snug">
+            Ready to turn your boring static images to{' '}
+            <span className="text-[#ff2d78]">spicy content?</span>
+          </p>
+        </div>
+        <nav className="absolute left-3 top-2.5 z-10 flex items-center gap-1.5 text-[11px] text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] sm:left-4 sm:top-3 sm:text-xs">
+          <Link
+            href="/tool"
+            aria-label="Back"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#141414]/80 text-white backdrop-blur-sm hover:bg-[#141414]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+              <path d="M15 6 9 12l6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+          <Link href="/" className="font-medium hover:text-white">
+            AI SLUTBOT
+          </Link>
+          <span className="text-white/55">/</span>
+          <span className="font-medium text-white">Checkout</span>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
+function TelegramIcon() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/payments/telegram-icon.png"
+      alt=""
+      width={32}
+      height={32}
+      loading="lazy"
+      decoding="async"
+      className="h-7 w-7 shrink-0 rounded-[7px] sm:h-8 sm:w-8 sm:rounded-lg"
+    />
+  );
+}
 
 function LockIcon({ className }: { className?: string }) {
   return (
@@ -241,6 +311,38 @@ function UsdtIcon() {
       decoding="async"
       className="h-7 w-7 shrink-0 rounded-[7px] sm:h-8 sm:w-8 sm:rounded-lg"
     />
+  );
+}
+
+function SamsungPayMark() {
+  return (
+    <span className="inline-flex h-5 items-center rounded-[4px] bg-black px-1.5 text-[9px] font-semibold tracking-tight text-white sm:h-7 sm:px-2 sm:text-[11px]">
+      Samsung Pay
+    </span>
+  );
+}
+
+function WalletLogos() {
+  return (
+    <span className="flex flex-wrap items-center gap-1 pl-7 sm:gap-2 sm:pl-8">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/payments/wallet-logos.png"
+        alt="Mastercard, Visa, Google Pay, Apple Pay"
+        className="h-[18px] w-auto sm:h-7"
+      />
+      <SamsungPayMark />
+    </span>
+  );
+}
+
+function PackAroundUsdPrice({ catalogStars, chargedStars }: { catalogStars: number; chargedStars: number }) {
+  if (chargedStars === catalogStars) return <>{formatAroundUsd(chargedStars)}</>;
+  return (
+    <span className="block leading-tight">
+      <span className="block text-[11px] font-normal text-white/35 line-through">{formatAroundUsd(catalogStars)}</span>
+      <span>{formatAroundUsd(chargedStars)}</span>
+    </span>
   );
 }
 
@@ -332,13 +434,14 @@ function openPaymentUrl(url: string): 'popup' | 'same-tab' | 'blocked' {
   return 'popup';
 }
 
-export default function CheckoutClient({ plan }: Props) {
+export default function CheckoutClient({ plan, initialMethod }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutReason = searchParams.get('reason')?.trim() || '';
   const checkoutBanner = checkoutBannerCopy(checkoutReason);
   const [authReady, setAuthReady] = useState(false);
   const [planId, setPlanId] = useState(plan.id);
+  const [method, setMethod] = useState<CheckoutMethod>(initialMethod);
   const [agreed, setAgreed] = useState(false);
   const [agreedNoMinors, setAgreedNoMinors] = useState(false);
   const [buying, setBuying] = useState(false);
@@ -357,25 +460,48 @@ export default function CheckoutClient({ plan }: Props) {
   const payButtonRef = useRef<HTMLButtonElement>(null);
 
   const selected = PREMIUM_PLANS.find((item) => item.id === planId) ?? plan;
-  const couponApplied = Boolean(appliedCoupon);
-  const dueToday = applyCouponToUsd(selected.price, appliedCoupon);
-  const couponSavingsLabel = appliedCoupon ? `${couponRewardLabel(appliedCoupon)} applied` : null;
-  const payLabel = useMemo(
-    () =>
-      buying
-        ? 'Opening…'
-        : couponApplied
-          ? `CONTINUE · ${formatUsdPrice(dueToday)} · You Saved ${formatUsdPrice(Math.max(0, selected.price - dueToday))}`
-          : `CONTINUE · ${formatUsdPrice(dueToday)}`,
-    [buying, couponApplied, dueToday, selected.price],
-  );
+  // USDT coupon is crypto-only — never discount Telegram Stars invoices with it.
+  const pricingCoupon =
+    appliedCoupon && !(method === 'stars' && isCryptoCouponCode(appliedCoupon.code)) ? appliedCoupon : null;
+  const selectedStars = applyCouponToStars({
+    catalogStars: selected.stars,
+    geoStars: selected.stars,
+    coupon: pricingCoupon,
+    roundUpTo: 1,
+  });
+  const couponApplied = Boolean(pricingCoupon);
+  const dueTodayUsd = applyCouponToUsd(selected.price, pricingCoupon);
+  const couponSavingsLabel = pricingCoupon
+    ? method === 'crypto' && dueTodayUsd >= selected.price - 0.001
+      ? `Crypto checkout is ${formatUsdPrice(CRYPTO_MIN_USD)} minimum — you still get ${selected.desires.toLocaleString('en-US')} Stars`
+      : `${couponRewardLabel(pricingCoupon)} the price you pay — you still get ${selected.desires.toLocaleString('en-US')} Stars`
+    : appliedCoupon && method === 'stars' && isCryptoCouponCode(appliedCoupon.code)
+      ? `USDT-only code — switch to Crypto to save ${CRYPTO_DISCOUNT_PERCENT}%`
+      : null;
+  const payLabel = useMemo(() => {
+    if (buying) return 'Opening…';
+    if (method === 'stars') {
+      const catalogStars = selected.stars;
+      if (couponApplied && selectedStars < catalogStars) {
+        return `CONTINUE · ${formatAroundUsd(selectedStars)} · You Saved ${formatAroundUsd(catalogStars - selectedStars)}`;
+      }
+      return `CONTINUE · ${formatAroundUsd(selectedStars)}`;
+    }
+    if (couponApplied) {
+      const savedUsd = Math.max(0, selected.price - dueTodayUsd);
+      if (savedUsd >= 0.01) {
+        return `CONTINUE · ${formatUsdPrice(dueTodayUsd)} · You Saved ${formatUsdPrice(savedUsd)}`;
+      }
+    }
+    return `CONTINUE · ${formatUsdPrice(dueTodayUsd)}`;
+  }, [buying, couponApplied, dueTodayUsd, method, selected.price, selected.stars, selectedStars]);
 
   const checkoutPath = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('plan', planId);
-    params.set('method', 'crypto');
+    params.set('method', method);
     return `/checkout?${params.toString()}`;
-  }, [searchParams, planId]);
+  }, [searchParams, planId, method]);
 
   useEffect(() => {
     let cancelled = false;
@@ -457,14 +583,14 @@ export default function CheckoutClient({ plan }: Props) {
   }, []);
 
   useEffect(() => {
-    trackEvent('checkout_view', { kind: 'view', plan: plan.id, method: 'crypto' });
-  }, [plan.id]);
+    trackEvent('checkout_view', { kind: 'view', plan: plan.id, method: initialMethod });
+  }, [plan.id, initialMethod]);
 
-  const replaceCheckout = (nextPlan: string) => {
+  const replaceCheckout = (nextPlan: string, nextMethod: CheckoutMethod) => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     params.set('plan', nextPlan);
-    params.set('method', 'crypto');
+    params.set('method', nextMethod);
     const next = `/checkout?${params.toString()}`;
     window.history.replaceState(window.history.state, '', next);
   };
@@ -473,6 +599,19 @@ export default function CheckoutClient({ plan }: Props) {
     const normalized = normalizeCryptoCouponCode(couponInput);
     if (!normalized) {
       setCouponNote('Invalid coupon code.');
+      return;
+    }
+    if (isCryptoCouponCode(normalized) && method === 'stars') {
+      setCouponNote('This code only works with USDT crypto payment.');
+      return;
+    }
+    const builtin = resolveCheckoutCoupon(normalized);
+    if (builtin) {
+      setCouponInput(builtin.code);
+      setAppliedCoupon(builtin);
+      setCouponNote('');
+      writeAppliedCoupon(builtin);
+      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
       return;
     }
     try {
@@ -503,7 +642,7 @@ export default function CheckoutClient({ plan }: Props) {
       setAppliedCoupon(coupon);
       setCouponNote('');
       writeAppliedCoupon(coupon);
-      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method: 'crypto' });
+      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
     } catch {
       setCouponNote('Could not validate coupon.');
     }
@@ -513,7 +652,7 @@ export default function CheckoutClient({ plan }: Props) {
     setAppliedCoupon(null);
     setCouponNote('');
     writeAppliedCoupon(null);
-    trackEvent('checkout_coupon', { kind: 'click', plan: planId, method: 'crypto' });
+    trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
   };
 
   const copyCryptoCouponCode = async () => {
@@ -523,6 +662,16 @@ export default function CheckoutClient({ plan }: Props) {
       // Clipboard may be blocked; still prefill the field below.
     }
     setCouponInput(CRYPTO_COUPON_CODE);
+    if (method !== 'crypto') {
+      setMethod('crypto');
+      replaceCheckout(planId, 'crypto');
+    }
+    const builtin = resolveCheckoutCoupon(CRYPTO_COUPON_CODE);
+    if (builtin) {
+      setAppliedCoupon(builtin);
+      setCouponNote('');
+      writeAppliedCoupon(builtin);
+    }
     setCopyLabel('Copied!');
     window.setTimeout(() => setCopyLabel('Tap to copy'), 2000);
   };
@@ -537,9 +686,20 @@ export default function CheckoutClient({ plan }: Props) {
 
   const selectPlan = (id: string) => {
     setPlanId(id);
-    trackEvent('checkout_plan', { kind: 'click', plan: id, method: 'crypto' });
-    replaceCheckout(id);
+    trackEvent('checkout_plan', { kind: 'click', plan: id, method });
+    replaceCheckout(id, method);
     scrollToPay();
+  };
+
+  const chooseMethod = (next: CheckoutMethod) => {
+    setMethod(next);
+    if (next === 'stars' && appliedCoupon && isCryptoCouponCode(appliedCoupon.code)) {
+      setCouponNote('USDT-only code — switch to Crypto to use it.');
+    } else if (couponNote.includes('USDT')) {
+      setCouponNote('');
+    }
+    trackEvent('checkout_method', { kind: 'click', plan: planId, method: next });
+    replaceCheckout(planId, next);
   };
 
   const startCheckout = async () => {
@@ -558,14 +718,19 @@ export default function CheckoutClient({ plan }: Props) {
       document.getElementById('checkout-age-terms')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method: 'crypto' });
+    trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method });
     setBuying(true);
     setNote('');
     setTermsNote('');
     setMinorsNote('');
-    setToast('Redirecting to NOWPayments, a secure payment...');
+    setToast(
+      method === 'stars'
+        ? 'Redirecting to Telegram, a secure payment...'
+        : 'Redirecting to NOWPayments, a secure payment...',
+    );
     try {
-      const res = await fetch('/api/payments/nowpayments', {
+      const endpoint = method === 'stars' ? '/api/payments/stars' : '/api/payments/nowpayments';
+      const res = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -573,7 +738,10 @@ export default function CheckoutClient({ plan }: Props) {
         },
         body: JSON.stringify({
           plan: selected.id,
-          couponCode: appliedCoupon?.code,
+          couponCode:
+            method === 'stars' && appliedCoupon && isCryptoCouponCode(appliedCoupon.code)
+              ? undefined
+              : appliedCoupon?.code,
         }),
       });
       const data = (await res.json()) as { url?: string; message?: string };
@@ -588,7 +756,7 @@ export default function CheckoutClient({ plan }: Props) {
         capturePosthogEvent('checkout_error', {
           stage: 'start_checkout',
           plan: selected.id,
-          method: 'crypto',
+          method,
           status: res.status,
           message: data.message || 'Could not start checkout.',
         });
@@ -605,7 +773,7 @@ export default function CheckoutClient({ plan }: Props) {
         capturePosthogEvent('checkout_error', {
           stage: 'popup_blocked',
           plan: selected.id,
-          method: 'crypto',
+          method,
         });
       } else if (opened === 'same-tab') {
         return;
@@ -640,8 +808,8 @@ export default function CheckoutClient({ plan }: Props) {
     } catch (error) {
       setToast(null);
       setNote('Could not start checkout.');
-      capturePosthogException(error, { source: 'checkout', stage: 'start_checkout', plan: selected.id, method: 'crypto' });
-      capturePosthogEvent('checkout_error', { stage: 'start_checkout', plan: selected.id, method: 'crypto' });
+      capturePosthogException(error, { source: 'checkout', stage: 'start_checkout', plan: selected.id, method });
+      capturePosthogEvent('checkout_error', { stage: 'start_checkout', plan: selected.id, method });
     } finally {
       setBuying(false);
     }
@@ -680,97 +848,85 @@ export default function CheckoutClient({ plan }: Props) {
           </div>
         </div>
       ) : null}
-      <CryptoOfferPromoBanner
-        secondsLeft={secondsLeft}
-        onCopyCode={() => void copyCryptoCouponCode()}
-        copyLabel={copyLabel}
-      />
       <div className="lg:grid lg:grid-cols-2">
-      <aside className="flex flex-col bg-[#635bff] px-3 py-2.5 text-white sm:px-6 sm:py-5 lg:min-h-[calc(100dvh-3.5rem)] lg:px-8 lg:py-6">
-        <nav className="flex items-center gap-1.5 text-[11px] text-white/75 sm:text-xs">
-          <Link
-            href="/tool"
-            aria-label="Back"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white hover:bg-white/10"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-              <path d="M15 6 9 12l6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-          <Link href="/" className="hover:text-white">
-            AI SLUTBOT
-          </Link>
-          <span className="text-white/40">/</span>
-          <span className="text-white">Checkout</span>
-        </nav>
+      <aside className="flex flex-col border-white/5 bg-[#090505] px-3 py-2.5 text-white sm:px-6 sm:py-5 lg:min-h-[calc(100dvh-3.5rem)] lg:border-r lg:px-8 lg:py-6">
+        <CheckoutPromoVideo />
+        <CryptoOfferPromoBanner
+          secondsLeft={secondsLeft}
+          onCopyCode={() => void copyCryptoCouponCode()}
+          copyLabel={copyLabel}
+          className="-mx-3 mb-2.5 border-b-0 px-0 py-0 sm:-mx-6 lg:-mx-8"
+        />
 
-        <div className="mt-2.5 flex items-start gap-2.5 sm:mt-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PRODUCT_THUMB}
-            alt=""
-            className="h-10 w-10 shrink-0 rounded-md object-cover sm:h-11 sm:w-11"
-          />
-          <div className="min-w-0">
-            <p className="text-[10px] font-medium text-[#fde68a] sm:text-[11px]">✨ Slutcoins never expire</p>
-            <p className="mt-0.5 text-[10px] leading-snug text-white/80 sm:text-[11px]">
-              {planGenerationCopy(selected)}
-            </p>
-            {planBonusGenerationCopy(selected) ? (
-              <p className="mt-0.5 text-[10px] font-medium leading-snug text-[#86efac] sm:text-[11px]">
-                Bonus: {planBonusGenerationCopy(selected)}
-              </p>
-            ) : null}
-            <p className="mt-0.5 text-xs font-semibold tabular-nums sm:text-[13px]">
-              {selected.desires.toLocaleString('en-US')} Slutcoins
-            </p>
-          </div>
-        </div>
+        <p className="text-[10px] font-medium leading-snug text-[#fde68a] sm:text-[11px]">
+          One time payment · ✨ Stars never expire
+        </p>
 
-        <div className="mt-2.5 space-y-1 sm:mt-4 sm:space-y-1.5">
+        <div className="mt-2.5 space-y-1 sm:mt-3 sm:space-y-1.5">
           {PACKS.map((pack) => {
             const active = pack.id === selected.id;
             const bonusPercent = planBonusPercentLabel(pack);
+            const chargedStars = applyCouponToStars({
+              catalogStars: pack.stars,
+              geoStars: pack.stars,
+              coupon: pricingCoupon,
+              roundUpTo: 1,
+            });
             return (
-              <button
+              <div
                 key={pack.id}
-                type="button"
-                onClick={() => selectPlan(pack.id)}
-                className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left sm:gap-2.5 sm:px-2.5 sm:py-2 ${
-                  active ? 'border-white bg-white/10' : 'border-white/25 hover:border-white/45'
+                className={`rounded-lg border ${
+                  active ? 'border-[#ff2d78]/70 bg-[#ff2d78]/10' : 'border-white/20 hover:border-[#ff2d78]/35'
                 }`}
               >
-                <span
-                  className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border sm:h-4 sm:w-4 ${
-                    active ? 'border-white' : 'border-white/50'
-                  }`}
-                >
-                  {active ? <span className="h-1.5 w-1.5 rounded-full bg-white sm:h-2 sm:w-2" /> : null}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-1">
-                    <span className="text-xs font-medium sm:text-[13px]">
-                      {pack.tier} · {pack.desires.toLocaleString('en-US')} Slutcoins
+                <div className="flex items-start">
+                  <button
+                    type="button"
+                    onClick={() => selectPlan(pack.id)}
+                    className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left sm:gap-2.5 sm:px-2.5 sm:py-2"
+                  >
+                    <span
+                      className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border sm:h-4 sm:w-4 ${
+                        active ? 'border-[#ff2d78]' : 'border-white/45'
+                      }`}
+                    >
+                      {active ? <span className="h-1.5 w-1.5 rounded-full bg-white sm:h-2 sm:w-2" /> : null}
                     </span>
-                    {bonusPercent ? (
-                      <span className="inline-flex rounded-full bg-[#22c55e] px-1.5 py-px text-[9px] font-semibold leading-3 text-white sm:text-[10px] sm:leading-4">
-                        {bonusPercent}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-1">
+                        <span className="text-xs font-medium leading-snug sm:text-[13px]">
+                          {planGenerationCopy(pack)}
+                        </span>
+                        {bonusPercent ? (
+                          <span className="inline-flex rounded-full bg-[#22c55e] px-1.5 py-px text-[9px] font-semibold leading-3 text-white sm:text-[10px] sm:leading-4">
+                            {bonusPercent}
+                          </span>
+                        ) : null}
+                      </span>
+                      {planMoreGenerationsCopy(pack) ? (
+                        <span className="mt-px block text-[10px] font-medium leading-snug text-[#86efac] sm:text-[11px]">
+                          {planMoreGenerationsCopy(pack)}
+                        </span>
+                      ) : null}
+                    </span>
+                    {method !== 'stars' ? (
+                      <span className="shrink-0 text-right text-xs font-medium sm:text-[13px]">
+                        {formatUsdPrice(applyCouponToUsd(pack.price, pricingCoupon))}
                       </span>
                     ) : null}
-                  </span>
-                  <span className="mt-px block text-[10px] leading-snug text-white/65 sm:text-[11px]">
-                    {planGenerationCopy(pack)}
-                  </span>
-                </span>
-                <span className="shrink-0 text-right text-xs font-medium sm:text-[13px]">
-                  {formatUsdPrice(applyCouponToUsd(pack.price, appliedCoupon))}
-                </span>
-              </button>
+                  </button>
+                  {method === 'stars' ? (
+                    <div className="shrink-0 px-2 py-1.5 text-right text-xs font-medium sm:px-2.5 sm:py-2 sm:text-[13px]">
+                      <PackAroundUsdPrice catalogStars={pack.stars} chargedStars={chargedStars} />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             );
           })}
           <CryptoCouponApplyField
             couponInput={couponInput}
-            couponApplied={couponApplied}
+            couponApplied={Boolean(appliedCoupon)}
             couponNote={couponNote}
             savingsLabel={couponSavingsLabel}
             onInputChange={(value) => {
@@ -781,26 +937,16 @@ export default function CheckoutClient({ plan }: Props) {
             onRemove={removeCheckoutCoupon}
           />
         </div>
-
-        <p className="mt-3 text-[10px] leading-snug text-white/60 sm:mt-auto sm:pt-6 sm:text-[11px]">
-          Support:{' '}
-          <a
-            href={`mailto:${HELLO_EMAIL}`}
-            className="font-medium text-white/90 underline underline-offset-2 hover:text-white"
-          >
-            {HELLO_EMAIL}
-          </a>
-        </p>
       </aside>
 
       <main className="flex min-h-0 flex-1 items-start bg-white px-3 py-3 pb-[max(1.25rem,var(--safe-bottom))] text-[#1a1a1a] sm:px-10 sm:py-8 lg:min-h-dvh lg:px-12 lg:py-10">
         <div className="w-full max-w-[440px]">
           <h1 className="mt-2.5 text-[17px] font-semibold tracking-tight text-[#1a1a1a] sm:mt-3 sm:text-[22px] lg:mt-8">
-            Pay with crypto
+            Payment method
           </h1>
 
           <p className="mt-1 hidden text-sm text-[#6b6f7a] sm:mt-3 sm:block">
-            Slutcoins are added to your account right after payment.
+            Stars are added to your account right after payment.
           </p>
 
           {checkoutBanner ? (
@@ -810,88 +956,158 @@ export default function CheckoutClient({ plan }: Props) {
           ) : null}
 
           <div className="mt-2.5 space-y-2 sm:mt-5 sm:space-y-3">
-            <div className="flex w-full items-start gap-2.5 rounded-lg border border-[#635bff] px-3 py-2.5 ring-1 ring-[#635bff] sm:gap-3 sm:rounded-xl sm:px-4 sm:py-3.5">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#635bff] sm:mt-1 sm:h-5 sm:w-5">
-                <span className="h-2 w-2 rounded-full bg-[#635bff] sm:h-2.5 sm:w-2.5" />
+            <button
+              type="button"
+              onClick={() => chooseMethod('stars')}
+              className={`flex w-full flex-col gap-1.5 rounded-lg border px-3 py-2.5 sm:gap-2.5 sm:rounded-xl sm:px-4 sm:py-3.5 ${
+                method === 'stars' ? 'border-[#ff2d78] ring-1 ring-[#ff2d78]' : 'border-[#d7dbe3] hover:border-[#b8becb]'
+              }`}
+            >
+              <span className="flex w-full items-center gap-2.5 sm:gap-3">
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:h-5 sm:w-5 ${
+                    method === 'stars' ? 'border-[#ff2d78]' : 'border-[#c9ccd6]'
+                  }`}
+                >
+                  {method === 'stars' ? <span className="h-2 w-2 rounded-full bg-[#ff2d78] sm:h-2.5 sm:w-2.5" /> : null}
+                </span>
+                <TelegramIcon />
+                <MethodCopy
+                  title="Credit / Debit Card"
+                  subtitle={method === 'stars' ? formatAroundUsd(selectedStars) : 'Apple Pay, Google Pay, cards'}
+                />
+              </span>
+              <WalletLogos />
+            </button>
+
+            {method === 'stars' ? (
+              <>
+                <p className="text-[12px] leading-snug text-[#1a1a1a] sm:text-[13px]">
+                  You&apos;ll be redirected to Telegram app, to pay using Stars. If any trouble please email our support
+                  team at{' '}
+                  <a
+                    href={`mailto:${HELLO_EMAIL}`}
+                    className="font-medium text-[#1a1a1a] underline underline-offset-2"
+                  >
+                    {HELLO_EMAIL}
+                  </a>
+                </p>
+                <p className="flex justify-center">
+                  <a
+                    href="/payments/telegram-stars-tutorial"
+                    onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[#ff2d78] underline underline-offset-2 hover:text-[#ff1a6b] sm:gap-2 sm:text-sm"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/payments/telegram-stars-icon.webp"
+                      alt=""
+                      width={20}
+                      height={20}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-4 w-auto shrink-0 sm:h-5"
+                    />
+                    Telegram Payment Tutorial
+                  </a>
+                </p>
+              </>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => chooseMethod('crypto')}
+              className={`flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 sm:gap-3 sm:rounded-xl sm:px-4 sm:py-3.5 ${
+                method === 'crypto' ? 'border-[#ff2d78] ring-1 ring-[#ff2d78]' : 'border-[#d7dbe3] hover:border-[#b8becb]'
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:mt-1 sm:h-5 sm:w-5 ${
+                  method === 'crypto' ? 'border-[#ff2d78]' : 'border-[#c9ccd6]'
+                }`}
+              >
+                {method === 'crypto' ? <span className="h-2 w-2 rounded-full bg-[#ff2d78] sm:h-2.5 sm:w-2.5" /> : null}
               </span>
               <span className="mt-0.5 shrink-0 sm:mt-1">
                 <UsdtIcon />
               </span>
               <MethodCopy title="Crypto" subtitle="USDT TRC20" />
-            </div>
+            </button>
 
-            <div className="flex items-center justify-center pt-0.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/payments/nowpayments-logo.png"
-                alt="NOWPayments"
-                className="h-4 w-auto sm:h-5"
-              />
-              <a
-                href="/payments/crypto-tutorial"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'crypto' })}
-                className="ml-1.5 text-[11px] font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff] sm:ml-2 sm:text-xs"
-              >
-                (Tutorial)
-              </a>
-            </div>
+            {method === 'crypto' ? (
+              <>
+                <p className="text-[12px] leading-snug text-[#1a1a1a] sm:text-[13px]">
+                  You&apos;ll be redirected to NOWpayments secure checkout to pay with USDT TRC20. If any trouble please
+                  email our support team at{' '}
+                  <a
+                    href={`mailto:${HELLO_EMAIL}`}
+                    className="font-medium text-[#1a1a1a] underline underline-offset-2"
+                  >
+                    {HELLO_EMAIL}
+                  </a>
+                </p>
+                <div className="flex items-center justify-center pt-0.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/payments/nowpayments-logo.png"
+                    alt="NOWPayments"
+                    className="h-4 w-auto sm:h-5"
+                  />
+                  <a
+                    href="/payments/crypto-tutorial"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'crypto' })}
+                    className="ml-1.5 text-[11px] font-medium text-[#ff2d78] underline underline-offset-2 hover:text-[#ff1a6b] sm:ml-2 sm:text-xs"
+                  >
+                    (Tutorial)
+                  </a>
+                </div>
+              </>
+            ) : null}
           </div>
 
-          <p className="mt-2 text-[12px] leading-snug text-[#1a1a1a] sm:mt-4 sm:text-[13px]">
-            You&apos;ll be redirected to NOWpayments secure checkout to pay with USDT TRC20. If any trouble please email
-            our support team at{' '}
-            <a href={`mailto:${HELLO_EMAIL}`} className="font-medium text-[#1a1a1a] underline underline-offset-2">
-              {HELLO_EMAIL}
-            </a>
-          </p>
-
-          <div className="mt-2.5 overflow-x-auto [scrollbar-width:none] sm:mt-5 [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center gap-2 whitespace-nowrap text-[9px] leading-none text-[#3d424d] sm:text-[10px]">
-              <input
-                id="checkout-no-minors"
-                type="checkbox"
-                checked={agreedNoMinors}
-                onChange={(event) => {
-                  setAgreedNoMinors(event.target.checked);
-                  if (event.target.checked) setMinorsNote('');
-                }}
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#635bff]"
-              />
-              <label htmlFor="checkout-no-minors" className="cursor-pointer">
-                Using minor photos is strictly forbidden and will lead to instant account termination.
-              </label>
-            </div>
+          <div className="mt-2.5 flex items-start gap-2 text-[10px] leading-snug text-[#3d424d] sm:mt-5 sm:gap-2 sm:text-[11px]">
+            <input
+              id="checkout-no-minors"
+              type="checkbox"
+              checked={agreedNoMinors}
+              onChange={(event) => {
+                setAgreedNoMinors(event.target.checked);
+                if (event.target.checked) setMinorsNote('');
+              }}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#ff2d78]"
+            />
+            <label htmlFor="checkout-no-minors" className="cursor-pointer">
+              Using minor photos is strictly forbidden and will lead to instant account termination.
+            </label>
           </div>
           {minorsNote ? (
             <p className="mt-1.5 text-[10px] leading-snug text-[#b42318] sm:text-[11px]">{minorsNote}</p>
           ) : null}
 
-          <div className="mt-2 overflow-x-auto [scrollbar-width:none] sm:mt-2.5 [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center gap-2 whitespace-nowrap text-[9px] leading-none text-[#3d424d] sm:text-[10px]">
-              <input
-                id="checkout-age-terms"
-                type="checkbox"
-                checked={agreed}
-                onChange={(event) => {
-                  setAgreed(event.target.checked);
-                  if (event.target.checked) setTermsNote('');
-                }}
-                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#635bff]"
-              />
-              <label htmlFor="checkout-age-terms" className="cursor-pointer">
-                You confirm that you are at least 18 years old and agree to our{' '}
-                <Link
-                  href="/terms"
-                  className="font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff]"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  Terms of Service
-                </Link>
-                .
-              </label>
-            </div>
+          <div className="mt-2 flex items-start gap-2 text-[10px] leading-snug text-[#3d424d] sm:mt-2.5 sm:gap-2 sm:text-[11px]">
+            <input
+              id="checkout-age-terms"
+              type="checkbox"
+              checked={agreed}
+              onChange={(event) => {
+                setAgreed(event.target.checked);
+                if (event.target.checked) setTermsNote('');
+              }}
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#ff2d78]"
+            />
+            <label htmlFor="checkout-age-terms" className="cursor-pointer">
+              You confirm that you are at least 18 years old and agree to our{' '}
+              <Link
+                href="/terms"
+                className="font-medium text-[#ff2d78] underline underline-offset-2 hover:text-[#ff1a6b]"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Terms of Service
+              </Link>
+              .
+            </label>
           </div>
           {termsNote ? (
             <p className="mt-1.5 text-[10px] leading-snug text-[#b42318] sm:text-[11px]">{termsNote}</p>
@@ -902,7 +1118,7 @@ export default function CheckoutClient({ plan }: Props) {
             type="button"
             disabled={buying}
             onClick={() => void startCheckout()}
-            className="mt-3 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7a72ff] to-[#4f3dff] px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(99,91,255,0.35)] hover:from-[#6e66f8] hover:to-[#4636f0] disabled:cursor-not-allowed disabled:opacity-50 sm:mt-5 sm:min-h-12"
+            className="mt-3 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff2d78] to-[#ff1a6b] px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(255,45,120,0.35)] hover:from-[#ff4d8f] hover:to-[#ff2d78] disabled:cursor-not-allowed disabled:opacity-50 sm:mt-5 sm:min-h-12"
           >
             {payLabel}
             <LockIcon className="h-3.5 w-3.5" />
@@ -913,7 +1129,7 @@ export default function CheckoutClient({ plan }: Props) {
               href={paymentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#635bff] px-4 text-sm font-semibold text-[#635bff] hover:bg-[#635bff]/5"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#ff2d78] px-4 text-sm font-semibold text-[#ff2d78] hover:bg-[#ff2d78]/5"
             >
               Open payment page
             </a>
@@ -923,9 +1139,31 @@ export default function CheckoutClient({ plan }: Props) {
             <TrustSignals />
           </div>
 
+          <div className="mt-4 hidden justify-center lg:flex lg:mt-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/checkout/ssl-secure-badge.png"
+              alt="Fully secured SSL checkout"
+              className="h-11 w-auto"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
           {note ? <p className="mt-2 text-center text-xs text-[#b42318] sm:mt-3">{note}</p> : null}
         </div>
       </main>
+      </div>
+
+      <div className="flex justify-center border-t border-[#eceef2] bg-white px-4 py-4 lg:hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/checkout/ssl-secure-badge.png"
+          alt="Fully secured SSL checkout"
+          className="h-11 w-auto"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
     </div>
   );

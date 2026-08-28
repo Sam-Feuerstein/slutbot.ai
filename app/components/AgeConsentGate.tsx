@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Check } from 'lucide-react';
 import BrandLogo from './BrandLogo';
-
-const STORAGE_KEY = 'slutbot-age-consent-v1';
+import {
+  AGE_CONSENT_EVENT,
+  AGE_CONSENT_STORAGE_KEY,
+  clearAgeGateAttr,
+  shouldShowAgeGate,
+} from '@/lib/ageConsent';
 
 const BULLETS = [
   'This website contains age-restricted materials including nudity and explicit depictions of sexual activity.',
@@ -16,19 +20,15 @@ const BULLETS = [
 
 export default function AgeConsentGate() {
   const pathname = usePathname();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => shouldShowAgeGate(pathname || '/'));
 
-  useEffect(() => {
-    if (pathname.startsWith('/admin') || pathname.startsWith('/checkout')) return;
-    try {
-      const accepted = localStorage.getItem(STORAGE_KEY) === '1';
-      setVisible(!accepted);
-    } catch {
-      setVisible(true);
-    }
+  useLayoutEffect(() => {
+    const next = shouldShowAgeGate(pathname);
+    setVisible(next);
+    if (!next) clearAgeGateAttr();
   }, [pathname]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.body.style.overflow = visible ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
@@ -38,7 +38,7 @@ export default function AgeConsentGate() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black p-4">
       <div
         role="dialog"
         aria-modal="true"
@@ -86,9 +86,14 @@ export default function AgeConsentGate() {
         <button
           type="button"
           onClick={() => {
-            localStorage.setItem(STORAGE_KEY, '1');
+            try {
+              localStorage.setItem(AGE_CONSENT_STORAGE_KEY, '1');
+            } catch {
+              /* ignore */
+            }
+            clearAgeGateAttr();
             setVisible(false);
-            window.dispatchEvent(new Event('slutbot-age-consent'));
+            window.dispatchEvent(new Event(AGE_CONSENT_EVENT));
           }}
           className="mt-8 flex w-full items-center overflow-hidden rounded-2xl bg-[#ff2d78] text-left font-bold text-black shadow-[0_0_28px_rgba(255,45,120,0.45)] transition-colors hover:bg-[#ff1a6b]"
         >

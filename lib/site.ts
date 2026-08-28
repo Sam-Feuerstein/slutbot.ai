@@ -35,7 +35,11 @@ export function checkoutHref(input?: {
   reason?: string;
 }) {
   const params = new URLSearchParams({ plan: input?.plan?.trim() || 'flirt' });
-  params.set('method', 'crypto');
+  if (input?.method === 'crypto') {
+    params.set('method', 'crypto');
+  } else {
+    params.set('method', 'stars');
+  }
   const reason = input?.reason?.trim();
   if (reason) {
     // Keep codes short so login → checkout redirects stay readable.
@@ -48,17 +52,17 @@ export function checkoutBannerCopy(reason?: string | null): string | null {
   const value = (reason || '').trim();
   if (!value) return null;
   if (value === 'unlock_preview') {
-    return 'Pay for a pack to unlock your video. Coins land on your account right after payment.';
+    return 'Pay for a pack to unlock your video. Stars land on your account right after payment.';
   }
   if (value === 'low_balance' || /available|required|more .+coins/i.test(value)) {
-    return 'You’re out of Slutcoins for this generation. Pick a pack below — coins land on your account right after payment.';
+    return 'You’re out of Stars for this generation. Pick a pack below — Stars land on your account right after payment.';
   }
   if (value === 'sign_in') {
-    return 'Sign in, then choose a pack. Coins are added to your account after payment.';
+    return 'Sign in, then choose a pack. Stars are added to your account after payment.';
   }
   // Unknown short codes / legacy — keep only if it isn’t the old accounting dump.
   if (value.length <= 80 && !/\d+\s+available/i.test(value)) return value;
-  return 'Pick a pack below to add Slutcoins and keep generating.';
+  return 'Pick a pack below to add Stars and keep generating.';
 }
 
 export function getAppUrl() {

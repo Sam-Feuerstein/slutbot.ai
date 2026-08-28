@@ -58,11 +58,11 @@ export function defaultPlanRows(): PlanPriceRow[] {
 export function defaultAdminSettings(): AdminMockSettings {
   return {
     costs: {
-      image: 4,
-      videoBasic: 8,
-      videoBetter: 8,
-      videoBetter720: 12,
-      videoBetter1080: 16,
+      image: 16,
+      videoBasic: 32,
+      videoBetter: 32,
+      videoBetter720: 48,
+      videoBetter1080: 64,
     },
     plans: defaultPlanRows(),
     nowpayments: {
@@ -83,12 +83,12 @@ export function defaultAdminSettings(): AdminMockSettings {
       smtpPort: '587',
       smtpUser: '',
       smtpPassword: '',
-      offerSubject: '{{name}}, extra Slutcoins this week',
+      offerSubject: '{{name}}, extra Stars this week',
       offerBody:
         `Hey {{name}},\n\nUnlock {{plan}} and keep generating on ${SITE_DOMAIN}.\n\n${SITE_URL}\n\n— AI SLUTBOT`,
       purchaseSubject: 'Your {{plan}} pack is ready',
       purchaseBody:
-        `Hi {{name}},\n\nWe received your {{plan}} purchase ({{amount}}).\n{{desires}} Slutcoins were added to your wallet.\n\nManage your account: ${SITE_URL}/account\n\nThanks for playing.\n— AI SLUTBOT (${SITE_DOMAIN})`,
+        `Hi {{name}},\n\nWe received your {{plan}} purchase ({{amount}}).\n{{desires}} Stars were added to your wallet.\n\nManage your account: ${SITE_URL}/account\n\nThanks for playing.\n— AI SLUTBOT (${SITE_DOMAIN})`,
       resetSubject: 'Reset your AI SLUTBOT password',
       resetBody:
         `Hi {{name}},\n\nUse this link to restore access to your ${SITE_DOMAIN} account:\n{{resetLink}}\n\nIf you did not ask for this, ignore the email.\n\n— AI SLUTBOT`,

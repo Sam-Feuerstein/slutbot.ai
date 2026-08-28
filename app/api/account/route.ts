@@ -3,11 +3,12 @@ import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
-import { PREMIUM_PLANS } from '@/lib/premiumPlans';
+import { PREMIUM_PLANS, planInvoiceCopy } from '@/lib/premiumPlans';
 import { publicBalanceFields } from '@/lib/users/wallet';
 
 function planLabel(planId: string) {
-  return PREMIUM_PLANS.find((plan) => plan.id === planId)?.tier ?? planId;
+  const plan = PREMIUM_PLANS.find((item) => item.id === planId);
+  return plan ? planInvoiceCopy(plan) : planId;
 }
 
 function providerLabel(provider: string) {

@@ -61,7 +61,7 @@ export default function NowPaymentsPage() {
         <Panel>
           <h2 className="text-lg font-black">USD pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            Live invoices bill these catalog USD amounts. Conversion base: 660 Stars = $9.99.
+            Live invoices bill these catalog USD amounts. Conversion base: 1,000 Stars = $25.
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {
@@ -73,7 +73,7 @@ export default function NowPaymentsPage() {
                 >
                   <div>
                     <p className="font-black">{meta?.tier ?? plan.id}</p>
-                    <p className="text-xs text-white/40">{plan.desires.toLocaleString()} Slutcoins</p>
+                    <p className="text-xs text-white/40">{plan.desires.toLocaleString()} Stars</p>
                   </div>
                   <div className="w-28">
                     <Field label="USD">

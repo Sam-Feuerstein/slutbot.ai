@@ -7,7 +7,7 @@ import { buildPageMetadata } from '@/lib/seo';
 export const metadata: Metadata = buildPageMetadata({
   title: 'Terms of Service',
   description:
-    'Terms of Service for AI SLUTBOT at aislutbot.com — AI porn generator rules, Slutcoins, prohibited content, refunds, and adult-only use.',
+    'Terms of Service for AI SLUTBOT at aislutbot.com — AI porn generator rules, Stars, prohibited content, refunds, and adult-only use.',
   path: '/terms',
 });
 
@@ -99,7 +99,7 @@ export default function TermsPage() {
                 applicable verification or consent requirements. Users must follow the prohibited content rules.
               </li>
               <li>
-                <strong className="text-white/80">Slutcoins.</strong> Paid packs grant Slutcoins that can be spent on
+                <strong className="text-white/80">Stars.</strong> Paid packs grant Stars that can be spent on
                 eligible generations. Packs, prices, and included generation estimates are displayed at checkout and
                 may change prospectively.
               </li>
@@ -223,20 +223,25 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section title="7. Using the Platform. Packs, Slutcoins, and Pricing">
+          <Section title="7. Using the Platform. Packs, Stars, and Pricing">
             <p>
-              The Platform offers paid Slutcoin packs to accommodate different user needs. Each pack provides a number
-              of Slutcoins that can be used for generating AI images and videos. Pack names, prices, Slutcoin amounts,
+              The Platform offers paid Stars packs to accommodate different user needs. Each pack provides a number
+              of Stars that can be used for generating AI images and videos. Pack names, prices, Stars amounts,
               and estimated image or video counts are displayed at checkout and may change prospectively.
             </p>
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Mini (Starter): 60 Slutcoins for USD $8.00 (529 Telegram Stars).</li>
-              <li>Flirt: 240 Slutcoins for USD $15.14 (1,000 Telegram Stars).</li>
-              <li>Desire: 394 Slutcoins for USD $37.84 (2,500 Telegram Stars), including a 30% generation bonus.</li>
-              <li>Passion: 848 Slutcoins for USD $75.68 (5,000 Telegram Stars), including a 40% generation bonus.</li>
-              <li>Ecstasy: 1,818 Slutcoins for USD $151.36 (10,000 Telegram Stars), including a 50% generation bonus.</li>
+              <li>Starter: 500 Stars for USD $13.00 crypto, or 500 Telegram Stars (about USD $13).</li>
+              <li>Flirt: 1,000 Stars for USD $25.00 crypto, or 1,000 Telegram Stars (about USD $16 to $25).</li>
+              <li>Desire: 2,500 Stars for USD $63.00 crypto, or 2,500 Telegram Stars (about USD $63).</li>
+              <li>Passion: 5,000 Telegram Stars or USD $125.00 crypto, for 400 image generations or 200 spicy videos (about USD $80 to $125), including up to 20 concurrent jobs.</li>
+              <li>Ecstasy: 10,000 Telegram Stars or USD $250.00 crypto, for 1,200 image generations or 600 spicy videos (about USD $160 to $250), including up to 20 concurrent jobs.</li>
             </ul>
+            <p>
+              Crypto (USDT) checkout charges the pack USD price, with a USD $8.50 minimum. Telegram Stars checkout charges the matching
+              Telegram Stars amount. In both cases the pack credits Stars to your wallet so you can use the generations shown at
+              checkout. Promotional coupons may reduce the amount you pay. They do not reduce the Stars credited for that pack.
+            </p>
             <p>
               Estimated image and video counts shown with a pack are illustrations based on typical generation costs
               (for example, short videos of about 5 seconds). Actual consumption depends on mode, duration, quality,
@@ -246,12 +251,12 @@ export default function TermsPage() {
             <p>
               We may offer one-time packs rather than, or in addition to, recurring subscriptions. Where a purchase is
               recurring, users can cancel according to the instructions shown at checkout or in their account. Upon
-              cancellation, expiration, or any other loss of paid access, unused Slutcoins and access to your
+              cancellation, expiration, or any other loss of paid access, unused Stars and access to your
               generation library may be restricted unless and until a new eligible pack is purchased, except where
               otherwise required by law or expressly stated by us.
             </p>
             <p>
-              To create images and videos, Slutcoins are necessary. Pricing reflects the computational resources
+              To create images and videos, Stars are necessary. Pricing reflects the computational resources
               required for generation. Video pricing may increase with duration, resolution, and other selected
               settings; the charge is displayed before generation where feasible. We reserve the right to adjust
               pricing prospectively if we identify discrepancies or changes in compute cost.
@@ -264,8 +269,8 @@ export default function TermsPage() {
 
           <Section title="8. Additional Features">
             <ul className="list-disc space-y-2 pl-5">
-              <li>Higher-value packs may provide more Slutcoins, more generations, and additional feature access as displayed.</li>
-              <li>Slutcoins have no cash value and are not transferable except as required by law.</li>
+              <li>Higher-value packs may provide more Stars, more generations, and additional feature access as displayed.</li>
+              <li>Stars have no cash value and are not transferable except as required by law.</li>
               <li>
                 Features such as HD or Ultra-HD rendering, faster generation, priority access, watermark-free exports,
                 and generation history duration depend on the pack or account status shown on the Platform.
@@ -290,7 +295,7 @@ export default function TermsPage() {
                 prompt complexity, model capabilities, resolution, duration, and other settings.
               </li>
               <li>
-                <strong className="text-white/80">Non-refundability of used Slutcoins.</strong> Once Slutcoins have been
+                <strong className="text-white/80">Non-refundability of used Stars.</strong> Once Stars have been
                 used to generate content, we cannot offer refunds based on output quality or accuracy, except as
                 required by law or under the Refund Policy below.
               </li>
@@ -470,14 +475,14 @@ export default function TermsPage() {
               <li>we fail to provide the service entirely, and you are unable to use it for its intended purpose;</li>
               <li>double billing or overcharging occurred due to a technical error on our part; or</li>
               <li>
-                you have not consumed any Slutcoins provided to you and have not used generation or related paid
+                you have not consumed any Stars provided to you and have not used generation or related paid
                 features, and a request is made within 14 days of purchase, except where law provides a longer or
                 shorter period.
               </li>
             </ul>
             <p>
               After 14 days from the date of purchase, any contractual right to withdraw expires, regardless of
-              whether you have used Slutcoins, except where a longer period is required by law.
+              whether you have used Stars, except where a longer period is required by law.
             </p>
             <p>Any chargeback associated with your account may result in its immediate termination.</p>
           </Section>
@@ -585,7 +590,7 @@ export default function TermsPage() {
 
           <Section title="22. Promotional Credits">
             <p>
-              We may award promotional Slutcoins or similar credits at our discretion. Promotional credits have no cash
+              We may award promotional Stars or similar credits at our discretion. Promotional credits have no cash
               value, are not transferable or withdrawable, and may be modified, suspended, or discontinued
               prospectively. We may withhold rewards in cases of abuse, multiple-account circumvention, fraud, policy
               violations, or technical error.

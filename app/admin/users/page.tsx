@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
       <PageHeader
         kicker="Accounts"
         title="Users"
-        description="Create test accounts, set passwords, and allocate Slutcoins."
+        description="Create test accounts, set passwords, and allocate Stars."
         action={
           <div className="flex flex-wrap gap-2">
             <input
@@ -101,7 +101,7 @@ export default function AdminUsersPage() {
             <input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="Email" className={inputClass} required />
             <input value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="Password (6+)" type="password" className={inputClass} required />
             <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Display name" className={inputClass} />
-            <input value={form.desires} onChange={(e) => setForm((f) => ({ ...f, desires: e.target.value }))} placeholder="Starting Slutcoins" type="number" className={inputClass} />
+            <input value={form.desires} onChange={(e) => setForm((f) => ({ ...f, desires: e.target.value }))} placeholder="Starting Stars" type="number" className={inputClass} />
             <div className="md:col-span-2">
               <SaveButton>Create user</SaveButton>
             </div>
@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
               <tr className="border-b border-white/8">
                 <th className="px-5 py-4 font-semibold">User</th>
                 <th className="px-5 py-4 font-semibold">Joined</th>
-                <th className="px-5 py-4 font-semibold">Slutcoins</th>
+                <th className="px-5 py-4 font-semibold">Stars</th>
                 <th className="px-5 py-4 font-semibold">Gens</th>
                 <th className="px-5 py-4 font-semibold">Status</th>
               </tr>
