@@ -423,20 +423,23 @@ export async function listAiToolGenerations(): Promise<{
   items: AiToolGenerationRecord[];
   error?: string;
 }> {
-  // KILL SWITCH — private archive leak containment. Flip off after deploy verified.
-  if (archiveKillSwitchOn() || true) {
-    return { items: [], error: 'Collection temporarily unavailable.' };
-  }
-
   const auth = await requireUser();
   if (auth.error || !auth.user) return { items: [], error: auth.error || 'Sign in required.' };
-  if (!String(auth.user.id || '').trim()) {
+  const user = auth.user;
+  const userId = String(user.id || '').trim();
+  if (!userId) {
     return { items: [], error: 'Sign in required.' };
+  }
+
+  // KILL SWITCH — env-controlled containment for the private archive leak.
+  // Set ARCHIVE_KILL_SWITCH=1 to blank the archive for everyone.
+  if (archiveKillSwitchOn()) {
+    return { items: [], error: 'Collection temporarily unavailable.' };
   }
 
   try {
     await connectDB();
-    const docs = await AiToolGeneration.find(ownedArchiveFilter(auth.user.id, auth.user.clientId))
+    const docs = await AiToolGeneration.find(ownedArchiveFilter(userId, user.clientId))
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();

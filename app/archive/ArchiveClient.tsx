@@ -14,7 +14,6 @@ import { deleteAiToolGeneration, listAiToolGenerations } from '@/lib/actions/wav
 import {
   downloadResult,
   mergeCollection,
-  readLocalCollection,
   removeLocalCollectionItem,
 } from '@/lib/collectionLocal';
 import type { AiToolGenerationRecord } from '@/lib/imageToVideo/types';

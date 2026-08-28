@@ -1,11 +1,36 @@
 import type { AiToolGenerationRecord } from '@/lib/imageToVideo/types';
+import { readCachedUserProfile } from '@/lib/auth/profile';
 
-const KEY = 'slutbot-collection';
+// Legacy GLOBAL key. This leaked generations across accounts on a shared
+// browser because it was not scoped to a user. We now purge it on every read
+// and never write to it again.
+const LEGACY_GLOBAL_KEY = 'slutbot-collection';
+const KEY_PREFIX = 'slutbot-collection:';
+
+function currentOwnerKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  const email = readCachedUserProfile()?.email?.trim().toLowerCase();
+  if (!email) return null;
+  return `${KEY_PREFIX}${email}`;
+}
+
+// Remove the old global cache so previously-leaked data is wiped everywhere.
+function purgeLegacyGlobal() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(LEGACY_GLOBAL_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export function readLocalCollection(): AiToolGenerationRecord[] {
   if (typeof window === 'undefined') return [];
+  purgeLegacyGlobal();
+  const key = currentOwnerKey();
+  if (!key) return [];
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as AiToolGenerationRecord[];
     return Array.isArray(parsed) ? parsed : [];
@@ -15,7 +40,11 @@ export function readLocalCollection(): AiToolGenerationRecord[] {
 }
 
 export function writeLocalCollection(items: AiToolGenerationRecord[]) {
-  localStorage.setItem(KEY, JSON.stringify(items.slice(0, 100)));
+  if (typeof window === 'undefined') return;
+  purgeLegacyGlobal();
+  const key = currentOwnerKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(items.slice(0, 100)));
 }
 
 export function addLocalCollectionItem(item: AiToolGenerationRecord) {
