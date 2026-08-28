@@ -80,7 +80,7 @@ export function organizationJsonLd() {
     '@type': 'Organization',
     name: 'SLUTBOT AI',
     url: SITE_URL,
-    logo: absoluteUrl('/brand/aislutbot-logo.webp'),
+    logo: absoluteUrl('/brand/aislutbot-logo.png'),
     email: LEGAL_EMAIL,
   };
 }

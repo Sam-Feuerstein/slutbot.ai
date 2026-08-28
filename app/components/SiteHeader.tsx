@@ -121,13 +121,17 @@ export default function SiteHeader() {
   return (
     <>
       <header
-        className={`relative sticky top-0 z-50 border-b border-[#ff2d78]/20 bg-[#4a122c] bg-[linear-gradient(90deg,#000_0%,#4a122c_72%)] pt-[calc(var(--safe-top)+0.375rem)] transition-shadow duration-200 sm:pt-[calc(var(--safe-top)+0.5rem)] ${
+        className={`relative sticky top-0 z-50 border-b border-[#ff2d78]/20 bg-[#4a122c] pt-[calc(var(--safe-top)+0.375rem)] transition-shadow duration-200 sm:pt-[calc(var(--safe-top)+0.5rem)] ${
           scrolled ? 'shadow-[0_10px_28px_rgba(0,0,0,0.38)]' : ''
         }`}
       >
-        <div className="safe-x relative mx-auto flex min-h-[4.5rem] max-w-[1600px] items-center justify-between gap-2 py-2 sm:min-h-[5.5rem] sm:gap-4 sm:py-2.5">
-          <Link href="/" aria-label="AI SLUTBOT home" className="flex min-w-0 translate-y-0.5 items-center gap-3 sm:gap-4">
-            <BrandLogo className="h-[57px] w-auto sm:h-[73px]" priority />
+        <div className="safe-x relative mx-auto flex min-h-[3.75rem] max-w-[1600px] items-center justify-between gap-2 overflow-hidden py-1.5 sm:min-h-[5.5rem] sm:gap-4 sm:overflow-visible sm:py-2.5">
+          <Link
+            href="/"
+            aria-label="AI SLUTBOT home"
+            className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden sm:translate-y-0.5 sm:gap-4"
+          >
+            <BrandLogo className="h-8 w-auto max-w-full sm:h-[73px]" preload />
 
             <div className="hidden h-7 w-px shrink-0 bg-white/20 sm:block" />
 
@@ -136,10 +140,10 @@ export default function SiteHeader() {
             </span>
           </Link>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+          <div className="relative z-10 flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <Link
               href={GENERATOR_PATH}
-              className={`inline-flex h-9 items-center rounded-md border-[2.5px] border-black bg-[#ff2d78] px-2.5 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
+              className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-[#ff2d78] px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-4 sm:text-[11px] sm:tracking-[0.08em] ${
                 pathname === GENERATOR_PATH || pathname.startsWith(`${GENERATOR_PATH}/`)
                   ? 'bg-[#ff4d90]'
                   : ''

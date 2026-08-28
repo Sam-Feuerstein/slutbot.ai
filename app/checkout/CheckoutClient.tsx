@@ -10,8 +10,7 @@ import { cacheUserProfile } from '@/lib/auth/profile';
 import { loginHref, HELLO_EMAIL, checkoutBannerCopy } from '@/lib/site';
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
-import { formatUsdPrice, usdFromStars, CRYPTO_DISCOUNT_PERCENT, PREMIUM_PLANS, planBonusGenerationCopy, planBonusPercentLabel, planGenerationCopy, type PremiumPlan } from '@/lib/premiumPlans';
-import type { StarsGeoQuote } from '@/lib/starsGeo/types';
+import { formatUsdPrice, CRYPTO_DISCOUNT_PERCENT, PREMIUM_PLANS, planBonusGenerationCopy, planBonusPercentLabel, planGenerationCopy, type PremiumPlan } from '@/lib/premiumPlans';
 import {
   CRYPTO_COUPON_APPLIED_KEY,
   CRYPTO_COUPON_CODE,
@@ -22,10 +21,8 @@ import {
   normalizeCryptoCouponCode,
   resolveCheckoutCoupon,
 } from '@/lib/payments/cryptoCoupon';
-import { applyCouponToStars, applyCouponToUsd, couponRewardLabel } from '@/lib/coupons/pricing';
+import { applyCouponToUsd, couponRewardLabel } from '@/lib/coupons/pricing';
 import type { PriceCoupon } from '@/lib/coupons/types';
-
-export type CheckoutMethod = 'stars' | 'crypto';
 
 function readAppliedCoupon(): PriceCoupon | null {
   if (typeof window === 'undefined') return null;
@@ -219,26 +216,10 @@ function CryptoCouponApplyField({
 
 type Props = {
   plan: PremiumPlan;
-  initialMethod: CheckoutMethod;
 };
 
 const PACKS = [...PREMIUM_PLANS].sort((a, b) => a.price - b.price);
 const PRODUCT_THUMB = '/checkout/product.jpg';
-
-function TelegramIcon() {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/payments/telegram-icon.png"
-      alt=""
-      width={32}
-      height={32}
-      loading="lazy"
-      decoding="async"
-      className="h-7 w-7 shrink-0 rounded-[7px] sm:h-8 sm:w-8 sm:rounded-lg"
-    />
-  );
-}
 
 function LockIcon({ className }: { className?: string }) {
   return (
@@ -260,38 +241,6 @@ function UsdtIcon() {
       decoding="async"
       className="h-7 w-7 shrink-0 rounded-[7px] sm:h-8 sm:w-8 sm:rounded-lg"
     />
-  );
-}
-
-function SamsungPayMark() {
-  return (
-    <span className="inline-flex h-5 items-center rounded-[4px] bg-black px-1.5 text-[9px] font-semibold tracking-tight text-white sm:h-7 sm:px-2 sm:text-[11px]">
-      Samsung Pay
-    </span>
-  );
-}
-
-function WalletLogos() {
-  return (
-    <span className="flex flex-wrap items-center gap-1 pl-7 sm:gap-2 sm:pl-8">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/payments/wallet-logos.png"
-        alt="Mastercard, Visa, Google Pay, Apple Pay"
-        className="h-[18px] w-auto sm:h-7"
-      />
-      <SamsungPayMark />
-    </span>
-  );
-}
-
-function PackUsdPrice({ catalogUsd, chargedUsd }: { catalogUsd: number; chargedUsd: number }) {
-  if (chargedUsd === catalogUsd) return <>{formatUsdPrice(chargedUsd)}</>;
-  return (
-    <span className="block leading-tight">
-      <span className="block text-[11px] font-normal text-white/35 line-through">{formatUsdPrice(catalogUsd)}</span>
-      <span>{formatUsdPrice(chargedUsd)}</span>
-    </span>
   );
 }
 
@@ -383,18 +332,19 @@ function openPaymentUrl(url: string): 'popup' | 'same-tab' | 'blocked' {
   return 'popup';
 }
 
-export default function CheckoutClient({ plan, initialMethod }: Props) {
+export default function CheckoutClient({ plan }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutReason = searchParams.get('reason')?.trim() || '';
   const checkoutBanner = checkoutBannerCopy(checkoutReason);
   const [authReady, setAuthReady] = useState(false);
   const [planId, setPlanId] = useState(plan.id);
-  const [method, setMethod] = useState<CheckoutMethod>(initialMethod);
   const [agreed, setAgreed] = useState(false);
+  const [agreedNoMinors, setAgreedNoMinors] = useState(false);
   const [buying, setBuying] = useState(false);
   const [note, setNote] = useState('');
   const [termsNote, setTermsNote] = useState('');
+  const [minorsNote, setMinorsNote] = useState('');
   const [toast, setToast] = useState<string | null>(null);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [couponInput, setCouponInput] = useState('');
@@ -402,28 +352,14 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   const [couponNote, setCouponNote] = useState('');
   const [copyLabel, setCopyLabel] = useState('Tap to copy');
   const [secondsLeft, setSecondsLeft] = useState(CRYPTO_COUPON_DURATION_MS / 1000);
-  const [starsQuote, setStarsQuote] = useState<StarsGeoQuote | null>(null);
   const balanceBeforePayment = useRef(0);
   const pollRef = useRef<number | null>(null);
   const payButtonRef = useRef<HTMLButtonElement>(null);
 
   const selected = PREMIUM_PLANS.find((item) => item.id === planId) ?? plan;
-  const geoStars = starsQuote?.packs[selected.id]?.stars ?? selected.stars;
-  const selectedStars = applyCouponToStars({
-    catalogStars: selected.stars,
-    geoStars,
-    coupon: appliedCoupon,
-    roundUpTo: starsQuote?.roundUpTo ?? 50,
-  });
-  const selectedStarsUsd = usdFromStars(selectedStars);
   const couponApplied = Boolean(appliedCoupon);
-  const dueToday =
-    method === 'crypto' ? applyCouponToUsd(selected.price, appliedCoupon) : selectedStarsUsd;
-  const couponSavingsLabel = appliedCoupon
-    ? method === 'stars'
-      ? `${couponRewardLabel(appliedCoupon)} stacked with country price`
-      : `${couponRewardLabel(appliedCoupon)} applied`
-    : null;
+  const dueToday = applyCouponToUsd(selected.price, appliedCoupon);
+  const couponSavingsLabel = appliedCoupon ? `${couponRewardLabel(appliedCoupon)} applied` : null;
   const payLabel = useMemo(
     () =>
       buying
@@ -437,9 +373,9 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   const checkoutPath = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('plan', planId);
-    params.set('method', method);
+    params.set('method', 'crypto');
     return `/checkout?${params.toString()}`;
-  }, [searchParams, planId, method]);
+  }, [searchParams, planId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -521,30 +457,14 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
   }, []);
 
   useEffect(() => {
-    trackEvent('checkout_view', { kind: 'view', plan: plan.id, method: initialMethod });
-  }, [plan.id, initialMethod]);
+    trackEvent('checkout_view', { kind: 'view', plan: plan.id, method: 'crypto' });
+  }, [plan.id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void fetch('/api/checkout/stars-quote')
-      .then(async (res) => {
-        const json = (await res.json()) as StarsGeoQuote;
-        if (!cancelled && res.ok && json?.packs) setStarsQuote(json);
-      })
-      .catch((error) => {
-        capturePosthogException(error, { source: 'checkout', stage: 'stars_quote' });
-        capturePosthogEvent('checkout_error', { stage: 'stars_quote', plan: plan.id, method: initialMethod });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const replaceCheckout = (nextPlan: string, nextMethod: CheckoutMethod) => {
+  const replaceCheckout = (nextPlan: string) => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     params.set('plan', nextPlan);
-    params.set('method', nextMethod);
+    params.set('method', 'crypto');
     const next = `/checkout?${params.toString()}`;
     window.history.replaceState(window.history.state, '', next);
   };
@@ -583,7 +503,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
       setAppliedCoupon(coupon);
       setCouponNote('');
       writeAppliedCoupon(coupon);
-      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
+      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method: 'crypto' });
     } catch {
       setCouponNote('Could not validate coupon.');
     }
@@ -593,7 +513,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
     setAppliedCoupon(null);
     setCouponNote('');
     writeAppliedCoupon(null);
-    trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
+    trackEvent('checkout_coupon', { kind: 'click', plan: planId, method: 'crypto' });
   };
 
   const copyCryptoCouponCode = async () => {
@@ -617,15 +537,9 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
 
   const selectPlan = (id: string) => {
     setPlanId(id);
-    trackEvent('checkout_plan', { kind: 'click', plan: id, method });
-    replaceCheckout(id, method);
+    trackEvent('checkout_plan', { kind: 'click', plan: id, method: 'crypto' });
+    replaceCheckout(id);
     scrollToPay();
-  };
-
-  const chooseMethod = (next: CheckoutMethod) => {
-    setMethod(next);
-    trackEvent('checkout_method', { kind: 'click', plan: planId, method: next });
-    replaceCheckout(planId, next);
   };
 
   const startCheckout = async () => {
@@ -634,23 +548,24 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
       router.replace(loginHref(checkoutPath));
       return;
     }
+    if (!agreedNoMinors) {
+      setMinorsNote('Please confirm you will not use minor photos.');
+      document.getElementById('checkout-no-minors')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     if (!agreed) {
       setTermsNote('Please tick the box to confirm you are 18+ and agree to the Terms of Service.');
       document.getElementById('checkout-age-terms')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method });
+    trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method: 'crypto' });
     setBuying(true);
     setNote('');
     setTermsNote('');
-    setToast(
-      method === 'stars'
-        ? 'Redirecting to Telegram, a secure payment...'
-        : 'Redirecting to NOWPayments, a secure payment...',
-    );
+    setMinorsNote('');
+    setToast('Redirecting to NOWPayments, a secure payment...');
     try {
-      const endpoint = method === 'stars' ? '/api/payments/stars' : '/api/payments/nowpayments';
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/payments/nowpayments', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -673,7 +588,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
         capturePosthogEvent('checkout_error', {
           stage: 'start_checkout',
           plan: selected.id,
-          method,
+          method: 'crypto',
           status: res.status,
           message: data.message || 'Could not start checkout.',
         });
@@ -690,7 +605,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
         capturePosthogEvent('checkout_error', {
           stage: 'popup_blocked',
           plan: selected.id,
-          method,
+          method: 'crypto',
         });
       } else if (opened === 'same-tab') {
         return;
@@ -725,8 +640,8 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
     } catch (error) {
       setToast(null);
       setNote('Could not start checkout.');
-      capturePosthogException(error, { source: 'checkout', stage: 'start_checkout', plan: selected.id, method });
-      capturePosthogEvent('checkout_error', { stage: 'start_checkout', plan: selected.id, method });
+      capturePosthogException(error, { source: 'checkout', stage: 'start_checkout', plan: selected.id, method: 'crypto' });
+      capturePosthogEvent('checkout_error', { stage: 'start_checkout', plan: selected.id, method: 'crypto' });
     } finally {
       setBuying(false);
     }
@@ -848,21 +763,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
                   </span>
                 </span>
                 <span className="shrink-0 text-right text-xs font-medium sm:text-[13px]">
-                  {method === 'stars' ? (
-                    <PackUsdPrice
-                      catalogUsd={pack.price}
-                      chargedUsd={usdFromStars(
-                        applyCouponToStars({
-                          catalogStars: pack.stars,
-                          geoStars: starsQuote?.packs[pack.id]?.stars ?? pack.stars,
-                          coupon: appliedCoupon,
-                          roundUpTo: starsQuote?.roundUpTo ?? 50,
-                        }),
-                      )}
-                    />
-                  ) : (
-                    formatUsdPrice(applyCouponToUsd(pack.price, appliedCoupon))
-                  )}
+                  {formatUsdPrice(applyCouponToUsd(pack.price, appliedCoupon))}
                 </span>
               </button>
             );
@@ -895,7 +796,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
       <main className="flex min-h-0 flex-1 items-start bg-white px-3 py-3 pb-[max(1.25rem,var(--safe-bottom))] text-[#1a1a1a] sm:px-10 sm:py-8 lg:min-h-dvh lg:px-12 lg:py-10">
         <div className="w-full max-w-[440px]">
           <h1 className="mt-2.5 text-[17px] font-semibold tracking-tight text-[#1a1a1a] sm:mt-3 sm:text-[22px] lg:mt-8">
-            Payment method
+            Pay with crypto
           </h1>
 
           <p className="mt-1 hidden text-sm text-[#6b6f7a] sm:mt-3 sm:block">
@@ -909,144 +810,91 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
           ) : null}
 
           <div className="mt-2.5 space-y-2 sm:mt-5 sm:space-y-3">
-            <button
-              type="button"
-              onClick={() => chooseMethod('stars')}
-              className={`flex w-full flex-col gap-1.5 rounded-lg border px-3 py-2.5 sm:gap-2.5 sm:rounded-xl sm:px-4 sm:py-3.5 ${
-                method === 'stars' ? 'border-[#635bff] ring-1 ring-[#635bff]' : 'border-[#d7dbe3] hover:border-[#b8becb]'
-              }`}
-            >
-              <span className="flex w-full items-center gap-2.5 sm:gap-3">
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:h-5 sm:w-5 ${
-                    method === 'stars' ? 'border-[#635bff]' : 'border-[#c9ccd6]'
-                  }`}
-                >
-                  {method === 'stars' ? <span className="h-2 w-2 rounded-full bg-[#635bff] sm:h-2.5 sm:w-2.5" /> : null}
-                </span>
-                <TelegramIcon />
-                <MethodCopy
-                  title="Card with Telegram"
-                  subtitle={method === 'stars' ? formatUsdPrice(selectedStarsUsd) : 'Apple Pay, Google Pay, cards'}
-                />
-              </span>
-              <WalletLogos />
-            </button>
-
-            {method === 'stars' ? (
-              <p className="flex justify-center">
-                <a
-                  href="/payments/telegram-stars-tutorial"
-                  onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff] sm:gap-2 sm:text-sm"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/payments/telegram-stars-icon.webp"
-                    alt=""
-                    width={20}
-                    height={20}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-4 w-auto shrink-0 sm:h-5"
-                  />
-                  Telegram Payment Tutorial
-                </a>
-              </p>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={() => chooseMethod('crypto')}
-              className={`flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 sm:gap-3 sm:rounded-xl sm:px-4 sm:py-3.5 ${
-                method === 'crypto' ? 'border-[#635bff] ring-1 ring-[#635bff]' : 'border-[#d7dbe3] hover:border-[#b8becb]'
-              }`}
-            >
-              <span
-                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:mt-1 sm:h-5 sm:w-5 ${
-                  method === 'crypto' ? 'border-[#635bff]' : 'border-[#c9ccd6]'
-                }`}
-              >
-                {method === 'crypto' ? <span className="h-2 w-2 rounded-full bg-[#635bff] sm:h-2.5 sm:w-2.5" /> : null}
+            <div className="flex w-full items-start gap-2.5 rounded-lg border border-[#635bff] px-3 py-2.5 ring-1 ring-[#635bff] sm:gap-3 sm:rounded-xl sm:px-4 sm:py-3.5">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#635bff] sm:mt-1 sm:h-5 sm:w-5">
+                <span className="h-2 w-2 rounded-full bg-[#635bff] sm:h-2.5 sm:w-2.5" />
               </span>
               <span className="mt-0.5 shrink-0 sm:mt-1">
                 <UsdtIcon />
               </span>
               <MethodCopy title="Crypto" subtitle="USDT TRC20" />
-            </button>
+            </div>
 
-            {method === 'crypto' ? (
-              <div className="flex items-center justify-center pt-0.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/payments/nowpayments-logo.png"
-                  alt="NOWPayments"
-                  className="h-4 w-auto sm:h-5"
-                />
-                <a
-                  href="/payments/crypto-tutorial"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'crypto' })}
-                  className="ml-1.5 text-[11px] font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff] sm:ml-2 sm:text-xs"
-                >
-                  (Tutorial)
-                </a>
-              </div>
-            ) : null}
+            <div className="flex items-center justify-center pt-0.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/payments/nowpayments-logo.png"
+                alt="NOWPayments"
+                className="h-4 w-auto sm:h-5"
+              />
+              <a
+                href="/payments/crypto-tutorial"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'crypto' })}
+                className="ml-1.5 text-[11px] font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff] sm:ml-2 sm:text-xs"
+              >
+                (Tutorial)
+              </a>
+            </div>
           </div>
 
           <p className="mt-2 text-[12px] leading-snug text-[#1a1a1a] sm:mt-4 sm:text-[13px]">
-            {method === 'stars' ? (
-              <>
-                You&apos;ll be redirected to Telegram app, to pay using Stars. If any trouble please email our support
-                team at{' '}
-                <a
-                  href={`mailto:${HELLO_EMAIL}`}
-                  className="font-medium text-[#1a1a1a] underline underline-offset-2"
-                >
-                  {HELLO_EMAIL}
-                </a>
-              </>
-            ) : (
-              <>
-                You&apos;ll be redirected to NOWpayments secure checkout to pay with USDT TRC20. If any trouble please
-                email our support team at{' '}
-                <a
-                  href={`mailto:${HELLO_EMAIL}`}
-                  className="font-medium text-[#1a1a1a] underline underline-offset-2"
-                >
-                  {HELLO_EMAIL}
-                </a>
-              </>
-            )}
+            You&apos;ll be redirected to NOWpayments secure checkout to pay with USDT TRC20. If any trouble please email
+            our support team at{' '}
+            <a href={`mailto:${HELLO_EMAIL}`} className="font-medium text-[#1a1a1a] underline underline-offset-2">
+              {HELLO_EMAIL}
+            </a>
           </p>
 
-          <div className="mt-2.5 flex items-start gap-2 text-[12px] leading-snug text-[#3d424d] sm:mt-5 sm:gap-2.5 sm:text-[13px]">
-            <input
-              id="checkout-age-terms"
-              type="checkbox"
-              checked={agreed}
-              onChange={(event) => {
-                setAgreed(event.target.checked);
-                if (event.target.checked) setTermsNote('');
-              }}
-              className="mt-[3px] h-4 w-4 shrink-0 cursor-pointer accent-[#635bff]"
-            />
-            <label htmlFor="checkout-age-terms" className="cursor-pointer">
-              By clicking CONTINUE, you confirm that you are at least 18 years old and agree to our{' '}
-              <Link
-                href="/terms"
-                className="font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff]"
-                onClick={(event) => event.stopPropagation()}
-              >
-                Terms of Service
-              </Link>
-              .
-            </label>
+          <div className="mt-2.5 overflow-x-auto [scrollbar-width:none] sm:mt-5 [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-2 whitespace-nowrap text-[9px] leading-none text-[#3d424d] sm:text-[10px]">
+              <input
+                id="checkout-no-minors"
+                type="checkbox"
+                checked={agreedNoMinors}
+                onChange={(event) => {
+                  setAgreedNoMinors(event.target.checked);
+                  if (event.target.checked) setMinorsNote('');
+                }}
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#635bff]"
+              />
+              <label htmlFor="checkout-no-minors" className="cursor-pointer">
+                Using minor photos is strictly forbidden and will lead to instant account termination.
+              </label>
+            </div>
+          </div>
+          {minorsNote ? (
+            <p className="mt-1.5 text-[10px] leading-snug text-[#b42318] sm:text-[11px]">{minorsNote}</p>
+          ) : null}
+
+          <div className="mt-2 overflow-x-auto [scrollbar-width:none] sm:mt-2.5 [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-2 whitespace-nowrap text-[9px] leading-none text-[#3d424d] sm:text-[10px]">
+              <input
+                id="checkout-age-terms"
+                type="checkbox"
+                checked={agreed}
+                onChange={(event) => {
+                  setAgreed(event.target.checked);
+                  if (event.target.checked) setTermsNote('');
+                }}
+                className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#635bff]"
+              />
+              <label htmlFor="checkout-age-terms" className="cursor-pointer">
+                You confirm that you are at least 18 years old and agree to our{' '}
+                <Link
+                  href="/terms"
+                  className="font-medium text-[#635bff] underline underline-offset-2 hover:text-[#4f3dff]"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Terms of Service
+                </Link>
+                .
+              </label>
+            </div>
           </div>
           {termsNote ? (
-            <p className="mt-2 text-xs leading-snug text-[#b42318] sm:mt-2.5 sm:text-[13px]">{termsNote}</p>
+            <p className="mt-1.5 text-[10px] leading-snug text-[#b42318] sm:text-[11px]">{termsNote}</p>
           ) : null}
 
           <button

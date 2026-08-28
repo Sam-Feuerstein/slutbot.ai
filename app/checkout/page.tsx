@@ -2,11 +2,11 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
 import { buildPageMetadata } from '@/lib/seo';
-import CheckoutClient, { type CheckoutMethod } from './CheckoutClient';
+import CheckoutClient from './CheckoutClient';
 
 export const metadata = buildPageMetadata({
   title: 'Checkout',
-  description: 'Pay for AI SLUTBOT Slutcoins with Telegram Stars or cryptocurrency.',
+  description: 'Pay for AI SLUTBOT Slutcoins with cryptocurrency.',
   path: '/checkout',
   noIndex: true,
 });
@@ -20,11 +20,9 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
     PREMIUM_PLANS.find((item) => item.id === 'flirt');
   if (!plan) redirect('/tool');
 
-  const initialMethod: CheckoutMethod = params.method === 'crypto' ? 'crypto' : 'stars';
-
   return (
     <Suspense fallback={<div className="min-h-dvh bg-white" />}>
-      <CheckoutClient plan={plan} initialMethod={initialMethod} />
+      <CheckoutClient plan={plan} />
     </Suspense>
   );
 }

@@ -1,12 +1,14 @@
 import Image from 'next/image';
 
-export const BRAND_LOGO_SRC = '/brand/aislutbot-logo.webp';
+export const BRAND_LOGO_SRC = '/brand/aislutbot-logo.png';
 
 export default function BrandLogo({
-  className = 'h-[51px] w-auto sm:h-[58px]',
+  className = 'h-9 w-auto max-w-full sm:h-[58px]',
+  preload = false,
   priority = false,
 }: {
   className?: string;
+  preload?: boolean;
   priority?: boolean;
 }) {
   return (
@@ -15,8 +17,10 @@ export default function BrandLogo({
       alt="AI SLUTBOT"
       width={456}
       height={128}
-      priority={priority}
-      className={`block max-w-none object-contain object-left ${className}`}
+      preload={preload || priority}
+      sizes="(max-width: 640px) 140px, 280px"
+      className={`block max-w-full object-contain object-left ${className}`}
+      style={{ width: 'auto' }}
     />
   );
 }
