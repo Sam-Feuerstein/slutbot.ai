@@ -352,10 +352,19 @@ export async function refundFailedGeneration(
 }
 
 function ownedArchiveFilter(userId: string, _clientId: string) {
-  // SECURITY: match ONLY the signed-in account. Never fall back to clientId,
-  // which can be shared/empty and leaks other users' private generations.
+  // SECURITY: match ONLY the signed-in account. Never fall back to clientId.
+  // Never pass an empty/undefined userId — Mongoose strips undefined and would
+  // return ALL generations (cross-user privacy leak).
   void _clientId;
-  return { userId };
+  const id = String(userId || '').trim();
+  if (!id) return { _id: null };
+  return { userId: id };
+}
+
+/** Emergency: set ARCHIVE_KILL_SWITCH=1 to serve zero archive items site-wide. */
+function archiveKillSwitchOn(): boolean {
+  const raw = (process.env.ARCHIVE_KILL_SWITCH || '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 }
 
 export async function saveAiToolGeneration(input: {
@@ -414,8 +423,16 @@ export async function listAiToolGenerations(): Promise<{
   items: AiToolGenerationRecord[];
   error?: string;
 }> {
+  // KILL SWITCH — private archive leak containment. Flip off after deploy verified.
+  if (archiveKillSwitchOn() || true) {
+    return { items: [], error: 'Collection temporarily unavailable.' };
+  }
+
   const auth = await requireUser();
   if (auth.error || !auth.user) return { items: [], error: auth.error || 'Sign in required.' };
+  if (!String(auth.user.id || '').trim()) {
+    return { items: [], error: 'Sign in required.' };
+  }
 
   try {
     await connectDB();

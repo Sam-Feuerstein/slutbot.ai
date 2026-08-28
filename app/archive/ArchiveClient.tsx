@@ -48,19 +48,29 @@ export default function ArchiveClient() {
       return;
     }
 
+    // Privacy kill switch: never paint local/remote collection while archive is locked down.
+    try {
+      localStorage.removeItem('slutbot-collection');
+    } catch {
+      // ignore
+    }
+
     let cancelled = false;
     (async () => {
       setLoading(true);
       setLoadError('');
-      const local = readLocalCollection();
+      setItems([]);
       const result = await listAiToolGenerations();
       if (cancelled) return;
       if (result.error?.toLowerCase().includes('sign in')) {
         router.replace(loginHref(ARCHIVE_PATH));
         return;
       }
-      if (result.error && !result.items.length && !local.length) setLoadError(result.error);
-      setItems(mergeCollection(result.items, local));
+      // Do not merge localStorage — it can retain another session's private media URLs.
+      setItems(result.items || []);
+      if (result.error && !(result.items || []).length) {
+        setLoadError(result.error);
+      }
       setLoading(false);
     })();
     const onComplete = (event: Event) => {
