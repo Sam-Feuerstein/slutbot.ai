@@ -193,8 +193,8 @@ export default function AccountClient() {
     }
   }
 
-  function signOut() {
-    signOutClient();
+  async function signOut() {
+    await signOutClient();
     router.push('/');
   }
 
@@ -439,7 +439,7 @@ export default function AccountClient() {
               </p>
               <button
                 type="button"
-                onClick={signOut}
+                onClick={() => void signOut()}
                 className="mt-4 min-h-11 rounded-full border border-white/15 px-5 text-sm font-bold text-white hover:bg-white/10"
               >
                 Sign out

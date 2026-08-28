@@ -118,9 +118,9 @@ export default function SiteHeader() {
     });
   }, [menuOpen]);
 
-  function logOut() {
+  async function logOut() {
     setMenuOpen(false);
-    signOutClient();
+    await signOutClient();
     router.push('/');
   }
 
@@ -295,7 +295,7 @@ export default function SiteHeader() {
               ) : (
                 <button
                   type="button"
-                  onClick={logOut}
+                  onClick={() => void logOut()}
                   className="mt-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[12px] font-semibold text-white/55 transition-colors hover:bg-black/25 hover:text-white"
                 >
                   <LogOut className="h-3.5 w-3.5" />

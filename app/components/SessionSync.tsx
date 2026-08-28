@@ -1,45 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { clearAuthSession, storeAuthSession } from '@/lib/auth/session';
+import { clearAuthSession, getAuthEpoch, storeAuthSession } from '@/lib/auth/session';
 import { cacheUserProfile, clearUserProfile } from '@/lib/auth/profile';
-import { refreshDesiresFromServer, setDesires } from '@/lib/desires';
+import { refreshDesiresFromServer } from '@/lib/desires';
 import { identifyPosthogUser } from '@/lib/posthog';
 import { getImageToVideoClientId } from '@/app/tool/clientId';
 
-async function bootstrapAdminAppSession(): Promise<boolean> {
-  try {
-    const res = await fetch('/api/admin/bootstrap-user', { credentials: 'include' });
-    if (!res.ok) return false;
-    const data = (await res.json()) as {
-      clientId?: string;
-      email?: string;
-      name?: string;
-      desires?: number;
-    };
-    if (!data.clientId) return false;
-    storeAuthSession({ clientId: data.clientId });
-    cacheUserProfile({
-      email: data.email || '',
-      name: data.name || 'Admin',
-      avatarUrl: '',
-    });
-    if (typeof data.desires === 'number') setDesires(data.desires);
-    identifyPosthogUser(getImageToVideoClientId(), {
-      email: data.email || '',
-      name: data.name || 'Admin',
-      is_admin: true,
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Keeps wallet balance in sync with the server and clears invalid auth sessions. */
+/**
+ * Keeps wallet + profile in sync with the httpOnly session cookie.
+ * Does NOT auto-bootstrap an admin app user — that was re-signing people
+ * in right after logout whenever an admin cookie was still present.
+ */
 export default function SessionSync() {
   useEffect(() => {
     let cancelled = false;
+    const epoch = getAuthEpoch();
 
     void (async () => {
       if (typeof window !== 'undefined') {
@@ -48,13 +24,17 @@ export default function SessionSync() {
 
       try {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok && !cancelled) {
+        if (cancelled || epoch !== getAuthEpoch()) return;
+
+        if (res.ok) {
           const data = (await res.json()) as {
             email?: string;
             name?: string;
             avatarUrl?: string;
             clientId?: string;
           };
+          if (cancelled || epoch !== getAuthEpoch()) return;
+
           if (data.clientId) storeAuthSession({ clientId: data.clientId });
           if (data.email) {
             cacheUserProfile({
@@ -67,18 +47,15 @@ export default function SessionSync() {
               name: data.name || '',
             });
           }
-        } else if (!cancelled) {
-          const bootstrapped = await bootstrapAdminAppSession();
-          if (!bootstrapped) {
-            clearAuthSession();
-            clearUserProfile();
-          }
+        } else {
+          clearAuthSession();
+          clearUserProfile();
         }
       } catch {
         /* offline — keep session flag */
       }
 
-      if (!cancelled) {
+      if (!cancelled && epoch === getAuthEpoch()) {
         await refreshDesiresFromServer();
       }
     })();
