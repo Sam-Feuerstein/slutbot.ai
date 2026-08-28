@@ -351,10 +351,11 @@ export async function refundFailedGeneration(
   return refundIfWavespeedFailed(auth.user.id, taskId);
 }
 
-function ownedArchiveFilter(userId: string, clientId: string) {
-  return {
-    $or: [{ userId }, { userId: null, clientId }],
-  };
+function ownedArchiveFilter(userId: string, _clientId: string) {
+  // SECURITY: match ONLY the signed-in account. Never fall back to clientId,
+  // which can be shared/empty and leaks other users' private generations.
+  void _clientId;
+  return { userId };
 }
 
 export async function saveAiToolGeneration(input: {
