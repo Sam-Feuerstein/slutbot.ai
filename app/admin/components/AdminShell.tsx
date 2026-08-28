@@ -77,7 +77,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   async function logout() {
     await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
-    signOutClient();
+    await signOutClient();
     window.location.href = '/admin/login';
   }
 
