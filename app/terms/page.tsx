@@ -231,7 +231,7 @@ export default function TermsPage() {
             </p>
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Mini (Starter): 60 Slutcoins for USD $7.57 (500 Telegram Stars).</li>
+              <li>Mini (Starter): 60 Slutcoins for USD $8.00 (529 Telegram Stars).</li>
               <li>Flirt: 240 Slutcoins for USD $15.14 (1,000 Telegram Stars).</li>
               <li>Desire: 394 Slutcoins for USD $37.84 (2,500 Telegram Stars), including a 30% generation bonus.</li>
               <li>Passion: 848 Slutcoins for USD $75.68 (5,000 Telegram Stars), including a 40% generation bonus.</li>

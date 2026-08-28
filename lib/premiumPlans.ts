@@ -103,6 +103,7 @@ function definePlan(input: {
   tier: string;
   subtitle?: string;
   stars: number;
+  price?: number;
   badge?: PremiumPlan['badge'];
   bonusPercent?: number;
   desires?: number;
@@ -110,7 +111,7 @@ function definePlan(input: {
   videoGenerations?: number;
   features: PremiumPlan['features'];
 }): PremiumPlan {
-  const price = usdFromStars(input.stars);
+  const price = input.price ?? usdFromStars(input.stars);
   const baseCoins = slutcoinsForUsd(price);
   const bonusPercent = input.bonusPercent ?? 0;
   const formulaCoins =
@@ -211,7 +212,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'mini',
     tier: 'Mini',
     subtitle: 'Starter',
-    stars: 500,
+    stars: starsFromUsd(8),
+    price: 8,
     desires: 60,
     imageGenerations: 15,
     videoGenerations: 4,
