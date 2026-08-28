@@ -423,18 +423,18 @@ export async function listAiToolGenerations(): Promise<{
   items: AiToolGenerationRecord[];
   error?: string;
 }> {
+  // HARD KILL SWITCH — archive stays blank for EVERY account until explicitly reopened.
+  // Do not remove `|| true` without confirming ARCHIVE_KILL_SWITCH=1 in Vercel first.
+  if (true || archiveKillSwitchOn()) {
+    return { items: [], error: 'Collection temporarily unavailable.' };
+  }
+
   const auth = await requireUser();
   if (auth.error || !auth.user) return { items: [], error: auth.error || 'Sign in required.' };
   const user = auth.user;
   const userId = String(user.id || '').trim();
   if (!userId) {
     return { items: [], error: 'Sign in required.' };
-  }
-
-  // KILL SWITCH — env-controlled containment for the private archive leak.
-  // Set ARCHIVE_KILL_SWITCH=1 to blank the archive for everyone.
-  if (archiveKillSwitchOn()) {
-    return { items: [], error: 'Collection temporarily unavailable.' };
   }
 
   try {
