@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import ExploreTabs from '@/app/components/ExploreTabs';
-import HomePresetGrid from '@/app/components/HomePresetGrid';
+import ExploreTikTokFeed from '@/app/components/ExploreTikTokFeed';
 import SiteHeader from '@/app/components/SiteHeader';
 import { HOME_PRESETS } from '@/lib/homePresets';
 import { buildPageMetadata } from '@/lib/seo';
@@ -16,17 +16,17 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ExplorePage() {
   return (
-    <div className="w-full text-white">
-      <div className="bg-[#4a122c]">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-black text-white">
+      <div className="shrink-0 bg-[#4a122c]">
         <SiteHeader />
         <div className="safe-x mx-auto max-w-[1600px]">
           <ExploreTabs />
         </div>
       </div>
 
-      <main className="safe-x mx-auto max-w-[1600px] pb-[max(1.5rem,var(--safe-bottom))] sm:pb-8">
-        <h1 className="sr-only">Explore AI nude video presets</h1>
-        <HomePresetGrid presets={HOME_PRESETS} />
+      <main className="relative min-h-0 flex-1">
+        <h1 className="sr-only">Explore feed — AI video presets</h1>
+        <ExploreTikTokFeed presets={HOME_PRESETS} />
       </main>
     </div>
   );

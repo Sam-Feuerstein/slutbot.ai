@@ -1,3 +1,5 @@
+import { getAuthEpoch, isSignedIn } from '@/lib/auth/session';
+
 export type UserProfile = {
   name: string;
   email: string;
@@ -52,11 +54,14 @@ export function clearUserProfile() {
 }
 
 export async function fetchUserProfile(): Promise<UserProfile | null> {
+  const epoch = getAuthEpoch();
+  if (!isSignedIn()) return null;
+
   try {
     const res = await fetch('/api/auth/me', { credentials: 'include' });
-    if (!res.ok) return null;
+    if (epoch !== getAuthEpoch() || !isSignedIn() || !res.ok) return null;
     const data = (await res.json()) as UserProfile;
-    if (!data.email) return null;
+    if (epoch !== getAuthEpoch() || !isSignedIn() || !data.email) return null;
     const profile: UserProfile = {
       name: data.name || '',
       email: data.email,

@@ -18,7 +18,7 @@ export default function BrandLogo({
       width={456}
       height={128}
       preload={preload || priority}
-      sizes="(max-width: 640px) 140px, 280px"
+      sizes="(max-width: 640px) 228px, 280px"
       className={`block max-w-full object-contain object-left ${className}`}
       style={{ width: 'auto' }}
     />

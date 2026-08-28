@@ -1,27 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { maxAutoplayingVideos } from '@/lib/media/autoplay';
-import { orderExamples, type ExampleVideo } from '@/lib/exampleVideos';
+import type { ExampleVideo } from '@/lib/exampleVideos';
+import { trackSampleClick } from '@/lib/samples/client';
+import { generatorModePath } from '@/lib/site';
 import ExploreExampleCard from './ExploreExampleCard';
-
-function useGridColumns() {
-  const [cols, setCols] = useState(2);
-
-  useEffect(() => {
-    const update = () => {
-      if (window.matchMedia('(min-width: 1024px)').matches) setCols(5);
-      else if (window.matchMedia('(min-width: 768px)').matches) setCols(3);
-      else setCols(2);
-    };
-
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
-
-  return cols;
-}
+import ExploreExampleLightbox from './ExploreExampleLightbox';
 
 function getScrollParent(node: HTMLElement | null): Element | null {
   let current = node?.parentElement;
@@ -34,10 +20,40 @@ function getScrollParent(node: HTMLElement | null): Element | null {
 }
 
 export default function ExploreExampleGrid({ examples }: { examples: ExampleVideo[] }) {
-  const cols = useGridColumns();
-  const ordered = orderExamples(examples, cols);
+  const router = useRouter();
   const gridRef = useRef<HTMLDivElement>(null);
   const [playingIds, setPlayingIds] = useState<Set<string>>(() => new Set());
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const closePreview = useCallback(() => setPreviewIndex(null), []);
+
+  const previewExample = previewIndex === null ? null : examples[previewIndex];
+
+  const goToPreview = useCallback((index: number) => {
+    const example = examples[index];
+    if (!example) return;
+    trackSampleClick(example.id);
+    setPreviewIndex(index);
+  }, [examples]);
+
+  const shiftPreview = useCallback(
+    (delta: number) => {
+      setPreviewIndex((current) => {
+        if (current === null) return null;
+        const next = current + delta;
+        if (next < 0 || next >= examples.length) return current;
+        trackSampleClick(examples[next].id);
+        return next;
+      });
+    },
+    [examples],
+  );
+
+  const goToGenerator = useCallback(
+    (example: ExampleVideo) => {
+      router.push(generatorModePath(example.video ? 'video' : 'image', example.id));
+    },
+    [router],
+  );
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -87,18 +103,38 @@ export default function ExploreExampleGrid({ examples }: { examples: ExampleVide
       observer.disconnect();
       window.removeEventListener('resize', publish);
     };
-  }, [ordered]);
+  }, [examples]);
 
   return (
-    <div ref={gridRef} className="grid w-full grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-5 md:gap-y-10 lg:grid-cols-5 lg:gap-x-6 lg:gap-y-12">
-      {ordered.map((example, index) => (
-        <ExploreExampleCard
-          key={example.id}
-          example={example}
-          playing={playingIds.has(example.id)}
-          eager={index < 2}
+    <>
+      <div ref={gridRef} className="grid w-full grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-5 md:gap-y-10 lg:grid-cols-5 lg:gap-x-6 lg:gap-y-12">
+        {examples.map((example, index) => (
+          <ExploreExampleCard
+            key={example.id}
+            example={example}
+            playing={playingIds.has(example.id)}
+            eager={index < 2}
+            onOpenPreview={() => goToPreview(index)}
+          />
+        ))}
+      </div>
+
+      {previewExample && previewIndex !== null ? (
+        <ExploreExampleLightbox
+          example={previewExample}
+          index={previewIndex}
+          total={examples.length}
+          hasPrev={previewIndex > 0}
+          hasNext={previewIndex < examples.length - 1}
+          onPrev={() => shiftPreview(-1)}
+          onNext={() => shiftPreview(1)}
+          onClose={closePreview}
+          onTry={() => {
+            closePreview();
+            goToGenerator(previewExample);
+          }}
         />
-      ))}
-    </div>
+      ) : null}
+    </>
   );
 }

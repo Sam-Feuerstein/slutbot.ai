@@ -19,6 +19,15 @@ export const CURRENCY_NAME_SINGULAR = 'Star';
 
 export const VIDEO_DURATION_SECONDS = 5;
 
+/** Homepage sample cards: 5s · 480p · standard video price, or one image price for stills. */
+export function samplePreviewGeneration(isVideo: boolean) {
+  return {
+    durationSec: isVideo ? VIDEO_DURATION_SECONDS : null,
+    qualityLabel: isVideo ? '480p' : null,
+    cost: isVideo ? DESIRE_COSTS.videoBetter : DESIRE_COSTS.image,
+  };
+}
+
 /** Pack video counts use 480 Normal. Image and video costs are in Stars. */
 
 export const VIDEO_QUALITY_TIERS: {

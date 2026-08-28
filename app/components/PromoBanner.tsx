@@ -4,23 +4,24 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { prefersReducedMedia } from '@/lib/media/autoplay';
+import type { PublicHeroDemo } from '@/lib/samples';
 import { generatorModePath } from '@/lib/site';
 
-const DEMO_1_POSTER = '/examples/example-ex-1.jpg';
-const DEMO_1_VIDEO = '/examples/example-ex-1.mp4';
-const DEMO_2_POSTER = '/examples/example-ex-2.jpg';
-const DEMO_2_VIDEO = '/examples/example-ex-2.mp4';
+const FALLBACK_DEMOS: [PublicHeroDemo, PublicHeroDemo] = [
+  { id: 'example-ex-1', poster: '/examples/example-ex-1.jpg', video: '/examples/example-ex-1.mp4' },
+  { id: 'example-ex-2', poster: '/examples/example-ex-2.jpg', video: '/examples/example-ex-2.mp4' },
+];
 
 const STEPS = ['Upload photo', 'Generate video or image', 'Save it.'] as const;
 
-function DemoVideo({
+function DemoMedia({
   poster,
   videoSrc,
   priority = false,
   autoplay = false,
 }: {
   poster: string;
-  videoSrc: string;
+  videoSrc?: string;
   priority?: boolean;
   autoplay?: boolean;
 }) {
@@ -50,7 +51,7 @@ function DemoVideo({
             priority={priority}
             className="object-cover object-top"
           />
-          {playVideo ? (
+          {playVideo && videoSrc ? (
             <video
               ref={videoRef}
               src={videoSrc}
@@ -89,24 +90,39 @@ function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
-export default function PromoBanner() {
-  const [playSecond, setPlaySecond] = useState(false);
-
-  useEffect(() => {
-    if (prefersReducedMedia()) return;
-    const desktop = window.matchMedia('(min-width: 768px)');
-    const update = () => setPlaySecond(desktop.matches);
-    update();
-    desktop.addEventListener('change', update);
-    return () => desktop.removeEventListener('change', update);
-  }, []);
+export default function PromoBanner({
+  demos = FALLBACK_DEMOS,
+}: {
+  demos?: [PublicHeroDemo, PublicHeroDemo];
+}) {
+  const left = demos[0] || FALLBACK_DEMOS[0];
+  const right = demos[1] || FALLBACK_DEMOS[1];
 
   return (
     <section className="overflow-hidden rounded-2xl border border-black/10 bg-white px-4 py-6 sm:rounded-[28px] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
       <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <DemoVideo poster={DEMO_1_POSTER} videoSrc={DEMO_1_VIDEO} priority autoplay />
-          <DemoVideo poster={DEMO_2_POSTER} videoSrc={DEMO_2_VIDEO} autoplay={playSecond} />
+        <div className="min-w-0">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <DemoMedia poster={left.poster} videoSrc={left.video} priority autoplay />
+            <DemoMedia poster={right.poster} videoSrc={right.video} autoplay />
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:flex-wrap">
+            <Link
+              href={generatorModePath('video')}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ffe600] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:flex-1"
+            >
+              <SparkleIcon className="h-4 w-4 shrink-0" />
+              Try Undress AI Videos
+            </Link>
+            <Link
+              href={generatorModePath('image')}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ff2d78] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:flex-1"
+            >
+              <SparkleIcon className="h-4 w-4 shrink-0" />
+              Try Undress AI Images
+            </Link>
+          </div>
         </div>
 
         <div className="min-w-0">
@@ -134,23 +150,15 @@ export default function PromoBanner() {
                 </li>
               ))}
             </ol>
-          </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:mt-7 sm:flex-row sm:flex-wrap">
-            <Link
-              href={generatorModePath('video')}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ffe600] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:w-auto"
-            >
-              <SparkleIcon className="h-4 w-4 shrink-0" />
-              Try Undress AI Videos
-            </Link>
-            <Link
-              href={generatorModePath('image')}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border-[2.5px] border-black bg-[#ff2d78] px-5 py-3 text-center text-[12px] font-black uppercase tracking-[0.08em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:w-auto"
-            >
-              <SparkleIcon className="h-4 w-4 shrink-0" />
-              Try Undress AI Images
-            </Link>
+            <div className="mt-7 flex justify-center sm:mt-8">
+              <Link
+                href={generatorModePath('image')}
+                className="inline-flex min-h-14 w-full max-w-lg items-center justify-center rounded-md border-[2.5px] border-black bg-[#ff2d78] px-8 py-4 text-center text-[14px] font-black uppercase tracking-[0.1em] text-white shadow-[4px_4px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none sm:min-h-16 sm:w-auto sm:px-10 sm:text-[15px]"
+              >
+                GENERATE YOURS
+              </Link>
+            </div>
           </div>
         </div>
       </div>

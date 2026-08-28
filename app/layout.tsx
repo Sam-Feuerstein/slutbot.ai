@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import AppProviders from './components/AppProviders';
 import JsonLd from './components/JsonLd';
 import FeaturedOn from './components/FeaturedOn';
@@ -7,7 +8,6 @@ import SiteChrome from './components/SiteChrome';
 import SiteFooter from './components/SiteFooter';
 import { PRESET_MEDIA_BASE } from '@/lib/presetMedia';
 import { DEFAULT_OG_IMAGE, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
-import { AGE_GATE_BOOT_SCRIPT } from '@/lib/ageConsent';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -67,7 +67,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-            <script dangerouslySetInnerHTML={{ __html: AGE_GATE_BOOT_SCRIPT }} />
             {PRESET_MEDIA_BASE ? (
               <>
                 <link rel="preconnect" href={PRESET_MEDIA_BASE} />
@@ -82,9 +81,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <meta name="apple-mobile-web-app-title" content="AI SLUTBOT" />
             <link rel="preload" as="image" href="/brand/aislutbot-logo.png" type="image/png" />
             <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM site summary" />
-            <PostHogSnippet />
       </head>
       <body>
+        <Script id="age-gate-boot" src="/scripts/age-gate-boot.js" strategy="beforeInteractive" />
+        <PostHogSnippet />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <AppProviders>
           <SiteChrome featuredOn={<FeaturedOn />} footer={<SiteFooter />}>

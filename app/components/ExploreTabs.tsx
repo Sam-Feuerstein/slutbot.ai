@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { EXPLORE_PATH, GENERATOR_PATH } from '@/lib/site';
 
 const TABS = [
-  { href: EXPLORE_PATH, label: 'Explore', match: (path: string) => path === EXPLORE_PATH },
+  { href: EXPLORE_PATH, label: 'Explore Feed', match: (path: string) => path === EXPLORE_PATH },
   {
     href: GENERATOR_PATH,
     label: '🔥 AI porn generator',

@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SITE_DOMAIN } from '@/lib/site';
-import { signOutClient } from '@/lib/auth/session';
+import { signOutClient, storeAuthSession } from '@/lib/auth/session';
+import { cacheUserProfile } from '@/lib/auth/profile';
+import { setDesires } from '@/lib/desires';
 import BrandLogo from '../../components/BrandLogo';
 
 const NAV = [
@@ -18,6 +20,7 @@ const NAV = [
       { href: '/admin/wallet', label: 'Stars cost', match: 'exact' as const },
       { href: '/admin/coupons', label: 'Coupons', match: 'exact' as const },
       { href: '/admin/prompts', label: 'Prompts & models', match: 'exact' as const },
+      { href: '/admin/samples', label: 'Sample gallery', match: 'exact' as const },
     ],
   },
   {
@@ -39,6 +42,29 @@ function isActive(pathname: string, href: string, match: 'exact' | 'prefix') {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+async function syncAdminSiteSession() {
+  try {
+    const res = await fetch('/api/admin/bootstrap-user', { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      clientId?: string;
+      email?: string;
+      name?: string;
+      desires?: number;
+    };
+    if (!data.clientId) return;
+    storeAuthSession({ clientId: data.clientId });
+    cacheUserProfile({
+      email: data.email || '',
+      name: data.name || 'Admin',
+      avatarUrl: '',
+    });
+    if (typeof data.desires === 'number') setDesires(data.desires);
+  } catch {
+    /* site session sync is best-effort */
+  }
+}
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -54,7 +80,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     let cancelled = false;
     setAuthorized(false);
     void fetch('/api/admin/me', { credentials: 'same-origin' })
-      .then((res) => {
+      .then(async (res) => {
         if (cancelled) return;
         if (!res.ok) {
           const next = encodeURIComponent(pathname || '/admin');
@@ -62,6 +88,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           return;
         }
         setAuthorized(true);
+        await syncAdminSiteSession();
       })
       .catch(() => {
         if (!cancelled) {
@@ -76,8 +103,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [login, pathname, router]);
 
   async function logout() {
-    await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    // Full sign-out: admin panel + site user (one session, no split brain).
     await signOutClient();
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch {
+      /* signOutClient already wiped cookies via /api/auth/logout */
+    }
     window.location.href = '/admin/login';
   }
 

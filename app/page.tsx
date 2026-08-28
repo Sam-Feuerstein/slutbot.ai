@@ -4,6 +4,8 @@ import HomeSeoSection from './components/HomeSeoSection';
 import JsonLd from './components/JsonLd';
 import { buildPageMetadata, softwareApplicationJsonLd } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'AI Nude image and video Generator | AI SLUTBOT',
   description:

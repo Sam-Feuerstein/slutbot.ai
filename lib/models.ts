@@ -265,3 +265,65 @@ const pwaInstallSchema = new Schema(
 pwaInstallSchema.index({ createdAt: -1 });
 
 export const PwaInstall = models.PwaInstall || model('PwaInstall', pwaInstallSchema);
+
+const sampleShowcaseSchema = new Schema(
+  {
+    sampleId: { type: String, required: true, unique: true, index: true },
+    kind: { type: String, enum: ['example', 'before_after'], required: true, index: true },
+    title: { type: String, default: 'Sample' },
+    posterUrl: { type: String, default: '' },
+    videoUrl: { type: String, default: '' },
+    /** Original / before photo for video cards (corner thumb + lightbox). */
+    sourceUrl: { type: String, default: '' },
+    beforeUrl: { type: String, default: '' },
+    afterUrl: { type: String, default: '' },
+    combinedUrl: { type: String, default: '' },
+    sortOrder: { type: Number, default: 0, index: true },
+    enabled: { type: Boolean, default: true, index: true },
+    pinned: { type: Boolean, default: false },
+    /** Homepage PromoBanner slots: 1 = left, 2 = right, 0 = not in hero. */
+    heroSlot: { type: Number, enum: [0, 1, 2], default: 0, index: true },
+  },
+  { timestamps: true, collection: 'sampleshowcases' },
+);
+
+export const SampleShowcase = models.SampleShowcase || model('SampleShowcase', sampleShowcaseSchema);
+
+const sampleLikeSchema = new Schema(
+  {
+    sampleId: { type: String, required: true, index: true },
+    clientId: { type: String, required: true, index: true },
+    country: { type: String, default: '', uppercase: true, index: true },
+  },
+  { timestamps: true, collection: 'samplelikes' },
+);
+sampleLikeSchema.index({ sampleId: 1, clientId: 1 }, { unique: true });
+sampleLikeSchema.index({ createdAt: -1 });
+
+export const SampleLike = models.SampleLike || model('SampleLike', sampleLikeSchema);
+
+const presetLikeSchema = new Schema(
+  {
+    presetId: { type: String, required: true, index: true },
+    clientId: { type: String, required: true, index: true },
+    country: { type: String, default: '', uppercase: true, index: true },
+  },
+  { timestamps: true, collection: 'presetlikes' },
+);
+presetLikeSchema.index({ presetId: 1, clientId: 1 }, { unique: true });
+presetLikeSchema.index({ createdAt: -1 });
+
+export const PresetLike = models.PresetLike || model('PresetLike', presetLikeSchema);
+
+const sampleClickSchema = new Schema(
+  {
+    sampleId: { type: String, required: true, index: true },
+    clientId: { type: String, default: '', index: true },
+    country: { type: String, default: '', uppercase: true, index: true },
+  },
+  { timestamps: true, collection: 'sampleclicks' },
+);
+sampleClickSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 });
+sampleClickSchema.index({ sampleId: 1, createdAt: -1 });
+
+export const SampleClick = models.SampleClick || model('SampleClick', sampleClickSchema);

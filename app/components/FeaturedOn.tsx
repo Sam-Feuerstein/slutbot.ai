@@ -49,8 +49,10 @@ function PublicationMark({ name }: { name: string }) {
   if (name === 'New York Post') {
     return (
       <span className="flex flex-col items-center justify-center text-white">
-        <span className="text-[8px] font-semibold tracking-[0.36em]">NEW YORK</span>
-        <span className="mt-px text-[15px] font-black leading-none tracking-[0.2em]">POST</span>
+        <span className="text-[7px] font-semibold tracking-[0.32em] sm:text-[8px] sm:tracking-[0.36em]">NEW YORK</span>
+        <span className="mt-px text-[12px] font-black leading-none tracking-[0.18em] sm:text-[15px] sm:tracking-[0.2em]">
+          POST
+        </span>
       </span>
     );
   }
@@ -65,29 +67,34 @@ function PublicationMark({ name }: { name: string }) {
 }
 
 type FeaturedOnProps = {
-  variant?: 'default' | 'login' | 'login-content';
+  variant?: 'default' | 'login' | 'login-content' | 'menu';
 };
 
 export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
   const isLogin = variant === 'login' || variant === 'login-content';
-  const isEmbedded = variant === 'login-content';
+  const isMenu = variant === 'menu';
+  const isEmbedded = variant === 'login-content' || isMenu;
 
   const content = (
     <>
       <p
         className={
-          isLogin
-            ? 'text-center text-[10px] font-semibold uppercase tracking-[0.38em] text-[#ff9ec4]/80 drop-shadow-[0_0_10px_rgba(255,45,120,0.35)] sm:text-left'
-            : 'text-center text-[10px] font-medium uppercase tracking-[0.32em] text-white/40'
+          isMenu
+            ? 'text-center text-[9px] font-semibold uppercase tracking-[0.32em] text-white/45'
+            : isLogin
+              ? 'text-center text-[10px] font-semibold uppercase tracking-[0.38em] text-[#ff9ec4]/80 drop-shadow-[0_0_10px_rgba(255,45,120,0.35)]'
+              : 'text-center text-[10px] font-medium uppercase tracking-[0.32em] text-white/40'
         }
       >
         {isLogin ? 'Featured on' : 'Featured in'}
       </p>
       <ul
         className={`grid items-center justify-items-center ${
-          isLogin
-            ? 'mt-5 grid-cols-3 gap-x-4 gap-y-5 sm:mt-6 sm:grid-cols-6 sm:gap-x-6 sm:gap-y-0'
-            : 'mt-8 grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-6 lg:gap-x-5 lg:gap-y-0'
+          isMenu
+            ? 'mt-3 grid-cols-3 gap-x-2 gap-y-3'
+            : isLogin
+              ? 'mt-5 grid-cols-3 gap-x-4 gap-y-5 sm:mt-6 sm:grid-cols-6 sm:gap-x-6 sm:gap-y-0'
+              : 'mt-8 grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-6 lg:gap-x-5 lg:gap-y-0'
         }`}
       >
         {FEATURED_PUBLICATIONS.map(({ name, href, logo, width, height }) => (
@@ -98,9 +105,11 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
               rel="nofollow noopener noreferrer"
               aria-label={`Visit ${name}`}
               className={`flex w-full items-center justify-center transition-all duration-300 ${
-                isLogin
-                  ? 'h-8 max-w-[108px] opacity-45 hover:opacity-100 hover:drop-shadow-[0_0_14px_rgba(255,45,120,0.45)] sm:h-9 sm:max-w-[120px]'
-                  : 'h-9 max-w-[130px] opacity-60 hover:opacity-100'
+                isMenu
+                  ? 'h-6 max-w-[84px] opacity-50 hover:opacity-100'
+                  : isLogin
+                    ? 'h-8 max-w-[108px] opacity-45 hover:opacity-100 hover:drop-shadow-[0_0_14px_rgba(255,45,120,0.45)] sm:h-9 sm:max-w-[120px]'
+                    : 'h-9 max-w-[130px] opacity-60 hover:opacity-100'
               }`}
             >
               {logo ? (
@@ -112,7 +121,11 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
                   height={height}
                   loading="lazy"
                   decoding="async"
-                  className="max-h-5 w-auto max-w-[112px] object-contain object-center sm:max-h-6"
+                  className={
+                    isMenu
+                      ? 'max-h-3.5 w-auto max-w-[78px] object-contain object-center'
+                      : 'max-h-5 w-auto max-w-[112px] object-contain object-center sm:max-h-6'
+                  }
                 />
               ) : (
                 <PublicationMark name={name} />

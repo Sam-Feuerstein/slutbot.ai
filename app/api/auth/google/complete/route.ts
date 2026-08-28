@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotToken } from '@/lib/auth/slutbotAuth';
-import { setSessionCookie } from '@/lib/auth/sessionCookie';
+import { OAUTH_LOGIN_COOKIE, setSessionCookie } from '@/lib/auth/sessionCookie';
 import { publicBalanceFields } from '@/lib/users/wallet';
-
-const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(OAUTH_LOGIN_COOKIE)?.value;

@@ -6,11 +6,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FeaturedOn from '@/app/components/FeaturedOn';
 import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
+import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import { safeNextPath } from '@/lib/site';
 
 export { storeAuthSession, clearAuthSession };
 
-const LOGIN_BG_VIDEO = '/ai-slut-porn-generator.mp4';
+const LOGIN_BG_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
+const LOGIN_BG_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
 const LOGIN_LOGO_SRC = '/brand/slutbot-ai-login.png?v=3';
 
 function GoogleMark() {
@@ -80,42 +82,78 @@ export default function LoginClient() {
   }, [searchParams]);
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden text-white">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#0a0208] text-white">
+      {/* Desktop: full-bleed background video */}
       <video
         src={LOGIN_BG_VIDEO}
+        poster={LOGIN_BG_POSTER}
         autoPlay
         loop
         muted
         playsInline
-        preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
+        preload="metadata"
+        className="absolute inset-0 hidden h-full w-full object-cover object-top md:block"
         aria-hidden
       />
-      <div className="absolute inset-0 bg-[#0a0208]/18" aria-hidden />
+      <div className="absolute inset-0 hidden bg-[#0a0208]/18 md:block" aria-hidden />
       <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.1),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_100%,rgba(120,18,72,0.1),transparent_50%),linear-gradient(180deg,rgba(74,18,44,0.28)_0%,rgba(26,6,18,0.34)_45%,rgba(10,2,8,0.4)_100%)]"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 opacity-[0.025] [background-image:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,45,120,0.65)_2px,rgba(255,45,120,0.65)_3px)]"
+        className="absolute inset-0 hidden bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.1),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_100%,rgba(120,18,72,0.1),transparent_50%),linear-gradient(180deg,rgba(74,18,44,0.28)_0%,rgba(26,6,18,0.34)_45%,rgba(10,2,8,0.4)_100%)] md:block"
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(10,2,8,0.18)_100%)]"
+        className="absolute inset-0 hidden opacity-[0.025] [background-image:repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,45,120,0.65)_2px,rgba(255,45,120,0.65)_3px)] md:block"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 hidden bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(10,2,8,0.18)_100%)] md:block"
         aria-hidden
       />
 
+      {/* Mobile: full-width top video (checkout-style) */}
+      <div className="relative shrink-0 md:hidden">
+        <div className="relative aspect-[16/8.1] overflow-hidden bg-[#090505]">
+          <video
+            src={LOGIN_BG_VIDEO}
+            poster={LOGIN_BG_POSTER}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover object-top"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-[#090505]/85 to-transparent px-3 pb-6 pt-[max(0.625rem,var(--safe-top))]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0a0208] via-[#0a0208]/80 to-transparent px-3 pb-2.5 pt-10"
+            aria-hidden
+          />
+          <button
+            type="button"
+            aria-label="Back"
+            onClick={() => router.push(backPath)}
+            className="absolute left-3 top-[max(0.625rem,var(--safe-top))] z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#141414]/80 text-white backdrop-blur-sm hover:bg-[#141414]"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop back button */}
       <button
         type="button"
         aria-label="Back"
         onClick={() => router.push(backPath)}
-        className="absolute left-4 top-[max(1rem,var(--safe-top))] z-50 inline-flex h-10 items-center gap-0.5 rounded-full border border-white/15 bg-black/40 px-3 text-sm font-semibold text-white/90 backdrop-blur-md hover:bg-black/55 hover:text-white sm:left-6"
+        className="absolute left-4 top-[max(1rem,var(--safe-top))] z-50 hidden h-10 items-center gap-0.5 rounded-full border border-white/15 bg-black/40 px-3 text-sm font-semibold text-white/90 backdrop-blur-md hover:bg-black/55 hover:text-white md:left-6 md:inline-flex"
       >
         <ChevronLeft className="h-5 w-5" aria-hidden />
         Back
       </button>
 
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-[max(1.5rem,var(--safe-top))]">
+      <div className="relative z-10 flex flex-1 items-start justify-center px-4 pb-6 pt-4 md:items-center md:py-[max(1.5rem,var(--safe-top))]">
         <div className="mx-auto flex w-full max-w-[420px] flex-col items-center">
           <div className="relative w-full overflow-hidden rounded-2xl border border-[#ff2d78]/35 bg-[#140810]/75 p-6 shadow-[0_0_40px_rgba(255,45,120,0.18),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-md">
             <div
@@ -184,14 +222,8 @@ export default function LoginClient() {
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff2d78]/70 to-transparent"
           aria-hidden
         />
-        <div className="safe-x mx-auto flex max-w-[1280px] items-center gap-5 px-4 py-6 pb-[max(1.25rem,var(--safe-bottom))] sm:gap-8 sm:py-8">
-          <div className="min-w-0 flex-1">
-            <FeaturedOn variant="login-content" />
-          </div>
-          <div
-            className="hidden h-16 w-px shrink-0 bg-gradient-to-b from-transparent via-[#ff2d78]/30 to-transparent sm:block"
-            aria-hidden
-          />
+        <div className="safe-x mx-auto flex max-w-[720px] flex-col items-center px-4 py-6 pb-[max(1.25rem,var(--safe-bottom))] sm:py-8">
+          <FeaturedOn variant="login-content" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={LOGIN_LOGO_SRC}
@@ -199,7 +231,7 @@ export default function LoginClient() {
             width={512}
             height={512}
             decoding="async"
-            className="h-auto w-12 shrink-0 bg-transparent object-contain opacity-100 sm:w-14"
+            className="mt-5 h-auto w-12 shrink-0 bg-transparent object-contain sm:mt-6 sm:w-14"
           />
         </div>
       </footer>

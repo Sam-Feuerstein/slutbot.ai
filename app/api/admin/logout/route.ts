@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { ADMIN_COOKIE, adminCookieOptions } from '@/lib/auth/adminSession';
+import { clearAllAuthCookies } from '@/lib/auth/sessionCookie';
 
+/** Admin logout is a full sign-out — clears admin + site user + OAuth cookies. */
 export async function POST() {
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(ADMIN_COOKIE, '', adminCookieOptions(true));
+  clearAllAuthCookies(res);
   return res;
 }

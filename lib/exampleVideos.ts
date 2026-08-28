@@ -3,7 +3,45 @@ export type ExampleVideo = {
   title: string;
   poster: string;
   video?: string;
+  /** Miniature “before” still (usually frame ~0.5s from the source clip). */
+  source?: string;
 };
+
+export const PART_2_VIDEO_IDS = [
+  'example-part-2-ds',
+  'example-part-2-dash',
+  'example-part-2-2',
+  'example-part-2-322',
+  'example-part-2-dds',
+  'example-part-2-ddss',
+  'example-part-2-dss',
+  'example-part-2-ez',
+  'example-part-2-fs',
+  'example-part-2',
+] as const;
+
+export function getExampleSourceThumb(id: string, hasVideo = false): string | undefined {
+  if (!hasVideo || !id) return undefined;
+  return `/examples/${id}-source.jpg`;
+}
+
+function withSourceThumb(example: ExampleVideo): ExampleVideo {
+  if (!example.video) return example;
+  return { ...example, source: getExampleSourceThumb(example.id, true) };
+}
+
+const PART_2_SAMPLES: ExampleVideo[] = [
+  withSourceThumb({ id: 'example-part-2-ds', title: 'Sample', video: '/examples/example-part-2-ds.mp4', poster: '/examples/example-part-2-ds.jpg' }),
+  withSourceThumb({ id: 'example-part-2-dash', title: 'Sample', video: '/examples/example-part-2-dash.mp4', poster: '/examples/example-part-2-dash.jpg' }),
+  withSourceThumb({ id: 'example-part-2-2', title: 'Sample', video: '/examples/example-part-2-2.mp4', poster: '/examples/example-part-2-2.jpg' }),
+  withSourceThumb({ id: 'example-part-2-322', title: 'Sample', video: '/examples/example-part-2-322.mp4', poster: '/examples/example-part-2-322.jpg' }),
+  withSourceThumb({ id: 'example-part-2-dds', title: 'Sample', video: '/examples/example-part-2-dds.mp4', poster: '/examples/example-part-2-dds.jpg' }),
+  withSourceThumb({ id: 'example-part-2-ddss', title: 'Sample', video: '/examples/example-part-2-ddss.mp4', poster: '/examples/example-part-2-ddss.jpg' }),
+  withSourceThumb({ id: 'example-part-2-dss', title: 'Sample', video: '/examples/example-part-2-dss.mp4', poster: '/examples/example-part-2-dss.jpg' }),
+  withSourceThumb({ id: 'example-part-2-ez', title: 'Sample', video: '/examples/example-part-2-ez.mp4', poster: '/examples/example-part-2-ez.jpg' }),
+  withSourceThumb({ id: 'example-part-2-fs', title: 'Sample', video: '/examples/example-part-2-fs.mp4', poster: '/examples/example-part-2-fs.jpg' }),
+  withSourceThumb({ id: 'example-part-2', title: 'Sample', video: '/examples/example-part-2.mp4', poster: '/examples/example-part-2.jpg' }),
+];
 
 const STILL_SAMPLES: ExampleVideo[] = [
   { id: 'example-sample-01', title: 'Sample', poster: '/examples/example-sample-01.jpg' },
@@ -18,29 +56,29 @@ const STILL_SAMPLES: ExampleVideo[] = [
 ];
 
 const VIDEO_SAMPLES: ExampleVideo[] = [
-  { id: 'example-ad074579', title: 'Example 01', video: '/examples/example-ad074579.mp4', poster: '/examples/example-ad074579.jpg' },
-  { id: 'example-0ff90f6b', title: 'Example 02', video: '/examples/example-0ff90f6b.mp4', poster: '/examples/example-0ff90f6b.jpg' },
-  { id: 'example-1db093a6', title: 'Example 03', video: '/examples/example-1db093a6.mp4', poster: '/examples/example-1db093a6.jpg' },
-  { id: 'example-274764cf', title: 'Example 04', video: '/examples/example-274764cf.mp4', poster: '/examples/example-274764cf.jpg' },
-  { id: 'example-27c3eb5a', title: 'Example 05', video: '/examples/example-27c3eb5a.mp4', poster: '/examples/example-27c3eb5a.jpg' },
-  { id: 'example-34939fa0', title: 'Example 06', video: '/examples/example-34939fa0.mp4', poster: '/examples/example-34939fa0.jpg' },
-  { id: 'example-592213dd', title: 'Example 07', video: '/examples/example-592213dd.mp4', poster: '/examples/example-592213dd.jpg' },
-  { id: 'example-5a2e9b88', title: 'Example 08', video: '/examples/example-5a2e9b88.mp4', poster: '/examples/example-5a2e9b88.jpg' },
-  { id: 'example-65dd9d12', title: 'Example 09', video: '/examples/example-65dd9d12.mp4', poster: '/examples/example-65dd9d12.jpg' },
-  { id: 'example-67f0ed07', title: 'Example 10', video: '/examples/example-67f0ed07.mp4', poster: '/examples/example-67f0ed07.jpg' },
-  { id: 'example-6f78bec3', title: 'Example 11', video: '/examples/example-6f78bec3.mp4', poster: '/examples/example-6f78bec3.jpg' },
-  { id: 'example-8807a1a3', title: 'Example 12', video: '/examples/example-8807a1a3.mp4', poster: '/examples/example-8807a1a3.jpg' },
-  { id: 'example-8958c49a', title: 'Example 13', video: '/examples/example-8958c49a.mp4', poster: '/examples/example-8958c49a.jpg' },
-  { id: 'example-9a2e941b', title: 'Example 14', video: '/examples/example-9a2e941b.mp4', poster: '/examples/example-9a2e941b.jpg' },
-  { id: 'example-a0551ee7', title: 'Example 15', video: '/examples/example-a0551ee7.mp4', poster: '/examples/example-a0551ee7.jpg' },
-  { id: 'example-b1a31e7d', title: 'Example 16', video: '/examples/example-b1a31e7d.mp4', poster: '/examples/example-b1a31e7d.jpg' },
-  { id: 'example-b5a19589', title: 'Example 17', video: '/examples/example-b5a19589.mp4', poster: '/examples/example-b5a19589.jpg' },
-  { id: 'example-be9f24fc', title: 'Example 18', video: '/examples/example-be9f24fc.mp4', poster: '/examples/example-be9f24fc.jpg' },
-  { id: 'example-c66f4599', title: 'Example 19', video: '/examples/example-c66f4599.mp4', poster: '/examples/example-c66f4599.jpg' },
-  { id: 'example-e1e349f7', title: 'Example 20', video: '/examples/example-e1e349f7.mp4', poster: '/examples/example-e1e349f7.jpg' },
-  { id: 'example-eac87879', title: 'Example 21', video: '/examples/example-eac87879.mp4', poster: '/examples/example-eac87879.jpg' },
-  { id: 'example-fe2d26f6', title: 'Example 22', video: '/examples/example-fe2d26f6.mp4', poster: '/examples/example-fe2d26f6.jpg' },
-  { id: 'example-left', title: 'Example 23', video: '/examples/example-left.mp4', poster: '/examples/example-left.jpg' },
+  withSourceThumb({ id: 'example-ad074579', title: 'Example 01', video: '/examples/example-ad074579.mp4', poster: '/examples/example-ad074579.jpg' }),
+  withSourceThumb({ id: 'example-0ff90f6b', title: 'Example 02', video: '/examples/example-0ff90f6b.mp4', poster: '/examples/example-0ff90f6b.jpg' }),
+  withSourceThumb({ id: 'example-1db093a6', title: 'Example 03', video: '/examples/example-1db093a6.mp4', poster: '/examples/example-1db093a6.jpg' }),
+  withSourceThumb({ id: 'example-274764cf', title: 'Example 04', video: '/examples/example-274764cf.mp4', poster: '/examples/example-274764cf.jpg' }),
+  withSourceThumb({ id: 'example-27c3eb5a', title: 'Example 05', video: '/examples/example-27c3eb5a.mp4', poster: '/examples/example-27c3eb5a.jpg' }),
+  withSourceThumb({ id: 'example-34939fa0', title: 'Example 06', video: '/examples/example-34939fa0.mp4', poster: '/examples/example-34939fa0.jpg' }),
+  withSourceThumb({ id: 'example-592213dd', title: 'Example 07', video: '/examples/example-592213dd.mp4', poster: '/examples/example-592213dd.jpg' }),
+  withSourceThumb({ id: 'example-5a2e9b88', title: 'Example 08', video: '/examples/example-5a2e9b88.mp4', poster: '/examples/example-5a2e9b88.jpg' }),
+  withSourceThumb({ id: 'example-65dd9d12', title: 'Example 09', video: '/examples/example-65dd9d12.mp4', poster: '/examples/example-65dd9d12.jpg' }),
+  withSourceThumb({ id: 'example-67f0ed07', title: 'Example 10', video: '/examples/example-67f0ed07.mp4', poster: '/examples/example-67f0ed07.jpg' }),
+  withSourceThumb({ id: 'example-6f78bec3', title: 'Example 11', video: '/examples/example-6f78bec3.mp4', poster: '/examples/example-6f78bec3.jpg' }),
+  withSourceThumb({ id: 'example-8807a1a3', title: 'Example 12', video: '/examples/example-8807a1a3.mp4', poster: '/examples/example-8807a1a3.jpg' }),
+  withSourceThumb({ id: 'example-8958c49a', title: 'Example 13', video: '/examples/example-8958c49a.mp4', poster: '/examples/example-8958c49a.jpg' }),
+  withSourceThumb({ id: 'example-9a2e941b', title: 'Example 14', video: '/examples/example-9a2e941b.mp4', poster: '/examples/example-9a2e941b.jpg' }),
+  withSourceThumb({ id: 'example-a0551ee7', title: 'Example 15', video: '/examples/example-a0551ee7.mp4', poster: '/examples/example-a0551ee7.jpg' }),
+  withSourceThumb({ id: 'example-b1a31e7d', title: 'Example 16', video: '/examples/example-b1a31e7d.mp4', poster: '/examples/example-b1a31e7d.jpg' }),
+  withSourceThumb({ id: 'example-b5a19589', title: 'Example 17', video: '/examples/example-b5a19589.mp4', poster: '/examples/example-b5a19589.jpg' }),
+  withSourceThumb({ id: 'example-be9f24fc', title: 'Example 18', video: '/examples/example-be9f24fc.mp4', poster: '/examples/example-be9f24fc.jpg' }),
+  withSourceThumb({ id: 'example-c66f4599', title: 'Example 19', video: '/examples/example-c66f4599.mp4', poster: '/examples/example-c66f4599.jpg' }),
+  withSourceThumb({ id: 'example-e1e349f7', title: 'Example 20', video: '/examples/example-e1e349f7.mp4', poster: '/examples/example-e1e349f7.jpg' }),
+  withSourceThumb({ id: 'example-eac87879', title: 'Example 21', video: '/examples/example-eac87879.mp4', poster: '/examples/example-eac87879.jpg' }),
+  withSourceThumb({ id: 'example-fe2d26f6', title: 'Example 22', video: '/examples/example-fe2d26f6.mp4', poster: '/examples/example-fe2d26f6.jpg' }),
+  withSourceThumb({ id: 'example-left', title: 'Example 23', video: '/examples/example-left.mp4', poster: '/examples/example-left.jpg' }),
 ];
 
 /** Interleave photo samples with video clips so the grid alternates naturally. */
@@ -64,7 +102,13 @@ function mixExamples(stills: ExampleVideo[], videos: ExampleVideo[]): ExampleVid
   return mixed;
 }
 
-export const EXAMPLE_VIDEOS: ExampleVideo[] = mixExamples(STILL_SAMPLES, VIDEO_SAMPLES);
+export const EXAMPLE_VIDEOS: ExampleVideo[] = [...PART_2_SAMPLES, ...mixExamples(STILL_SAMPLES, VIDEO_SAMPLES)];
+
+export function getExampleById(id: string): ExampleVideo | undefined {
+  const trimmed = id.trim();
+  if (!trimmed) return undefined;
+  return EXAMPLE_VIDEOS.find((example) => example.id === trimmed);
+}
 
 const PINNED_FIRST_IDS = ['example-sample-01', 'example-sample-02'] as const;
 

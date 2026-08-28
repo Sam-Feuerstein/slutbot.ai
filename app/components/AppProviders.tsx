@@ -20,6 +20,7 @@ const AdminSaleAlert = dynamic(() => import('./AdminSaleAlert'), {
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <GenerationJobsProvider>
+      <AgeConsentGate />
       {children}
       <Suspense fallback={null}>
         <PostHogPageView />
@@ -29,7 +30,6 @@ export default function AppProviders({ children }: { children: React.ReactNode }
         <AdminSaleAlert />
       </Suspense>
       <PwaInstallBanner />
-      <AgeConsentGate />
     </GenerationJobsProvider>
   );
 }

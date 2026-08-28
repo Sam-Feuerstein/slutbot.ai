@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { LogOut, User, X } from 'lucide-react';
+import FeaturedOn from './FeaturedOn';
 import BrandLogo from './BrandLogo';
 import Breadcrumbs from './Breadcrumbs';
 import UserAvatar from './UserAvatar';
@@ -27,7 +28,7 @@ import {
   remainingGenerations,
   remainingGenerationsCopy,
 } from '@/lib/desires';
-import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH } from '@/lib/site';
+import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH, ARCHIVE_PATH } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -51,7 +52,7 @@ function SparkleIcon({ className }: { className?: string }) {
 const MENU_LINKS = [
   { href: EXPLORE_PATH, label: 'Explore' },
   { href: GENERATOR_PATH, label: 'AI porn generator' },
-  { href: '/archive', label: 'My Collection' },
+  { href: ARCHIVE_PATH, label: 'My Collection' },
   { href: ACCOUNT_PATH, label: 'Account', signedInOnly: true },
 ];
 
@@ -79,7 +80,7 @@ export default function SiteHeader() {
     if (cached) setProfile(cached);
 
     void fetchUserProfile().then((fresh) => {
-      if (fresh) setProfile(fresh);
+      if (fresh && getAuthToken()) setProfile(fresh);
     });
   }, []);
 
@@ -121,6 +122,7 @@ export default function SiteHeader() {
   async function logOut() {
     setMenuOpen(false);
     await signOutClient();
+    refreshAuth();
     router.push('/');
   }
 
@@ -134,17 +136,14 @@ export default function SiteHeader() {
           scrolled ? 'shadow-[0_10px_28px_rgba(0,0,0,0.38)]' : ''
         }`}
       >
-        <div className="safe-x relative mx-auto flex min-h-[3.75rem] max-w-[1600px] items-center justify-between gap-2 overflow-hidden py-1.5 sm:min-h-[5.5rem] sm:gap-4 sm:overflow-visible sm:py-2.5">
+        <div className="safe-x relative mx-auto flex min-h-[4.75rem] max-w-[1600px] items-center justify-between gap-2 overflow-hidden py-1.5 sm:min-h-[5.5rem] sm:gap-4 sm:overflow-visible sm:py-2.5">
           <Link
             href="/"
             aria-label="AI SLUTBOT home"
-            className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden sm:translate-y-0.5 sm:gap-4"
+            className="flex min-w-0 flex-col items-start gap-0.5 overflow-hidden sm:translate-y-0.5 sm:gap-1"
           >
-            <BrandLogo className="h-8 w-auto max-w-full sm:h-[73px]" preload />
-
-            <div className="hidden h-7 w-px shrink-0 bg-white/20 sm:block" />
-
-            <span className="hidden truncate text-[11px] font-semibold tracking-[0.06em] text-white/65 sm:block">
+            <BrandLogo className="h-14 w-auto max-w-[min(100%,14rem)] sm:h-[73px] sm:max-w-full" preload />
+            <span className="max-w-[min(100%,14rem)] truncate text-[9px] font-semibold leading-tight tracking-[0.05em] text-white/65 sm:max-w-none sm:text-[11px] sm:tracking-[0.06em]">
               #1 Nude image and Video Generator
             </span>
           </Link>
@@ -162,18 +161,29 @@ export default function SiteHeader() {
                 Undress Anyone
               </Link>
 
-              <button
-                type="button"
-                onClick={() => openPremiumPlans()}
-                className="inline-flex h-9 min-h-9 max-w-[9.5rem] shrink-0 items-center gap-1 rounded-full border border-[#ff2d78]/35 bg-black/25 px-2 text-white transition-colors hover:bg-black/35 sm:h-10 sm:max-w-none sm:gap-1.5 sm:px-2.5"
-                aria-label={`${desires.toLocaleString('en-US')} ${CURRENCY_NAME}, get more`}
+              <Link
+                href={ARCHIVE_PATH}
+                className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-white/10 px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow,background-color] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white/15 hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em] ${
+                  pathname === ARCHIVE_PATH ? 'bg-white/20' : ''
+                }`}
               >
-                <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78] sm:h-4 sm:w-4" />
-                <span className="min-w-0 truncate text-xs font-bold tabular-nums sm:text-sm">
-                  {desires.toLocaleString('en-US')}
-                </span>
-                <span className="shrink-0 text-[10px] font-semibold text-white/70 sm:text-[11px]">{CURRENCY_NAME}</span>
-              </button>
+                My Collection
+              </Link>
+
+              {signedIn ? (
+                <button
+                  type="button"
+                  onClick={() => openPremiumPlans()}
+                  className="inline-flex h-9 min-h-9 max-w-[9.5rem] shrink-0 items-center gap-1 rounded-full border border-[#ff2d78]/35 bg-black/25 px-2 text-white transition-colors hover:bg-black/35 sm:h-10 sm:max-w-none sm:gap-1.5 sm:px-2.5"
+                  aria-label={`${desires.toLocaleString('en-US')} ${CURRENCY_NAME}, get more`}
+                >
+                  <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78] sm:h-4 sm:w-4" />
+                  <span className="min-w-0 truncate text-xs font-bold tabular-nums sm:text-sm">
+                    {desires.toLocaleString('en-US')}
+                  </span>
+                  <span className="shrink-0 text-[10px] font-semibold text-white/70 sm:text-[11px]">{CURRENCY_NAME}</span>
+                </button>
+              ) : null}
             </div>
 
             <button
@@ -241,28 +251,31 @@ export default function SiteHeader() {
               </Link>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                openPremiumPlans();
-              }}
-              className="relative mb-2.5 w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2.5 text-left transition-colors hover:bg-black/35"
-            >
-              <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
-                <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78]" />
-                <span className="tabular-nums">{desires.toLocaleString('en-US')}</span>
-                <span className="font-semibold text-white/75">{CURRENCY_NAME} available</span>
-                <span className="ml-auto shrink-0 text-[10px] font-semibold text-[#ff9dbe]">Get more</span>
-              </p>
-              <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">Possible generations</p>
-              <p className="mt-0.5 text-[12px] font-semibold leading-snug text-white/85">
-                {remainingGenerationsCopy(desires, paidDesires)}
-              </p>
-              <p className="mt-1 text-[10px] leading-snug text-white/45">
-                {generations.images.toLocaleString('en-US')} images · {generations.videos.toLocaleString('en-US')} videos (480p)
-              </p>
-            </button>
+            {signedIn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  openPremiumPlans();
+                }}
+                className="relative mb-2.5 w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2.5 text-left transition-colors hover:bg-black/35"
+              >
+                <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
+                  <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78]" />
+                  <span className="tabular-nums">{desires.toLocaleString('en-US')}</span>
+                  <span className="font-semibold text-white/75">{CURRENCY_NAME} available</span>
+                  <span className="ml-auto shrink-0 text-[10px] font-semibold text-[#ff9dbe]">Get more</span>
+                </p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">Possible generations</p>
+                <p className="mt-0.5 text-[12px] font-semibold leading-snug text-white/85">
+                  {remainingGenerationsCopy(desires, paidDesires)}
+                </p>
+                <p className="mt-1 text-[10px] leading-snug text-white/45">
+                  {generations.images.toLocaleString('en-US')} images · {generations.videos.toLocaleString('en-US')} videos
+                  (480p)
+                </p>
+              </button>
+            ) : null}
 
             <Link
               href={GENERATOR_PATH}
@@ -273,7 +286,7 @@ export default function SiteHeader() {
               Generate now
             </Link>
 
-            <nav className="relative flex flex-1 flex-col gap-0.5 overflow-y-auto border-t border-white/15 pb-[min(34vh,16rem)] pt-2">
+            <nav className="relative flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto border-t border-white/15 pt-2">
               {MENU_LINKS.filter((link) => !link.signedInOnly || signedIn).map(({ href, label }) => (
                 <Link
                   key={href}
@@ -304,23 +317,24 @@ export default function SiteHeader() {
               )}
             </nav>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-[max(0.25rem,var(--safe-bottom))] z-10 flex justify-center overflow-visible">
-              <div
-                aria-hidden
-                className="absolute bottom-6 left-1/2 h-28 w-[88%] -translate-x-1/2 rounded-full bg-[#ff2d78]/30 blur-3xl"
-              />
-              <div
-                aria-hidden
-                className="absolute bottom-2 left-1/2 h-10 w-[70%] -translate-x-1/2 rounded-full bg-[#ff2d78]/45 blur-xl"
-              />
-              <Image
-                src="/brand/menu-mascot.png"
-                alt=""
-                width={504}
-                height={994}
-                className="relative h-[min(42vh,26rem)] w-auto max-w-none translate-x-2 select-none object-contain object-bottom drop-shadow-[0_18px_36px_rgba(255,45,120,0.42)] sm:h-[min(46vh,29rem)] sm:translate-x-3"
-                priority={false}
-              />
+            <div className="relative mt-auto shrink-0">
+              <div className="pointer-events-none relative z-10 flex justify-center overflow-visible">
+                <div
+                  aria-hidden
+                  className="absolute bottom-8 left-1/2 h-24 w-[88%] -translate-x-1/2 rounded-full bg-[#ff2d78]/25 blur-3xl"
+                />
+                <Image
+                  src="/brand/menu-mascot.png"
+                  alt=""
+                  width={504}
+                  height={994}
+                  className="relative h-[min(28vh,14rem)] w-auto max-w-none translate-x-1 select-none object-contain object-bottom drop-shadow-[0_12px_28px_rgba(255,45,120,0.38)] sm:h-[min(30vh,16rem)]"
+                  priority={false}
+                />
+              </div>
+              <div className="relative -mt-6 bg-gradient-to-t from-[#090505] via-[#090505]/92 via-40% to-[#4a122c]/0 px-2 pb-[max(0.75rem,var(--safe-bottom))] pt-10">
+                <FeaturedOn variant="menu" />
+              </div>
             </div>
           </aside>
         </div>

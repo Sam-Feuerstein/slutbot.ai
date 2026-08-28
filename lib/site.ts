@@ -3,6 +3,7 @@ export const SITE_URL = `https://${SITE_DOMAIN}`;
 export const GENERATOR_PATH = '/ai-porn-generator';
 export const EXPLORE_PATH = '/explore';
 export const ACCOUNT_PATH = '/account';
+export const ARCHIVE_PATH = '/archive';
 export const GENERATOR_CANONICAL = `${SITE_URL}${GENERATOR_PATH}`;
 
 /** Public contact addresses — always @aislutbot.com */
@@ -15,8 +16,11 @@ export function generatorPresetPath(presetId: string): string {
   return `${GENERATOR_PATH}/${presetId}`;
 }
 
-export function generatorModePath(mode: 'image' | 'video'): string {
-  return `${GENERATOR_PATH}?mode=${mode}`;
+export function generatorModePath(mode: 'image' | 'video', sampleId?: string): string {
+  const params = new URLSearchParams({ mode });
+  const id = sampleId?.trim();
+  if (id) params.set('sample', id);
+  return `${GENERATOR_PATH}?${params.toString()}`;
 }
 
 export function safeNextPath(path?: string | null): string {

@@ -5,8 +5,48 @@ import PaymentSuccessBanner from './components/PaymentSuccessBanner';
 import PromoBanner from './components/PromoBanner';
 import SiteHeader from './components/SiteHeader';
 import { EXAMPLE_VIDEOS } from '@/lib/exampleVideos';
+import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
+import { listHeroDemos, listPublicBeforeAfter, listPublicExamples } from '@/lib/samples';
+import type { PublicHeroDemo } from '@/lib/samples';
 
-export default function HomeClient() {
+const FALLBACK_HERO: [PublicHeroDemo, PublicHeroDemo] = [
+  { id: 'example-ex-1', poster: '/examples/example-ex-1.jpg', video: '/examples/example-ex-1.mp4' },
+  { id: 'example-ex-2', poster: '/examples/example-ex-2.jpg', video: '/examples/example-ex-2.mp4' },
+];
+
+export default async function HomeClient() {
+  let examples = EXAMPLE_VIDEOS;
+  let beforeAfter = BEFORE_AFTER_EXAMPLES;
+  let heroDemos: [PublicHeroDemo, PublicHeroDemo] = FALLBACK_HERO;
+
+  try {
+    const [publicExamples, publicBeforeAfter, hero] = await Promise.all([
+      listPublicExamples(),
+      listPublicBeforeAfter(),
+      listHeroDemos(),
+    ]);
+    heroDemos = hero;
+    if (publicExamples.length) {
+      examples = publicExamples.map((row) => ({
+        id: row.id,
+        title: row.title,
+        poster: row.poster,
+        video: row.video,
+        source: row.source,
+      }));
+    }
+    if (publicBeforeAfter.length) {
+      beforeAfter = publicBeforeAfter.map((row) => ({
+        id: row.id,
+        before: row.before,
+        after: row.after,
+        combined: row.combined,
+      }));
+    }
+  } catch {
+    // Fall back to static seed assets if Mongo is unavailable.
+  }
+
   return (
     <div className="w-full text-white">
       <div className="bg-[linear-gradient(90deg,#000_0%,#4a122c_72%)]">
@@ -16,8 +56,8 @@ export default function HomeClient() {
         </Suspense>
 
         <div className="safe-x mx-auto max-w-[1600px] space-y-5 pb-6 pt-3 sm:space-y-7 sm:pb-9 sm:pt-5">
-          <PromoBanner />
-          <BeforeAfterShowcase />
+          <PromoBanner demos={heroDemos} />
+          <BeforeAfterShowcase pairs={beforeAfter} />
         </div>
       </div>
 
@@ -27,7 +67,7 @@ export default function HomeClient() {
           <span className="text-[#ff2d78]">AI SLUTBOT</span> Image to video nude
           generation.
         </h2>
-        <ExploreExampleGrid examples={EXAMPLE_VIDEOS} />
+        <ExploreExampleGrid examples={examples} />
       </main>
     </div>
   );

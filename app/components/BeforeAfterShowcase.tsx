@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { X, ZoomIn } from 'lucide-react';
 import type { BeforeAfterPair } from '@/lib/beforeAfterExamples';
 import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
+import { trackSampleClick } from '@/lib/samples/client';
 import { generatorModePath } from '@/lib/site';
 
 function BeforeAfterImage({
@@ -53,7 +54,10 @@ function BeforeAfterCard({
     <article className="min-w-[min(88vw,22rem)] shrink-0 snap-center sm:min-w-0">
       <button
         type="button"
-        onClick={() => onZoom(pair)}
+        onClick={() => {
+          trackSampleClick(pair.id);
+          onZoom(pair);
+        }}
         className="group/card relative w-full cursor-zoom-in rounded-lg border border-[#ff2d78] bg-white p-2 text-left shadow-[3px_3px_0_0_#000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff2d78] focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:rounded-xl sm:p-2.5"
         aria-label="View before and after comparison"
       >

@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { rememberBalanceBeforePayment } from '@/app/components/PaymentSuccessBanner';
 import { CURRENCY_NAME, getAuthToken, getDesires, setDesires, syncPurchasedDesires } from '@/lib/desires';
-import { storeAuthSession } from '@/lib/auth/session';
-import { cacheUserProfile } from '@/lib/auth/profile';
+import { getAuthEpoch } from '@/lib/auth/session';
+import { tryRestoreSessionFromCookie } from '@/lib/auth/syncSession';
 import { loginHref, HELLO_EMAIL, checkoutBannerCopy } from '@/lib/site';
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
@@ -505,55 +505,15 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    const epoch = getAuthEpoch();
 
     void (async () => {
       let signedIn = Boolean(getAuthToken());
       if (!signedIn) {
-        try {
-          const me = await fetch('/api/auth/me', { credentials: 'include' });
-          if (me.ok) {
-            const data = (await me.json()) as { clientId?: string; email?: string; name?: string; avatarUrl?: string };
-            if (data.clientId) storeAuthSession({ clientId: data.clientId });
-            if (data.email) {
-              cacheUserProfile({
-                email: data.email,
-                name: data.name || '',
-                avatarUrl: data.avatarUrl || '',
-              });
-            }
-            signedIn = true;
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-      if (!signedIn) {
-        try {
-          const res = await fetch('/api/admin/bootstrap-user', { credentials: 'include' });
-          if (res.ok) {
-            const data = (await res.json()) as {
-              clientId?: string;
-              email?: string;
-              name?: string;
-              desires?: number;
-            };
-            if (data.clientId) {
-              storeAuthSession({ clientId: data.clientId });
-              cacheUserProfile({
-                email: data.email || '',
-                name: data.name || 'Admin',
-                avatarUrl: '',
-              });
-              if (typeof data.desires === 'number') setDesires(data.desires);
-              signedIn = true;
-            }
-          }
-        } catch {
-          /* not an admin session */
-        }
+        signedIn = await tryRestoreSessionFromCookie(epoch);
       }
 
-      if (cancelled) return;
+      if (cancelled || epoch !== getAuthEpoch()) return;
       if (!signedIn) {
         router.replace(loginHref(checkoutPath));
         return;

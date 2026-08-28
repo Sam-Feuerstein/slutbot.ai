@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Download, ImageIcon, Loader2, Trash2, Video } from 'lucide-react';
+import { Download, ImageIcon, Loader2, Share2, Trash2, Video } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import LockedVideoCard from '../components/LockedVideoCard';
 import {
@@ -17,7 +18,8 @@ import {
   removeLocalCollectionItem,
 } from '@/lib/collectionLocal';
 import type { AiToolGenerationRecord } from '@/lib/imageToVideo/types';
-import { GENERATOR_PATH } from '@/lib/site';
+import { getAuthToken } from '@/lib/desires';
+import { ARCHIVE_PATH, GENERATOR_PATH, loginHref } from '@/lib/site';
 
 function formatWhen(iso: string) {
   try {
@@ -28,22 +30,36 @@ function formatWhen(iso: string) {
 }
 
 export default function ArchiveClient() {
+  const router = useRouter();
   const [items, setItems] = useState<AiToolGenerationRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [adminSession, setAdminSession] = useState(false);
+  const [pushingId, setPushingId] = useState('');
+  const [pushNote, setPushNote] = useState('');
+  const [actionError, setActionError] = useState('');
   const generationJobs = useOptionalGenerationJobs();
   const inFlight =
     generationJobs?.jobs.filter((job) => job.phase === 'uploading' || job.phase === 'generating') ?? [];
 
   useEffect(() => {
+    if (!getAuthToken()) {
+      router.replace(loginHref(ARCHIVE_PATH));
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       setLoading(true);
-      setError('');
+      setLoadError('');
       const local = readLocalCollection();
       const result = await listAiToolGenerations();
       if (cancelled) return;
-      if (result.error && !result.items.length && !local.length) setError(result.error);
+      if (result.error?.toLowerCase().includes('sign in')) {
+        router.replace(loginHref(ARCHIVE_PATH));
+        return;
+      }
+      if (result.error && !result.items.length && !local.length) setLoadError(result.error);
       setItems(mergeCollection(result.items, local));
       setLoading(false);
     })();
@@ -57,7 +73,41 @@ export default function ArchiveClient() {
       cancelled = true;
       window.removeEventListener(GENERATION_COMPLETE_EVENT, onComplete);
     };
+  }, [router]);
+
+  useEffect(() => {
+    void fetch('/api/admin/me', { credentials: 'same-origin' })
+      .then((res) => setAdminSession(res.ok))
+      .catch(() => setAdminSession(false));
   }, []);
+
+  const onPushToSamples = async (item: AiToolGenerationRecord) => {
+    if (!adminSession || item.id.startsWith('local-')) return;
+    setPushingId(item.id);
+    setPushNote('');
+    setActionError('');
+    try {
+      const res = await fetch('/api/admin/samples/generations', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          generationId: item.id,
+          title: `Generator ${item.mode}${item.quality ? ` · ${item.quality}` : ''}`,
+        }),
+      });
+      const json = (await res.json()) as { message?: string; sample?: { title?: string } };
+      if (!res.ok) {
+        setActionError(json.message || 'Could not push to samples.');
+        return;
+      }
+      setPushNote(`Added “${json.sample?.title || 'generation'}” to homepage samples.`);
+    } catch {
+      setActionError('Could not push to samples.');
+    } finally {
+      setPushingId('');
+    }
+  };
 
   const onDelete = async (item: AiToolGenerationRecord) => {
     if (!item.id.startsWith('local-')) {
@@ -84,13 +134,16 @@ export default function ArchiveClient() {
           </Link>
         </div>
 
+        {pushNote ? <p className="mb-4 text-sm font-medium text-emerald-300">{pushNote}</p> : null}
+        {actionError ? <p className="mb-4 text-sm font-medium text-red-400">{actionError}</p> : null}
+
         {loading && items.length === 0 && inFlight.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-20 text-white/60">
             <Loader2 className="h-5 w-5 animate-spin" />
             Loading...
           </div>
-        ) : error && items.length === 0 && inFlight.length === 0 ? (
-          <p className="text-sm font-medium text-red-400">{error}</p>
+        ) : loadError && items.length === 0 && inFlight.length === 0 ? (
+          <p className="text-sm font-medium text-red-400">{loadError}</p>
         ) : items.length === 0 && inFlight.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
             <p className="text-sm text-white/60">No generations yet.</p>
@@ -158,6 +211,17 @@ export default function ArchiveClient() {
                     </p>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
+                    {adminSession && !item.id.startsWith('local-') ? (
+                      <button
+                        type="button"
+                        disabled={pushingId === item.id}
+                        onClick={() => void onPushToSamples(item)}
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2.5 text-xs font-bold text-amber-100 hover:bg-amber-400/20 disabled:opacity-50"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        {pushingId === item.id ? 'Pushing…' : 'Push to samples'}
+                      </button>
+                    ) : null}
                     {!item.locked ? (
                       <button
                         type="button"

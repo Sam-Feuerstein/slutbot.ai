@@ -4,6 +4,7 @@ import { resetPosthog } from '@/lib/posthog';
 export const TOKEN_KEY = 'token';
 export const USER_CLIENT_KEY = 'slutbot-user-client-id';
 export const SIGNED_IN_KEY = 'slutbot-signed-in';
+const BLOCK_SESSION_RESTORE_KEY = 'slutbot-block-session-restore';
 
 /** Bumped on sign-out so in-flight /api/auth/me syncs cannot restore the session. */
 let authEpoch = 0;
@@ -19,6 +20,7 @@ export function bumpAuthEpoch(): number {
 
 export function storeAuthSession(input: { clientId: string; token?: string }) {
   if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(BLOCK_SESSION_RESTORE_KEY);
   localStorage.setItem(SIGNED_IN_KEY, '1');
   localStorage.setItem(USER_CLIENT_KEY, input.clientId);
   localStorage.removeItem(TOKEN_KEY);
@@ -32,9 +34,15 @@ export function clearAuthSession() {
   clearUserProfile();
 }
 
+export function isSessionRestoreBlocked(): boolean {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem(BLOCK_SESSION_RESTORE_KEY) === '1';
+}
+
 export async function signOutClient() {
   if (typeof window === 'undefined') return;
   bumpAuthEpoch();
+  sessionStorage.setItem(BLOCK_SESSION_RESTORE_KEY, '1');
   try {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
   } catch {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronDown, Download, ImageIcon, RefreshCw, Trash2, Upload, Video } from 'lucide-react';
+import { Download, ImageIcon, RefreshCw, Trash2, Upload, Video } from 'lucide-react';
 import SiteHeader from '../components/SiteHeader';
 import LockedVideoCard from '../components/LockedVideoCard';
 import { useGenerationJobs } from '../components/GenerationJobsProvider';
@@ -12,6 +12,7 @@ import {
   CURRENCY_NAME,
   DESIRE_COSTS,
   DESIRES_UPDATED_EVENT,
+  formatDesireBalance,
   getAuthToken,
   getDesires,
   getGenerationDesireCost,
@@ -19,18 +20,19 @@ import {
   openCheckoutInsufficient,
   refreshDesiresFromServer,
   VIDEO_DURATION_SECONDS,
-  VIDEO_OUTPUT_TIERS,
 } from '@/lib/desires';
-import type { VideoModel } from '@/lib/imageToVideo/types';
 import { uiMediaUrl } from '@/lib/presetMedia';
 import { loginHref } from '@/lib/site';
+import type { ExampleVideo } from '@/lib/exampleVideos';
 
 type Mode = 'image' | 'video';
-type Quality = '480p' | '720p' | '1080p';
 
 const DEMO_VIDEO = uiMediaUrl('tool/undress-demo.mp4') || '/mock/tool/undress-demo.mp4';
 const DEMO_POSTER = '/brand/tool-poster.webp';
 const HOME_UPLOAD_KEY = 'slutbot-home-upload';
+const VIDEO_MODEL = 'current' as const;
+const VIDEO_QUALITY = '480p' as const;
+const VIDEO_COST = DESIRE_COSTS.videoBetter;
 
 async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
   const res = await fetch(dataUrl);
@@ -45,12 +47,21 @@ function canAutoplayMedia() {
   return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
 
-function DemoVideo({ src }: { src: string }) {
+function DemoPreview({
+  videoSrc,
+  posterSrc,
+  sourceSrc,
+}: {
+  videoSrc?: string;
+  posterSrc: string;
+  sourceSrc?: string;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [loadVideo, setLoadVideo] = useState(false);
+  const canPlayVideo = Boolean(videoSrc);
 
   useEffect(() => {
-    if (!canAutoplayMedia()) return;
+    if (!canPlayVideo || !canAutoplayMedia()) return;
     const root = rootRef.current;
     if (!root) return;
     const io = new IntersectionObserver(
@@ -64,30 +75,38 @@ function DemoVideo({ src }: { src: string }) {
     );
     io.observe(root);
     return () => io.disconnect();
-  }, []);
+  }, [canPlayVideo]);
 
   return (
     <div ref={rootRef} className="absolute inset-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={DEMO_POSTER}
+        src={posterSrc}
         alt=""
         width={720}
         height={900}
         decoding="async"
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover object-top"
       />
-      {loadVideo ? (
+      {loadVideo && videoSrc ? (
         <video
-          src={src}
+          src={videoSrc}
           autoPlay
           loop
           muted
           playsInline
           preload="none"
-          poster={DEMO_POSTER}
-          className="absolute inset-0 h-full w-full object-cover"
+          poster={posterSrc}
+          className="absolute inset-0 h-full w-full object-cover object-top"
         />
+      ) : null}
+      {sourceSrc ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 w-[28%]">
+          <div className="relative aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={sourceSrc} alt="" className="h-full w-full object-cover object-top" />
+          </div>
+        </div>
       ) : null}
     </div>
   );
@@ -96,10 +115,12 @@ function DemoVideo({ src }: { src: string }) {
 export default function ImageToVideoClient({
   presetTitle,
   initialMode,
+  demoSample,
 }: {
   presetId?: string;
   presetTitle?: string;
   initialMode?: Mode;
+  demoSample?: ExampleVideo;
 } = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -110,8 +131,6 @@ export default function ImageToVideoClient({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mode, setMode] = useState<Mode>(initialMode === 'image' || initialMode === 'video' ? initialMode : 'video');
-  const [videoModel, setVideoModel] = useState<VideoModel>('current');
-  const [quality, setQuality] = useState<Quality>('480p');
   const duration = VIDEO_DURATION_SECONDS;
   const [error, setError] = useState('');
   const [resultUrl, setResultUrl] = useState('');
@@ -119,12 +138,9 @@ export default function ImageToVideoClient({
   const [resultId, setResultId] = useState<string | null>(null);
   const [resultLocked, setResultLocked] = useState(false);
   const [toolStep, setToolStep] = useState<'landing' | 'ready'>('landing');
-  const [consentOpen, setConsentOpen] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [certified, setCertified] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [balance, setBalance] = useState(0);
-  const selectedOutputTier =
-    VIDEO_OUTPUT_TIERS.find((row) => row.quality === quality) ?? VIDEO_OUTPUT_TIERS[0];
 
   const resetOutput = () => {
     setResultUrl('');
@@ -140,13 +156,12 @@ export default function ImageToVideoClient({
     resetOutput();
   };
 
-  const onSelectQuality = (nextQuality: Quality) => {
-    const next = VIDEO_OUTPUT_TIERS.find((row) => row.quality === nextQuality);
-    if (!next) return;
-    if (next.videoModel === videoModel && next.quality === quality) return;
-    setVideoModel(next.videoModel);
-    setQuality(next.quality);
+  const applyFile = (file: File) => {
     resetOutput();
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setToolStep('ready');
+    setCertified(false);
   };
 
   const onFileChange = (file: File | null) => {
@@ -156,25 +171,7 @@ export default function ImageToVideoClient({
       return;
     }
     setError('');
-    setPendingFile(file);
-    setConsentOpen(true);
-    if (inputRef.current) inputRef.current.value = '';
-  };
-
-  const onConsentContinue = () => {
-    if (!pendingFile) return;
-    resetOutput();
-    setSelectedFile(pendingFile);
-    setPreviewUrl(URL.createObjectURL(pendingFile));
-    setPendingFile(null);
-    setConsentOpen(false);
-    setToolStep('ready');
-  };
-
-  const onConsentInterrupt = () => {
-    setPendingFile(null);
-    setConsentOpen(false);
-    sessionStorage.removeItem(HOME_UPLOAD_KEY);
+    applyFile(file);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -206,13 +203,6 @@ export default function ImageToVideoClient({
   }, [jobs]);
 
   useEffect(() => {
-    document.body.style.overflow = consentOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [consentOpen]);
-
-  useEffect(() => {
     const raw = sessionStorage.getItem(HOME_UPLOAD_KEY);
     if (!raw) return;
     try {
@@ -231,9 +221,13 @@ export default function ImageToVideoClient({
       inputRef.current?.click();
       return;
     }
+    if (!certified) {
+      setError('Tick the certification box to generate.');
+      return;
+    }
     if (Date.now() - lastStartRef.current < 1000) return;
 
-    const desireCost = getGenerationDesireCost(mode, videoModel, quality);
+    const desireCost = getGenerationDesireCost(mode, VIDEO_MODEL, VIDEO_QUALITY);
     if (!getAuthToken()) {
       router.push(loginHref(pathname || '/ai-porn-generator'));
       return;
@@ -251,8 +245,8 @@ export default function ImageToVideoClient({
       file: selectedFile,
       previewUrl,
       mode,
-      videoModel,
-      quality,
+      videoModel: VIDEO_MODEL,
+      quality: VIDEO_QUALITY,
       duration,
     });
   };
@@ -271,12 +265,16 @@ export default function ImageToVideoClient({
     resetOutput();
   };
 
+  const demoVideoSrc = demoSample?.video || (demoSample ? undefined : DEMO_VIDEO);
+  const demoPosterSrc = demoSample?.poster || DEMO_POSTER;
+  const demoSourceSrc = demoSample?.source;
+
   const mainMedia =
     previewUrl && toolStep === 'ready' ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={previewUrl} alt="Upload preview" className="h-full w-full object-cover" />
   ) : (
-    <DemoVideo src={DEMO_VIDEO} />
+    <DemoPreview videoSrc={demoVideoSrc} posterSrc={demoPosterSrc} sourceSrc={demoSourceSrc} />
   );
 
   return (
@@ -291,38 +289,8 @@ export default function ImageToVideoClient({
               : 'pb-[max(1.5rem,var(--safe-bottom))]'
           }`}
         >
-          <div className="inline-flex w-full max-w-[420px] rounded-full border border-white/10 bg-[#1a1a1a] p-1">
-            <button
-              type="button"
-              onClick={() => onSelectMode('video')}
-              className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-bold transition-colors sm:px-5 ${
-                mode === 'video'
-                  ? 'bg-[#2a2a2a] text-[#ff2d78]'
-                  : 'text-white/50 hover:text-white'
-              }`}
-            >
-              <Video className="h-4 w-4" />
-              Video
-              <span className="rounded-md bg-[#ff2d78] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
-                New
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onSelectMode('image')}
-              className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-bold transition-colors sm:px-5 ${
-                mode === 'image'
-                  ? 'bg-[#2a2a2a] text-[#ff2d78]'
-                  : 'text-white/50 hover:text-white'
-              }`}
-            >
-              <ImageIcon className="h-4 w-4" />
-              Image
-            </button>
-          </div>
-
           <div
-            className={`mt-6 w-full ${
+            className={`mt-2 w-full ${
               resultKind && (resultUrl || resultLocked)
                 ? 'grid max-w-5xl items-start gap-6 lg:grid-cols-2'
                 : 'flex max-w-[420px] flex-col items-stretch'
@@ -363,47 +331,105 @@ export default function ImageToVideoClient({
                 </div>
               </div>
 
+              <div className="mt-4 inline-flex w-full rounded-full border border-white/10 bg-[#1a1a1a] p-1">
+                <button
+                  type="button"
+                  onClick={() => onSelectMode('video')}
+                  className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-bold transition-colors sm:px-5 ${
+                    mode === 'video'
+                      ? 'bg-[#2a2a2a] text-[#ff2d78]'
+                      : 'text-white/50 hover:text-white'
+                  }`}
+                >
+                  <Video className="h-4 w-4" />
+                  Video
+                  <span className="rounded-md bg-[#ff2d78] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
+                    New
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectMode('image')}
+                  className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-bold transition-colors sm:px-5 ${
+                    mode === 'image'
+                      ? 'bg-[#2a2a2a] text-[#ff2d78]'
+                      : 'text-white/50 hover:text-white'
+                  }`}
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  Image
+                </button>
+              </div>
+
               {mode === 'video' || (toolStep === 'ready' && selectedFile) ? (
-                <div className="mt-6 w-full space-y-4">
+                <div className="mt-4 w-full space-y-4">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={certified}
+                      onChange={(e) => {
+                        setCertified(e.target.checked);
+                        if (e.target.checked) setError('');
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/30 bg-black accent-[#ff2d78]"
+                    />
+                    <span className="text-[12px] leading-snug text-white/70">
+                      <span className="font-bold text-white">I hereby certify</span> I have the rights to use
+                      and modify this photo. I am the subject or have the subject&apos;s explicit consent. I
+                      understand the image is for my private viewing only and won&apos;t be published.
+                    </span>
+                  </label>
+
                   {mode === 'image' ? (
                     <div>
                       <button
                         type="button"
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || !certified}
                         onClick={onGenerate}
-                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#ff2d78] py-3.5 text-sm font-extrabold text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex min-h-12 w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-[#ff2d78] py-3 text-sm font-extrabold text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {activeCount > 0
-                          ? `Generate another · ${DESIRE_COSTS.image} ${CURRENCY_NAME}`
-                          : `Generate image · ${DESIRE_COSTS.image} ${CURRENCY_NAME}${
-                              signedIn && balance < DESIRE_COSTS.image ? ' · buy credits' : ''
+                        <span>
+                          {activeCount > 0
+                            ? `Generate another · ${DESIRE_COSTS.image} ${CURRENCY_NAME}`
+                            : `Generate image · ${DESIRE_COSTS.image} ${CURRENCY_NAME}${
+                                signedIn && balance < DESIRE_COSTS.image ? ' · buy credits' : ''
+                              }`}
+                        </span>
+                        {signedIn ? (
+                          <span
+                            className={`text-[11px] font-semibold normal-case tracking-normal ${
+                              balance >= DESIRE_COSTS.image ? 'text-white/80' : 'text-amber-200'
                             }`}
+                          >
+                            Your balance: {formatDesireBalance(balance)} {CURRENCY_NAME}
+                          </span>
+                        ) : null}
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <label className="relative block">
-                        <span className="sr-only">Video quality</span>
-                        <select
-                          value={selectedOutputTier.quality}
-                          onChange={(event) => onSelectQuality(event.target.value as Quality)}
-                          className="h-11 w-full appearance-none rounded-xl border border-white/10 bg-[#1c1c1c] py-2 pl-4 pr-10 text-sm font-bold text-white outline-none transition hover:border-white/20 focus:border-[#ff2d78]"
-                        >
-                          {VIDEO_OUTPUT_TIERS.map((tier) => (
-                            <option key={tier.id} value={tier.quality} className="bg-[#1c1c1c] text-white">
-                              {tier.label} · {tier.hint} · {tier.cost} {CURRENCY_NAME}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
-                      </label>
+                    <div>
                       <button
                         type="button"
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || !certified}
                         onClick={onGenerate}
-                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#ff2d78] py-3.5 text-sm font-extrabold tracking-wide text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex min-h-12 w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-[#ff2d78] py-3 text-sm font-extrabold tracking-wide text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {activeCount > 0 ? 'GENERATE ANOTHER' : 'GENERATE VIDEO'}
+                        <span>
+                          {activeCount > 0
+                            ? `Generate another · ${VIDEO_COST} ${CURRENCY_NAME}`
+                            : `Generate video · ${VIDEO_COST} ${CURRENCY_NAME}${
+                                signedIn && balance < VIDEO_COST ? ' · buy credits' : ''
+                              }`}
+                        </span>
+                        {signedIn ? (
+                          <span
+                            className={`text-[11px] font-semibold normal-case tracking-normal ${
+                              balance >= VIDEO_COST ? 'text-white/80' : 'text-amber-200'
+                            }`}
+                          >
+                            Your balance: {formatDesireBalance(balance)} {CURRENCY_NAME}
+                          </span>
+                        ) : null}
                       </button>
                     </div>
                   )}
@@ -412,16 +438,6 @@ export default function ImageToVideoClient({
                     <p className="text-sm text-white/50">
                       Generation keeps running in the corner. Start another or browse the site.
                     </p>
-                  ) : null}
-
-                  {selectedFile ? (
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.click()}
-                      className="text-sm font-semibold text-[#ff2d78] hover:underline"
-                    >
-                      Change image
-                    </button>
                   ) : null}
                 </div>
               ) : null}
@@ -451,8 +467,8 @@ export default function ImageToVideoClient({
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={onGenerate}
-                    disabled={!selectedFile}
+                    onClick={() => onGenerate()}
+                    disabled={!selectedFile || !certified}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#ff2d78] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#ff1a6b] disabled:opacity-40"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -482,48 +498,6 @@ export default function ImageToVideoClient({
           </div>
         </main>
       </div>
-
-      {consentOpen ? (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:p-4">
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute inset-0 bg-black/75 sm:backdrop-blur-sm"
-            onClick={onConsentInterrupt}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="consent-title"
-            className="relative w-full max-w-md rounded-t-2xl border border-white/10 bg-[#161616] p-6 pb-[max(1.5rem,var(--safe-bottom))] shadow-2xl sm:rounded-2xl sm:p-7"
-          >
-            <h2 id="consent-title" className="text-xl font-black tracking-tight text-white">
-              I hereby certify
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-white/70">
-              I have the rights to use and modify this photo. I am the subject or have the subject&apos;s
-              explicit consent. I understand the image is for my private viewing only and won&apos;t be
-              published.
-            </p>
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={onConsentContinue}
-                className="min-h-12 rounded-xl bg-[#ff2d78] px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] transition-colors hover:bg-[#ff1a6b]"
-              >
-                Yes continue
-              </button>
-              <button
-                type="button"
-                onClick={onConsentInterrupt}
-                className="min-h-12 rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                No interrupt
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }

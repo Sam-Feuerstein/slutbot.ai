@@ -35,6 +35,12 @@ const CARDS = [
     copy: 'Hidden nude prompts used on every image and video generation.',
     key: 'users' as const,
   },
+  {
+    href: '/admin/samples',
+    title: 'Sample gallery',
+    copy: 'Homepage examples + before/after. Upload, reorder, clicks and likes.',
+    key: 'users' as const,
+  },
 ];
 
 type Overview = {
