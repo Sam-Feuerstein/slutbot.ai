@@ -37,6 +37,7 @@ const slutbotUserSchema = new Schema(
     trialGranted: { type: Boolean, default: false },
     trialGrantedAt: { type: Date, default: null },
     signupCountry: { type: String, default: '', uppercase: true, index: true },
+    signupIpHash: { type: String, default: '', index: true },
     banned: { type: Boolean, default: false },
     imageGens: { type: Number, default: 0 },
     videoGens: { type: Number, default: 0 },

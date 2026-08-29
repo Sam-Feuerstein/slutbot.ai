@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import SiteHeader from '../components/SiteHeader';
+import { purgeAllLocalCollectionCaches } from '@/lib/collectionLocal';
 import { getAuthToken } from '@/lib/desires';
 import { ARCHIVE_PATH, GENERATOR_PATH, loginHref } from '@/lib/site';
 
@@ -19,11 +20,7 @@ export default function ArchiveClient() {
       router.replace(loginHref(ARCHIVE_PATH));
       return;
     }
-    try {
-      localStorage.removeItem('slutbot-collection');
-    } catch {
-      // ignore
-    }
+    purgeAllLocalCollectionCaches();
   }, [router]);
 
   return (

@@ -24,6 +24,24 @@ function purgeLegacyGlobal() {
   }
 }
 
+/** Wipe legacy global + every per-user collection cache from this browser. */
+export function purgeAllLocalCollectionCaches() {
+  if (typeof window === 'undefined') return;
+  purgeLegacyGlobal();
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const storageKey = localStorage.key(i);
+      if (storageKey && (storageKey === LEGACY_GLOBAL_KEY || storageKey.startsWith(KEY_PREFIX))) {
+        keys.push(storageKey);
+      }
+    }
+    keys.forEach((storageKey) => localStorage.removeItem(storageKey));
+  } catch {
+    // ignore
+  }
+}
+
 export function readLocalCollection(): AiToolGenerationRecord[] {
   if (typeof window === 'undefined') return [];
   purgeLegacyGlobal();
@@ -76,7 +94,7 @@ export function mergeCollection(
 
 export async function downloadResult(url: string, filename: string) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { credentials: 'include' });
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');

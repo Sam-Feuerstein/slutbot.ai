@@ -1,7 +1,7 @@
 import { DESIRE_COSTS } from '@/lib/generation/costs';
 
-/** One free image. Trial cannot run video. */
-export const TRIAL_CREDITS = DESIRE_COSTS.image;
+/** Enough for 2 images or 1 standard 480p video. */
+export const TRIAL_CREDITS = DESIRE_COSTS.videoBasic;
 
 /**
  * ffmpeg gblur sigma for locked trial videos. Higher = more blur.

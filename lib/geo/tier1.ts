@@ -46,6 +46,40 @@ export function isTier1Country(code?: string | null): boolean {
   return normalized.length === 2 && TIER1_COUNTRIES.has(normalized);
 }
 
+/**
+ * Southern / Eastern Europe for the signup trial.
+ * LatAm, Asia, Africa, and Turkey are not included.
+ */
+export const TIER2_COUNTRIES = new Set([
+  'ES',
+  'IT',
+  'PT',
+  'GR',
+  'CY',
+  'MT',
+  'CZ',
+  'PL',
+  'SK',
+  'SI',
+  'HU',
+  'HR',
+  'EE',
+  'LV',
+  'LT',
+  'RO',
+  'BG',
+]);
+
+export function isTier2Country(code?: string | null): boolean {
+  const normalized = normalizeCountryCode(code || '');
+  return normalized.length === 2 && TIER2_COUNTRIES.has(normalized);
+}
+
+/** Countries that receive signup trial credits (T1 + T2). */
+export function isTrialEligibleCountry(code?: string | null): boolean {
+  return isTier1Country(code) || isTier2Country(code);
+}
+
 /** CDN country in production. Local/dev can override with TRIAL_DEV_COUNTRY (default US). */
 export function resolveRequestCountry(headers: Headers): string {
   const fromHeaders = countryFromHeaders(headers);

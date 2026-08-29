@@ -1,8 +1,8 @@
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
-import { DESIRE_COSTS, getGenerationDesireCost, type VideoQuality } from '@/lib/generation/costs';
-import { isTier1Country } from '@/lib/geo/tier1';
+import { getGenerationDesireCost, type VideoQuality } from '@/lib/generation/costs';
+import { isTrialEligibleCountry } from '@/lib/geo/tier1';
 import type { VideoModel } from '@/lib/imageToVideo/types';
 import type { CreditSource } from '@/lib/users/wallet';
 
@@ -19,8 +19,8 @@ export type GenerationChargePlan = {
 function canSpendTrial(signupCountry: string, currentCountry: string, trialCredits: number): boolean {
   return (
     trialCredits > 0 &&
-    isTier1Country(signupCountry) &&
-    isTier1Country(currentCountry)
+    isTrialEligibleCountry(signupCountry) &&
+    isTrialEligibleCountry(currentCountry)
   );
 }
 
@@ -85,9 +85,9 @@ export async function planGenerationCharge(input: {
     };
   }
 
-  if (input.mode === 'image' && trialOk && trial >= DESIRE_COSTS.image) {
+  if (trialOk && trial >= requestedCost) {
     return {
-      cost: DESIRE_COSTS.image,
+      cost: requestedCost,
       quality,
       videoModel,
       paidWith: 'trial',

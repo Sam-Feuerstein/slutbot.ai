@@ -9,6 +9,7 @@ import {
 import { signSlutbotToken } from '@/lib/auth/slutbotAuth';
 import { loginHref, safeNextPath } from '@/lib/site';
 import { resolveRequestCountry } from '@/lib/geo/tier1';
+import { clientIp } from '@/lib/rateLimit';
 
 const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
 
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
   try {
     const accessToken = await exchangeGoogleCode(code, origin);
     const profile = await fetchGoogleProfile(accessToken);
-    const user = await findOrCreateGoogleUser(profile, resolveRequestCountry(req.headers));
+    const user = await findOrCreateGoogleUser(profile, resolveRequestCountry(req.headers), clientIp(req));
     const token = signSlutbotToken(String(user._id));
 
     const completeUrl = new URL('/login/oauth-complete', origin);

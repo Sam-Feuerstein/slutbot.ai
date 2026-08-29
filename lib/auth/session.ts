@@ -1,4 +1,5 @@
 import { clearUserProfile } from '@/lib/auth/profile';
+import { purgeAllLocalCollectionCaches } from '@/lib/collectionLocal';
 import { resetPosthog } from '@/lib/posthog';
 
 export const TOKEN_KEY = 'token';
@@ -20,6 +21,7 @@ export function bumpAuthEpoch(): number {
 
 export function storeAuthSession(input: { clientId: string; token?: string }) {
   if (typeof window === 'undefined') return;
+  purgeAllLocalCollectionCaches();
   sessionStorage.removeItem(BLOCK_SESSION_RESTORE_KEY);
   localStorage.setItem(SIGNED_IN_KEY, '1');
   localStorage.setItem(USER_CLIENT_KEY, input.clientId);
@@ -49,6 +51,7 @@ export async function signOutClient() {
     /* still clear local state */
   }
   clearAuthSession();
+  purgeAllLocalCollectionCaches();
   localStorage.removeItem('slutbot-desires');
   localStorage.removeItem('slutbot-desires-server');
   localStorage.removeItem('slutbot-trial-credits');

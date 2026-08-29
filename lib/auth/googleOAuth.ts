@@ -122,7 +122,7 @@ export async function fetchGoogleProfile(accessToken: string): Promise<GooglePro
   };
 }
 
-export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '') {
+export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '', ip = '') {
   await connectDB();
 
   let user = await SlutbotUser.findOne({ googleId: profile.id });
@@ -152,7 +152,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '
     return user;
   }
 
-  const trial = trialGrantFields(country);
+  const trial = await trialGrantFields(country, ip);
   return SlutbotUser.create({
     email: profile.email,
     name: profile.name,

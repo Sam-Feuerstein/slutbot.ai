@@ -367,6 +367,12 @@ function archiveKillSwitchOn(): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 }
 
+/** Archive stays OFF until ARCHIVE_ENABLED=1 after a privacy audit. Default = disabled. */
+function archiveListingEnabled(): boolean {
+  const raw = (process.env.ARCHIVE_ENABLED || '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+}
+
 export async function saveAiToolGeneration(input: {
   mode: 'image' | 'video';
   videoModel?: VideoModel | null;
@@ -423,9 +429,8 @@ export async function listAiToolGenerations(): Promise<{
   items: AiToolGenerationRecord[];
   error?: string;
 }> {
-  // HARD KILL SWITCH — archive stays blank for EVERY account until explicitly reopened.
-  // Do not remove `|| true` without confirming ARCHIVE_KILL_SWITCH=1 in Vercel first.
-  if (true || archiveKillSwitchOn()) {
+  // HARD LOCK — no account may list archive items until ARCHIVE_ENABLED=1 after privacy audit.
+  if (true || !archiveListingEnabled() || archiveKillSwitchOn()) {
     return { items: [], error: 'Collection temporarily unavailable.' };
   }
 
@@ -505,8 +510,8 @@ export async function listActiveGenerationJobs(): Promise<{ jobs: ActiveGenerati
   }
 }
 
-function jobLocksVideo(job: { mode?: string; locked?: boolean; paidWith?: string }): boolean {
-  return job.mode === 'video' && (Boolean(job.locked) || job.paidWith === 'trial');
+function jobLocksVideo(job: { mode?: string; locked?: boolean }): boolean {
+  return job.mode === 'video' && Boolean(job.locked);
 }
 
 function lockedJobClientResult(job: { previewKey?: string; generationId?: string }): ImageToVideoPollResult {

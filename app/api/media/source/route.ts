@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { userFromSession } from '@/lib/auth/requestUser';
+import { isWavespeedSourceKey, requiresOwnerSession, userOwnsMediaKey } from '@/lib/media/access';
 import { verifyMediaSignature } from '@/lib/media/sign';
 import { getR2Object } from '@/lib/r2';
 import { isOriginalOutputKey } from '@/lib/trial/ingest';
@@ -11,6 +13,23 @@ export async function GET(req: NextRequest) {
   const sig = req.nextUrl.searchParams.get('sig') || '';
   if (!verifyMediaSignature(key, exp, sig)) {
     return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
+  }
+
+  const user = await userFromSession();
+  if (requiresOwnerSession(key)) {
+    if (!user) {
+      return NextResponse.json({ message: 'Sign in required.' }, { status: 401 });
+    }
+    if (!(await userOwnsMediaKey(user.id, key))) {
+      return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
+    }
+  } else if (!isWavespeedSourceKey(key)) {
+    if (!user) {
+      return NextResponse.json({ message: 'Sign in required.' }, { status: 401 });
+    }
+    if (!(await userOwnsMediaKey(user.id, key))) {
+      return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
+    }
   }
 
   if (isOriginalOutputKey(key)) {
@@ -32,7 +51,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(Buffer.from(bytes), {
       headers: {
         'Content-Type': obj.ContentType || 'application/octet-stream',
-        'Cache-Control': 'private, max-age=60',
+        'Cache-Control': 'private, no-store',
         'Content-Disposition': 'inline',
       },
     });
