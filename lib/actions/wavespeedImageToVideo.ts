@@ -106,7 +106,7 @@ function assertWavespeedPollUrl(url: string) {
   }
 }
 
-async function requireUser(): Promise<{ user?: SlutbotAuthUser; error?: string }> {
+async function requireUser(): Promise<{ user: SlutbotAuthUser; error?: undefined } | { user?: undefined; error: string }> {
   const user = await userFromSession();
   if (!user) return { error: 'Sign in required.' };
   return { user };
@@ -116,7 +116,7 @@ export async function uploadImageToVideoSource(
   formData: FormData,
 ): Promise<{ key?: string; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { error: auth.error || 'Sign in required.' };
   const file = formData.get('file') as File | null;
   if (!file) return { error: 'No image provided.' };
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -226,7 +226,7 @@ export async function submitWavespeedImageToVideo(
   _videoModel: VideoModel = 'current',
 ): Promise<{ taskId?: string; desires?: number; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { error: auth.error || 'Sign in required.' };
 
   const requestedQuality: VideoQuality = '480p';
   const normalizedDuration = normalizeCheapDuration(duration);
@@ -275,7 +275,7 @@ export async function submitWavespeedImageEdit(
   sourceKey: string,
 ): Promise<{ taskId?: string; desires?: number; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { error: auth.error || 'Sign in required.' };
 
   const plan = await planGenerationCharge({
     userId: auth.user.id,
@@ -314,7 +314,7 @@ export async function refundFailedGeneration(
   taskId: string,
 ): Promise<{ ok: boolean; desires?: number; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
   return refundIfWavespeedFailed(auth.user.id, taskId);
 }
 
@@ -349,7 +349,7 @@ export async function saveAiToolGeneration(input: {
   duration?: number | null;
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
   if (!isUserUploadKey(input.sourceKey) || !input.outputUrl?.trim()) {
     return { ok: false, error: 'Missing output.' };
   }
@@ -375,7 +375,7 @@ export async function saveAiToolGeneration(input: {
 
 export async function deleteAiToolGeneration(id: string): Promise<{ ok: boolean; error?: string }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { ok: false, error: auth.error || 'Sign in required.' };
   const trimmedId = id?.trim();
   if (!trimmedId) return { ok: false, error: 'Missing id.' };
 
@@ -392,18 +392,10 @@ export async function deleteAiToolGeneration(id: string): Promise<{ ok: boolean;
   }
 }
 
-export async function listAiToolGenerations(): Promise<{
+async function listOwnedGenerations(user: SlutbotAuthUser): Promise<{
   items: AiToolGenerationRecord[];
   error?: string;
 }> {
-  // HARD LOCK — no account may list archive items until ARCHIVE_ENABLED=1 after privacy audit.
-  if (true || !archiveListingEnabled() || archiveKillSwitchOn()) {
-    return { items: [], error: 'Collection temporarily unavailable.' };
-  }
-
-  const auth = await requireUser();
-  if (auth.error || !auth.user) return { items: [], error: auth.error || 'Sign in required.' };
-  const user = auth.user;
   const userId = String(user.id || '').trim();
   if (!userId) {
     return { items: [], error: 'Sign in required.' };
@@ -443,6 +435,27 @@ export async function listAiToolGenerations(): Promise<{
   }
 }
 
+async function listOwnedGenerationsFromSession(): Promise<{
+  items: AiToolGenerationRecord[];
+  error?: string;
+}> {
+  const auth = await requireUser();
+  if (!auth.user) return { items: [], error: auth.error || 'Sign in required.' };
+  return listOwnedGenerations(auth.user);
+}
+
+export async function listAiToolGenerations(): Promise<{
+  items: AiToolGenerationRecord[];
+  error?: string;
+}> {
+  // HARD LOCK — no account may list archive items until ARCHIVE_ENABLED=1 after privacy audit.
+  if (true || !archiveListingEnabled() || archiveKillSwitchOn()) {
+    return { items: [], error: 'Collection temporarily unavailable.' };
+  }
+
+  return listOwnedGenerationsFromSession();
+}
+
 export type ActiveGenerationJobClient = {
   taskId: string;
   mode: 'image' | 'video';
@@ -456,7 +469,7 @@ export type ActiveGenerationJobClient = {
 
 export async function listActiveGenerationJobs(): Promise<{ jobs: ActiveGenerationJobClient[] }> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { jobs: [] };
+  if (!auth.user) return { jobs: [] };
 
   try {
     const rows = await listActiveJobsForUser(auth.user.id);
@@ -494,7 +507,7 @@ function lockedJobClientResult(job: { previewKey?: string; generationId?: string
 
 export async function pollWavespeedImageToVideo(taskId: string): Promise<ImageToVideoPollResult> {
   const auth = await requireUser();
-  if (auth.error || !auth.user) return { status: 'failed', error: auth.error || 'Sign in required.' };
+  if (!auth.user) return { status: 'failed', error: auth.error || 'Sign in required.' };
   if (!wavespeedApiKey()) {
     return { status: 'failed', error: 'WAVESPEED_API_KEY is not configured.' };
   }
