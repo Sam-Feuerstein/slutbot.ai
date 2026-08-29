@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
       plan: body.plan,
       method: body.method,
       clientId: body.clientId,
+      ip: clientIp(req),
+      headers: req.headers,
     });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503 });

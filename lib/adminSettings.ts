@@ -58,11 +58,11 @@ export function defaultPlanRows(): PlanPriceRow[] {
 export function defaultAdminSettings(): AdminMockSettings {
   return {
     costs: {
-      image: 16,
-      videoBasic: 32,
-      videoBetter: 32,
-      videoBetter720: 48,
-      videoBetter1080: 64,
+      image: 8,
+      videoBasic: 16,
+      videoBetter: 16,
+      videoBetter720: 24,
+      videoBetter1080: 32,
     },
     plans: defaultPlanRows(),
     nowpayments: {

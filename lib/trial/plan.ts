@@ -30,11 +30,12 @@ export async function planGenerationCharge(input: {
   mode: 'image' | 'video';
   videoModel: VideoModel;
   quality: VideoQuality;
+  duration?: number;
   currentCountry: string;
 }): Promise<GenerationChargePlan> {
   const quality = input.quality;
   const videoModel = input.videoModel;
-  const requestedCost = getGenerationDesireCost(input.mode, videoModel, quality);
+  const requestedCost = getGenerationDesireCost(input.mode, videoModel, quality, input.duration);
 
   if (isAdminAppUserEmail(input.email)) {
     return {

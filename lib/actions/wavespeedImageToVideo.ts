@@ -7,7 +7,9 @@ import connectDB from '@/lib/db/mongodb';
 import { AiToolGeneration } from '@/lib/models';
 import { userFromSession } from '@/lib/auth/requestUser';
 import type { SlutbotAuthUser } from '@/lib/auth/slutbotAuth';
-import { getImagePrompt, getVideoEngine, getVideoPrompt } from '@/lib/generationSettings';
+import { mergeVideoPrompts, resolveVideoEngine, VIDEO_CLOTHING_NEGATIVE } from '@/lib/generation/videoOptions';
+import { getImagePrompt, getVideoPrompt } from '@/lib/generationSettings';
+import type { VideoQuality } from '@/lib/generation/costs';
 import {
   attachJobTaskId,
   claimJobForIngest,
@@ -34,8 +36,6 @@ function wavespeedApiKey() {
   return envValue('WAVESPEED_API_KEY');
 }
 const WAVESPEED_HOST = 'api.wavespeed.ai';
-const LTX_SPICY_SUBMIT_URL =
-  'https://api.wavespeed.ai/api/v3/wavespeed-ai/ltx-2.3-spicy/image-to-video';
 const WAN_ULTRA_FAST_SUBMIT_URL =
   'https://api.wavespeed.ai/api/v3/wavespeed-ai/wan-2.2/i2v-480p-ultra-fast';
 const SEEDREAM_EDIT_URL = 'https://api.wavespeed.ai/api/v3/bytedance/seedream-v5.0-pro/edit';
@@ -43,16 +43,8 @@ const SEEDREAM_EDIT_URL = 'https://api.wavespeed.ai/api/v3/bytedance/seedream-v5
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
-const ALLOWED_RESOLUTIONS = ['480p', '720p', '1080p'] as const;
-const MIN_DURATION = 3;
-const MAX_DURATION = 20;
-const DEFAULT_RESOLUTION = '480p';
-const DEFAULT_DURATION = 5;
-
-const CHEAP_DURATIONS = [5] as const;
+const CHEAP_DURATIONS = [5, 8] as const;
 const TASK_ID_RE = /^[a-zA-Z0-9_-]{8,128}$/;
-
-type ImageToVideoResolution = (typeof ALLOWED_RESOLUTIONS)[number];
 
 type ImageToVideoPollResult = {
   status: 'created' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'timeout' | 'unknown';
@@ -64,23 +56,9 @@ type ImageToVideoPollResult = {
   desires?: number;
 };
 
-function normalizeResolution(value?: string): ImageToVideoResolution {
-  return ALLOWED_RESOLUTIONS.includes(value as ImageToVideoResolution)
-    ? (value as ImageToVideoResolution)
-    : DEFAULT_RESOLUTION;
-}
-
-function normalizeDuration(value?: number): number {
-  const n = Math.round(Number(value));
-  if (!Number.isFinite(n)) return DEFAULT_DURATION;
-  return Math.min(MAX_DURATION, Math.max(MIN_DURATION, n));
-}
-
 function normalizeCheapDuration(value?: number): (typeof CHEAP_DURATIONS)[number] {
   const n = Math.round(Number(value));
-  return CHEAP_DURATIONS.includes(n as (typeof CHEAP_DURATIONS)[number])
-    ? (n as (typeof CHEAP_DURATIONS)[number])
-    : 5;
+  return n <= 6 ? 5 : 8;
 }
 
 type WavespeedTask = {
@@ -241,53 +219,42 @@ async function startWavespeedJob(input: {
 
 export async function submitWavespeedImageToVideo(
   sourceKey: string,
-  _prompt?: string,
-  resolution?: string,
+  userPrompt?: string,
+  _resolution?: string,
   duration?: number,
-  preset?: string,
+  _preset?: string,
   _videoModel: VideoModel = 'current',
 ): Promise<{ taskId?: string; desires?: number; error?: string }> {
   const auth = await requireUser();
   if (auth.error || !auth.user) return { error: auth.error || 'Sign in required.' };
 
-  // Admin-selected WaveSpeed engine wins over the public quality picker.
-  const engine = await getVideoEngine();
-  const videoModel: VideoModel = engine === 'wan_ultra_fast' ? 'cheap' : 'current';
-  const requestedQuality = engine === 'wan_ultra_fast' ? '480p' : normalizeResolution(resolution);
+  const requestedQuality: VideoQuality = '480p';
+  const normalizedDuration = normalizeCheapDuration(duration);
+  const { videoModel } = resolveVideoEngine(normalizedDuration, requestedQuality);
   const plan = await planGenerationCharge({
     userId: auth.user.id,
     email: auth.user.email,
     mode: 'video',
     videoModel,
     quality: requestedQuality,
+    duration: normalizedDuration,
     currentCountry: resolveRequestCountry(await headers()),
   });
   if (plan.error) {
     return { error: 'Not enough Stars.', desires: plan.spendable };
   }
 
-  const quality = plan.quality;
-  const normalizedDuration =
-    videoModel === 'cheap' ? normalizeCheapDuration(duration) : normalizeDuration(duration);
-  const trimmedPrompt = await getVideoPrompt();
-  const image = wavespeedFetchUrl(sourceKey.trim());
-  const submitUrl = engine === 'wan_ultra_fast' ? WAN_ULTRA_FAST_SUBMIT_URL : LTX_SPICY_SUBMIT_URL;
-  const body =
-    engine === 'wan_ultra_fast'
-      ? {
-          image,
-          prompt: trimmedPrompt,
-          duration: normalizedDuration,
-          seed: -1,
-        }
-      : {
-          image,
-          prompt: trimmedPrompt,
-          preset: preset === 'original' ? 'original' : 'tuned',
-          resolution: quality,
-          duration: normalizedDuration,
-          seed: -1,
-        };
+  const quality = plan.quality as VideoQuality;
+  const trimmedPrompt = mergeVideoPrompts(await getVideoPrompt(), userPrompt);
+  const image = await wavespeedFetchUrl(sourceKey.trim());
+  const submitUrl = WAN_ULTRA_FAST_SUBMIT_URL;
+  const body = {
+    image,
+    prompt: trimmedPrompt,
+    negative_prompt: VIDEO_CLOTHING_NEGATIVE,
+    duration: normalizedDuration,
+    seed: -1,
+  };
 
   return startWavespeedJob({
     user: auth.user,
@@ -323,7 +290,7 @@ export async function submitWavespeedImageEdit(
   }
 
   const trimmedPrompt = await getImagePrompt();
-  const image = wavespeedFetchUrl(sourceKey.trim());
+  const image = await wavespeedFetchUrl(sourceKey.trim());
 
   return startWavespeedJob({
     user: auth.user,

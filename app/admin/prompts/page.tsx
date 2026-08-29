@@ -99,7 +99,7 @@ export default function AdminPromptsPage() {
         <Panel>
           <h2 className="text-lg font-black">Video model</h2>
           <p className="mt-1 text-sm text-white/45">
-            This overrides the public quality picker. All new video generations use the model you select.
+            Hidden prompts still apply. All user videos use the fast 5s / 8s model.
           </p>
           <div className="mt-5 space-y-3">
             {(engines.length

@@ -1,4 +1,5 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { envValue } from '@/lib/env';
 
@@ -56,5 +57,18 @@ export async function getR2Object(key: string) {
       Bucket: r2UploadBucket(),
       Key: key,
     }),
+  );
+}
+
+/** Short-lived GET URL for providers that must fetch the file themselves. */
+export async function presignR2GetUrl(key: string, expiresInSec = 15 * 60): Promise<string> {
+  const client = getR2Client();
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: r2UploadBucket(),
+      Key: key,
+    }),
+    { expiresIn: expiresInSec },
   );
 }

@@ -10,8 +10,9 @@ import { tryRestoreSessionFromCookie } from '@/lib/auth/syncSession';
 import { loginHref, HELLO_EMAIL, checkoutBannerCopy } from '@/lib/site';
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
+import FeaturedOn from '@/app/components/FeaturedOn';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
-import { formatUsdPrice, formatAroundUsd, CRYPTO_DISCOUNT_PERCENT, CRYPTO_MIN_USD, PREMIUM_PLANS, planBonusPercentLabel, planGenerationCopy, planMoreGenerationsCopy, type PremiumPlan } from '@/lib/premiumPlans';
+import { formatUsdPrice, CRYPTO_DISCOUNT_PERCENT, CRYPTO_MIN_USD, PREMIUM_PLANS, planBonusPercentLabel, planGenerationCopy, planMoreGenerationsCopy, type PremiumPlan } from '@/lib/premiumPlans';
 import {
   CRYPTO_COUPON_APPLIED_KEY,
   CRYPTO_COUPON_CODE,
@@ -336,12 +337,16 @@ function WalletLogos() {
   );
 }
 
-function PackAroundUsdPrice({ catalogStars, chargedStars }: { catalogStars: number; chargedStars: number }) {
-  if (chargedStars === catalogStars) return <>{formatAroundUsd(chargedStars)}</>;
+function formatCheckoutStars(stars: number) {
+  return `${Math.round(stars).toLocaleString('en-US')} Stars`;
+}
+
+function PackStarsPrice({ catalogStars, chargedStars }: { catalogStars: number; chargedStars: number }) {
+  if (chargedStars === catalogStars) return <>{formatCheckoutStars(chargedStars)}</>;
   return (
     <span className="block leading-tight">
-      <span className="block text-[11px] font-normal text-white/35 line-through">{formatAroundUsd(catalogStars)}</span>
-      <span>{formatAroundUsd(chargedStars)}</span>
+      <span className="block text-[11px] font-normal text-white/35 line-through">{formatCheckoutStars(catalogStars)}</span>
+      <span>{formatCheckoutStars(chargedStars)}</span>
     </span>
   );
 }
@@ -483,9 +488,9 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
     if (method === 'stars') {
       const catalogStars = selected.stars;
       if (couponApplied && selectedStars < catalogStars) {
-        return `CONTINUE · ${formatAroundUsd(selectedStars)} · You Saved ${formatAroundUsd(catalogStars - selectedStars)}`;
+        return `CONTINUE · ${formatCheckoutStars(selectedStars)} · You Saved ${formatCheckoutStars(catalogStars - selectedStars)}`;
       }
-      return `CONTINUE · ${formatAroundUsd(selectedStars)}`;
+      return `CONTINUE · ${formatCheckoutStars(selectedStars)}`;
     }
     if (couponApplied) {
       const savedUsd = Math.max(0, selected.price - dueTodayUsd);
@@ -877,7 +882,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
                   </button>
                   {method === 'stars' ? (
                     <div className="shrink-0 px-2 py-1.5 text-right text-xs font-medium sm:px-2.5 sm:py-2 sm:text-[13px]">
-                      <PackAroundUsdPrice catalogStars={pack.stars} chargedStars={chargedStars} />
+                      <PackStarsPrice catalogStars={pack.stars} chargedStars={chargedStars} />
                     </div>
                   ) : null}
                 </div>
@@ -934,7 +939,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
                 <TelegramIcon />
                 <MethodCopy
                   title="Credit / Debit Card"
-                  subtitle={method === 'stars' ? formatAroundUsd(selectedStars) : 'Apple Pay, Google Pay, cards'}
+                  subtitle={method === 'stars' ? formatCheckoutStars(selectedStars) : 'Apple Pay, Google Pay, cards'}
                 />
               </span>
               <WalletLogos />
@@ -1125,6 +1130,8 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
           decoding="async"
         />
       </div>
+
+      <FeaturedOn />
     </div>
   );
 }

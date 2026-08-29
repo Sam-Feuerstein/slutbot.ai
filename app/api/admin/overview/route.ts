@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { adminSessionOk } from '@/lib/auth/adminSession';
-import { getTotalVisits } from '@/lib/analytics';
+import { getTotalVisits, getVisitDashboardStats } from '@/lib/analytics';
 import { countPwaInstalls } from '@/lib/pwaInstall';
 
 function utcDay(date: Date) {
@@ -25,11 +25,16 @@ export async function GET(req: NextRequest) {
   }
 
   await connectDB();
-  const [users, paidPayments, pwaInstalls, totalVisits] = await Promise.all([
+  const [users, paidPayments, pwaInstalls, totalVisits, visitStats] = await Promise.all([
     SlutbotUser.find({}).select('_id clientId createdAt').lean(),
     SlutbotPayment.find({ status: 'paid' }).select('userId clientId usdAmount').lean(),
     countPwaInstalls().catch(() => 0),
     getTotalVisits().catch(() => 0),
+    getVisitDashboardStats(14).catch(() => ({
+      totalUniqueVisitors: 0,
+      dailyVisits: [],
+      visitsByCountry: [],
+    })),
   ]);
 
   const paidUserIds = new Set(
@@ -69,6 +74,8 @@ export async function GET(req: NextRequest) {
     freeUsers,
     pwaInstalls,
     totalVisits,
+    dailyVisits: visitStats.dailyVisits,
+    visitsByCountry: visitStats.visitsByCountry,
     daily: days.map((day) => dailyMap[day]),
   });
 }

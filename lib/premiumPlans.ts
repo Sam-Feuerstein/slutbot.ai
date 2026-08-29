@@ -30,7 +30,7 @@ export const BASE_STARS = LIST_STARS;
 export const BASE_USD = LIST_USD;
 export const STARS_USD_RATE = LIST_USD / LIST_STARS;
 export const MINI_STARS = 500;
-export const MINI_IMAGES = 30;
+export const MINI_IMAGES = 60;
 /** NOWPayments USDT minimum. Invoices below this fail. Coupons cannot go under it. */
 export const CRYPTO_MIN_USD = 8.5;
 /** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
@@ -119,12 +119,8 @@ export function planInvoiceCopy(plan: PremiumPlan): string {
   return `${images} IMG OR ${videos} SPICY VIDEO GENERATION / Never expires.`;
 }
 
-export function planMoreGenerationsCopy(plan: PremiumPlan): string | null {
-  const baselineImages = Math.round((plan.stars * MINI_IMAGES) / MINI_STARS);
-  if (baselineImages < 1) return null;
-  const morePercent = Math.round((plan.imageGenerations / baselineImages - 1) * 100);
-  if (morePercent < 1) return null;
-  return `GET ${morePercent}% more generations`;
+export function planMoreGenerationsCopy(_plan: PremiumPlan): string | null {
+  return null;
 }
 
 export function planBonusPercentLabel(plan: PremiumPlan): string | null {
@@ -198,8 +194,6 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     tier: 'Ecstasy',
     stars: 10000,
     badge: 'Best value',
-    imageGenerations: 1200,
-    videoGenerations: 600,
     concurrentGenerations: 20,
     features: features({
       hd: 'star',
@@ -216,8 +210,6 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     id: 'passion',
     tier: 'Passion',
     stars: 5000,
-    imageGenerations: 400,
-    videoGenerations: 200,
     concurrentGenerations: 20,
     features: features({
       hd: 'star',

@@ -29,4 +29,5 @@ export type StartGenerationInput = {
   videoModel: VideoModel;
   quality: string;
   duration?: number;
+  customPrompt?: string;
 };

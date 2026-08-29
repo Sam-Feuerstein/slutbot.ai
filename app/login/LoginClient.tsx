@@ -7,6 +7,7 @@ import { ChevronLeft } from 'lucide-react';
 import FeaturedOn from '@/app/components/FeaturedOn';
 import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
+import GuestSignupOffer from '@/app/components/GuestSignupOffer';
 import { safeNextPath } from '@/lib/site';
 
 export { storeAuthSession, clearAuthSession };
@@ -190,6 +191,7 @@ export default function LoginClient() {
               <h1 className="text-center text-2xl font-black tracking-tight text-white drop-shadow-[0_0_12px_rgba(255,45,120,0.35)]">
                 {isSignup ? 'Create your account' : 'Welcome back'}
               </h1>
+              <GuestSignupOffer asText className="mt-3" />
             </div>
 
             {error ? <p className="mt-4 text-center text-sm text-[#ffb0c8]">{error}</p> : null}

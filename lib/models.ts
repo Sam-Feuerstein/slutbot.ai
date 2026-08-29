@@ -179,6 +179,30 @@ analyticsEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 
 
 export const AnalyticsEvent = models.AnalyticsEvent || model('AnalyticsEvent', analyticsEventSchema);
 
+const analyticsDailyVisitorSchema = new Schema(
+  {
+    day: { type: String, required: true, index: true },
+    visitorKey: { type: String, required: true, index: true },
+    country: { type: String, default: 'XX', uppercase: true },
+  },
+  { timestamps: true, collection: 'analyticsdailyvisitors' },
+);
+analyticsDailyVisitorSchema.index({ day: 1, visitorKey: 1 }, { unique: true });
+
+export const AnalyticsDailyVisitor =
+  models.AnalyticsDailyVisitor || model('AnalyticsDailyVisitor', analyticsDailyVisitorSchema);
+
+const analyticsVisitorSchema = new Schema(
+  {
+    visitorKey: { type: String, required: true, unique: true, index: true },
+    country: { type: String, default: 'XX', uppercase: true },
+    firstDay: { type: String, default: '' },
+  },
+  { timestamps: true, collection: 'analyticsvisitors' },
+);
+
+export const AnalyticsVisitor = models.AnalyticsVisitor || model('AnalyticsVisitor', analyticsVisitorSchema);
+
 const starsGeoRuleSchema = new Schema(
   {
     country: { type: String, required: true, unique: true, uppercase: true, index: true },

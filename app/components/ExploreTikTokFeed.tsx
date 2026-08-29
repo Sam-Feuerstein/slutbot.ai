@@ -17,6 +17,7 @@ import {
 } from '@/lib/presetMedia';
 import { getAuthToken } from '@/lib/desires';
 import { EXPLORE_PATH, generatorPresetPath, loginHref } from '@/lib/site';
+import GuestSignupOffer from './GuestSignupOffer';
 import SampleLikeButton from './SampleLikeButton';
 
 const GUEST_FEED_LIMIT = 3;
@@ -150,6 +151,9 @@ function ExploreLoginGate() {
         <h2 className="text-center text-xl font-black tracking-tight text-white sm:text-2xl">
           Log in to view more
         </h2>
+        <div className="mt-3">
+          <GuestSignupOffer />
+        </div>
         <Link
           href={loginHref(EXPLORE_PATH)}
           className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[#ff2d78] px-6 text-sm font-black uppercase tracking-[0.1em] text-white shadow-lg shadow-[#ff2d78]/35 transition-colors hover:bg-[#ff1a6b]"

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { requireJwtSecret } from '@/lib/auth/secrets';
+import { isR2Configured, presignR2GetUrl } from '@/lib/r2';
 import { getAppUrl } from '@/lib/site';
 
 export const USER_UPLOAD_PREFIX = 'image-to-video/';
@@ -38,21 +39,25 @@ export function verifyMediaSignature(key: string, exp: number, sig: string): boo
   return timingSafeEqual(left, right);
 }
 
-/** URL WaveSpeed's servers can fetch. Never put WAVESPEED_API_KEY on this URL. */
-export function wavespeedFetchUrl(key: string): string {
+/**
+ * URL WaveSpeed can fetch without hitting aislutbot.com.
+ * Site WAF / bot rules often return 403 to their crawlers.
+ * Never put WAVESPEED_API_KEY on this URL.
+ */
+export async function wavespeedFetchUrl(key: string): Promise<string> {
   if (!isUserUploadKey(key)) {
     throw new Error('Invalid media key.');
   }
-  const app = getAppUrl();
+  if (isR2Configured()) {
+    return presignR2GetUrl(key, 20 * 60);
+  }
   const publicBase = (
     process.env.R2_UPLOAD_PUBLIC_URL ||
     process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE ||
     process.env.R2_PUBLIC_URL ||
     ''
   ).replace(/\/$/, '');
-  if (/localhost|127\.0\.0\.1/.test(app) && publicBase) {
-    return `${publicBase}/${key}`;
-  }
+  if (publicBase) return `${publicBase}/${key}`;
   return absoluteMediaUrl(key);
 }
 

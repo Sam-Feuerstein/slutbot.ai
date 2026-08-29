@@ -11,7 +11,7 @@ export default function AdminWalletPage() {
       <PageHeader
         kicker="Wallet"
         title="Generation cost"
-        description="How many Stars an image or a 5-second video burn. Pack prices live on NOWPayments and Telegram Stars."
+        description="Stars for an image, and for a 5-second video. An 8-second clip scales from this baseline."
         action={<SaveButton />}
       />
       <div className="space-y-5">
@@ -21,10 +21,10 @@ export default function AdminWalletPage() {
             {(
               [
                 ['image', 'Image'],
-                ['videoBasic', '5s basic'],
-                ['videoBetter', '5s better'],
-                ['videoBetter720', '5s better 720'],
-                ['videoBetter1080', '5s better 1080'],
+                ['videoBasic', '5s · 480p fast'],
+                ['videoBetter', '5s · 480p'],
+                ['videoBetter720', '5s · 720p'],
+                ['videoBetter1080', '5s · 1080p'],
               ] as const
             ).map(([key, label]) => (
               <Field key={key} label={label}>

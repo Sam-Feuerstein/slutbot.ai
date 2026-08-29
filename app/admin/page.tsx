@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { countryName } from '@/lib/starsGeo/countries';
 import { PageHeader, Panel, StatusChip, usePaymentEnvStatus } from './components/AdminUi';
 
 const CARDS = [
@@ -50,11 +51,109 @@ type Overview = {
   freeUsers: number;
   pwaInstalls: number;
   totalVisits: number;
+  dailyVisits: Array<{ day: string; visits: number }>;
+  visitsByCountry: Array<{ country: string; visits: number }>;
   daily: Array<{ day: string; paid: number; free: number }>;
 };
 
 function formatUsd(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}
+
+function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
+  const max = Math.max(1, ...daily.map((row) => row.visits));
+  const w = 640;
+  const h = 220;
+  const pad = { l: 36, r: 12, t: 16, b: 36 };
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const step = innerW / Math.max(daily.length - 1, 1);
+
+  const points = daily.map((row, i) => {
+    const x = pad.l + i * step;
+    const y = pad.t + innerH - (row.visits / max) * innerH;
+    return { x, y, ...row };
+  });
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1]?.x ?? pad.l} ${pad.t + innerH} L ${points[0]?.x ?? pad.l} ${pad.t + innerH} Z`;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Unique daily visits">
+        <defs>
+          <linearGradient id="visitsFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ff2d78" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#ff2d78" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+          const y = pad.t + innerH - tick * innerH;
+          const value = Math.round(max * tick);
+          return (
+            <g key={tick}>
+              <line x1={pad.l} y1={y} x2={w - pad.r} y2={y} stroke="rgba(255,255,255,0.06)" />
+              <text x={pad.l - 6} y={y + 3} textAnchor="end" fill="rgba(255,255,255,0.35)" fontSize="9">
+                {value}
+              </text>
+            </g>
+          );
+        })}
+        <path d={areaPath} fill="url(#visitsFill)" />
+        <path d={linePath} fill="none" stroke="#ff2d78" strokeWidth="2.5" strokeLinejoin="round" />
+        {points.map((p) => (
+          <g key={p.day}>
+            <circle cx={p.x} cy={p.y} r={3.5} fill="#ff2d78" />
+            <text x={p.x} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+              {p.day.slice(5)}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <p className="mt-2 text-xs text-white/45">
+        Unique visitors per UTC day — one count per browser, deduplicated by client ID.
+      </p>
+    </div>
+  );
+}
+
+function VisitsByCountryChart({ rows }: { rows: Overview['visitsByCountry'] }) {
+  const top = rows.slice(0, 12);
+  const max = Math.max(1, ...top.map((row) => row.visits));
+  const total = rows.reduce((sum, row) => sum + row.visits, 0);
+
+  if (!top.length) {
+    return <p className="text-sm text-white/40">No country data yet. Country is detected from CDN headers on each visit.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {top.map((row) => {
+        const pct = total ? Math.round((row.visits / total) * 100) : 0;
+        const width = `${Math.max(2, (row.visits / max) * 100)}%`;
+        const label = row.country === 'XX' ? 'Unknown' : countryName(row.country);
+        return (
+          <div key={row.country}>
+            <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-medium text-white/85">
+                {label}
+                <span className="ml-2 font-mono text-[11px] text-white/35">{row.country}</span>
+              </span>
+              <span className="tabular-nums text-white/55">
+                {row.visits.toLocaleString('en-US')} <span className="text-white/30">({pct}%)</span>
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#ff2d78] to-[#ff6b9d]" style={{ width }} />
+            </div>
+          </div>
+        );
+      })}
+      {rows.length > top.length ? (
+        <p className="text-xs text-white/35">+ {rows.length - top.length} more countries</p>
+      ) : null}
+    </div>
+  );
 }
 
 function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
@@ -164,9 +263,7 @@ export default function AdminOverviewPage() {
         <Panel className="!p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total visits</p>
           <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalVisits.toLocaleString('en-US') : '—'}</p>
-          <p className="mt-1 text-xs text-white/40">
-            <Link href="/admin/analytics" className="text-[#ff6b9d] hover:text-white">Open analytics →</Link>
-          </p>
+          <p className="mt-1 text-xs text-white/40">Unique visitors (all time)</p>
         </Panel>
         <Panel className="!p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">App installs</p>
@@ -174,6 +271,23 @@ export default function AdminOverviewPage() {
           <p className="mt-1 text-xs text-white/40">
             <Link href="/admin/app" className="text-[#ff6b9d] hover:text-white">Open list →</Link>
           </p>
+        </Panel>
+      </div>
+
+      <div className="mb-8 grid gap-4 lg:grid-cols-5">
+        <Panel className="lg:col-span-3">
+          <h2 className="text-lg font-black">Daily visits</h2>
+          <p className="mt-1 text-sm text-white/45">Unique visitors per day over the last 14 UTC days.</p>
+          <div className="mt-5">
+            {data ? <DailyVisitsChart daily={data.dailyVisits} /> : <p className="text-sm text-white/40">Loading…</p>}
+          </div>
+        </Panel>
+        <Panel className="lg:col-span-2">
+          <h2 className="text-lg font-black">Visits by country</h2>
+          <p className="mt-1 text-sm text-white/45">Unique visitors by first-seen country (CDN geo headers).</p>
+          <div className="mt-5">
+            {data ? <VisitsByCountryChart rows={data.visitsByCountry} /> : <p className="text-sm text-white/40">Loading…</p>}
+          </div>
         </Panel>
       </div>
 

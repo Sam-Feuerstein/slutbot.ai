@@ -28,6 +28,7 @@ import {
   remainingGenerations,
   remainingGenerationsCopy,
 } from '@/lib/desires';
+import GuestSignupOffer from './GuestSignupOffer';
 import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH, ARCHIVE_PATH } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
@@ -52,7 +53,7 @@ function SparkleIcon({ className }: { className?: string }) {
 const MENU_LINKS = [
   { href: EXPLORE_PATH, label: 'Explore' },
   { href: GENERATOR_PATH, label: 'AI porn generator' },
-  { href: ARCHIVE_PATH, label: 'My Collection' },
+  { href: ARCHIVE_PATH, label: 'My Collection', signedInOnly: true },
   { href: ACCOUNT_PATH, label: 'Account', signedInOnly: true },
 ];
 
@@ -161,14 +162,18 @@ export default function SiteHeader() {
                 Undress Anyone
               </Link>
 
-              <Link
-                href={ARCHIVE_PATH}
-                className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-white/10 px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow,background-color] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white/15 hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em] ${
-                  pathname === ARCHIVE_PATH ? 'bg-white/20' : ''
-                }`}
-              >
-                My Collection
-              </Link>
+              {signedIn ? (
+                <Link
+                  href={ARCHIVE_PATH}
+                  className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-white/10 px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow,background-color] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white/15 hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em] ${
+                    pathname === ARCHIVE_PATH ? 'bg-white/20' : ''
+                  }`}
+                >
+                  My Collection
+                </Link>
+              ) : (
+                <GuestSignupOffer compact />
+              )}
 
               {signedIn ? (
                 <button
@@ -298,13 +303,16 @@ export default function SiteHeader() {
                 </Link>
               ))}
               {!signedIn ? (
-                <Link
-                  href={loginHref(pathname)}
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
-                >
-                  Sign in
-                </Link>
+                <div className="mt-1 space-y-1">
+                  <GuestSignupOffer />
+                  <Link
+                    href={loginHref(pathname)}
+                    onClick={() => setMenuOpen(false)}
+                    className="block rounded-lg px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
+                  >
+                    Sign in
+                  </Link>
+                </div>
               ) : (
                 <button
                   type="button"

@@ -19,8 +19,14 @@ import {
   getPaidDesires,
   openCheckoutInsufficient,
   refreshDesiresFromServer,
-  VIDEO_DURATION_SECONDS,
 } from '@/lib/desires';
+import {
+  resolveVideoEngine,
+  VIDEO_DURATION_DEFAULT,
+  VIDEO_QUALITY_FIXED,
+} from '@/lib/generation/videoOptions';
+import GuestSignupOffer from '../components/GuestSignupOffer';
+import VideoGenerationOptions, { videoGenerationCost } from './VideoGenerationOptions';
 import { uiMediaUrl } from '@/lib/presetMedia';
 import { loginHref } from '@/lib/site';
 import type { ExampleVideo } from '@/lib/exampleVideos';
@@ -30,9 +36,6 @@ type Mode = 'image' | 'video';
 const DEMO_VIDEO = uiMediaUrl('tool/undress-demo.mp4') || '/mock/tool/undress-demo.mp4';
 const DEMO_POSTER = '/brand/tool-poster.webp';
 const HOME_UPLOAD_KEY = 'slutbot-home-upload';
-const VIDEO_MODEL = 'current' as const;
-const VIDEO_QUALITY = '480p' as const;
-const VIDEO_COST = DESIRE_COSTS.videoBetter;
 
 async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
   const res = await fetch(dataUrl);
@@ -131,14 +134,15 @@ export default function ImageToVideoClient({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mode, setMode] = useState<Mode>(initialMode === 'image' || initialMode === 'video' ? initialMode : 'video');
-  const duration = VIDEO_DURATION_SECONDS;
+  const [videoDuration, setVideoDuration] = useState(VIDEO_DURATION_DEFAULT);
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [error, setError] = useState('');
   const [resultUrl, setResultUrl] = useState('');
   const [resultKind, setResultKind] = useState<'image' | 'video' | null>(null);
   const [resultId, setResultId] = useState<string | null>(null);
   const [resultLocked, setResultLocked] = useState(false);
   const [toolStep, setToolStep] = useState<'landing' | 'ready'>('landing');
-  const [certified, setCertified] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [balance, setBalance] = useState(0);
 
@@ -161,7 +165,6 @@ export default function ImageToVideoClient({
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
     setToolStep('ready');
-    setCertified(false);
   };
 
   const onFileChange = (file: File | null) => {
@@ -216,18 +219,20 @@ export default function ImageToVideoClient({
     }
   }, []);
 
+  const videoEngine = resolveVideoEngine(videoDuration, VIDEO_QUALITY_FIXED);
+  const videoCost = videoGenerationCost(VIDEO_QUALITY_FIXED, videoDuration);
+
   const onGenerate = () => {
     if (!selectedFile || !previewUrl) {
       inputRef.current?.click();
       return;
     }
-    if (!certified) {
-      setError('Tick the certification box to generate.');
-      return;
-    }
     if (Date.now() - lastStartRef.current < 1000) return;
 
-    const desireCost = getGenerationDesireCost(mode, VIDEO_MODEL, VIDEO_QUALITY);
+    const desireCost =
+      mode === 'video'
+        ? videoCost
+        : getGenerationDesireCost('image', 'current', '480p');
     if (!getAuthToken()) {
       router.push(loginHref(pathname || '/ai-porn-generator'));
       return;
@@ -245,9 +250,10 @@ export default function ImageToVideoClient({
       file: selectedFile,
       previewUrl,
       mode,
-      videoModel: VIDEO_MODEL,
-      quality: VIDEO_QUALITY,
-      duration,
+      videoModel: videoEngine.videoModel,
+      quality: VIDEO_QUALITY_FIXED,
+      duration: videoDuration,
+      customPrompt: customPrompt.trim() || undefined,
     });
   };
 
@@ -293,7 +299,7 @@ export default function ImageToVideoClient({
             className={`mt-2 w-full ${
               resultKind && (resultUrl || resultLocked)
                 ? 'grid max-w-5xl items-start gap-6 lg:grid-cols-2'
-                : 'flex max-w-[420px] flex-col items-stretch'
+                : 'flex max-w-[480px] flex-col items-stretch'
             }`}
           >
             <div className="w-full">
@@ -361,30 +367,15 @@ export default function ImageToVideoClient({
                 </button>
               </div>
 
+              {!signedIn ? <div className="mt-4"><GuestSignupOffer /></div> : null}
+
               {mode === 'video' || (toolStep === 'ready' && selectedFile) ? (
                 <div className="mt-4 w-full space-y-4">
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={certified}
-                      onChange={(e) => {
-                        setCertified(e.target.checked);
-                        if (e.target.checked) setError('');
-                      }}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/30 bg-black accent-[#ff2d78]"
-                    />
-                    <span className="text-[12px] leading-snug text-white/70">
-                      <span className="font-bold text-white">I hereby certify</span> I have the rights to use
-                      and modify this photo. I am the subject or have the subject&apos;s explicit consent. I
-                      understand the image is for my private viewing only and won&apos;t be published.
-                    </span>
-                  </label>
-
                   {mode === 'image' ? (
                     <div>
                       <button
                         type="button"
-                        disabled={!selectedFile || !certified}
+                        disabled={!selectedFile}
                         onClick={onGenerate}
                         className="flex min-h-12 w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-[#ff2d78] py-3 text-sm font-extrabold text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
                       >
@@ -407,24 +398,32 @@ export default function ImageToVideoClient({
                       </button>
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-4">
+                      <VideoGenerationOptions
+                        open={advancedOpen}
+                        duration={videoDuration}
+                        customPrompt={customPrompt}
+                        onOpenChange={setAdvancedOpen}
+                        onDurationChange={setVideoDuration}
+                        onCustomPromptChange={setCustomPrompt}
+                      />
                       <button
                         type="button"
-                        disabled={!selectedFile || !certified}
+                        disabled={!selectedFile}
                         onClick={onGenerate}
                         className="flex min-h-12 w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-[#ff2d78] py-3 text-sm font-extrabold tracking-wide text-white shadow-[0_0_20px_rgba(255,45,120,0.35)] hover:bg-[#ff1a6b] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <span>
                           {activeCount > 0
-                            ? `Generate another · ${VIDEO_COST} ${CURRENCY_NAME}`
-                            : `Generate video · ${VIDEO_COST} ${CURRENCY_NAME}${
-                                signedIn && balance < VIDEO_COST ? ' · buy credits' : ''
+                            ? `Generate another · ${videoCost} ${CURRENCY_NAME}`
+                            : `Generate ${videoDuration}s video · ${videoCost} ${CURRENCY_NAME}${
+                                signedIn && balance < videoCost ? ' · buy credits' : ''
                               }`}
                         </span>
                         {signedIn ? (
                           <span
                             className={`text-[11px] font-semibold normal-case tracking-normal ${
-                              balance >= VIDEO_COST ? 'text-white/80' : 'text-amber-200'
+                              balance >= videoCost ? 'text-white/80' : 'text-amber-200'
                             }`}
                           >
                             Your balance: {formatDesireBalance(balance)} {CURRENCY_NAME}
@@ -468,7 +467,7 @@ export default function ImageToVideoClient({
                   <button
                     type="button"
                     onClick={() => onGenerate()}
-                    disabled={!selectedFile || !certified}
+                    disabled={!selectedFile}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#ff2d78] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#ff1a6b] disabled:opacity-40"
                   >
                     <RefreshCw className="h-4 w-4" />

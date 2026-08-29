@@ -276,7 +276,7 @@ export default function GenerationJobsProvider({ children }: { children: ReactNo
             ? await submitWavespeedImageEdit(upload.key)
             : await submitWavespeedImageToVideo(
                 upload.key,
-                undefined,
+                input.customPrompt,
                 input.quality,
                 input.duration ?? VIDEO_DURATION_SECONDS,
                 'tuned',
