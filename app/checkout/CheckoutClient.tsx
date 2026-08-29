@@ -734,7 +734,7 @@ export default function CheckoutClient({ plan, initialMethod }: Props) {
       const opened = openPaymentUrl(data.url);
       if (opened === 'blocked') {
         setPaymentUrl(data.url);
-        setToast('Popup blocked. Tap “Open payment page” below to continue.');
+        setToast(null);
         capturePosthogEvent('checkout_error', {
           stage: 'popup_blocked',
           plan: selected.id,

@@ -10,6 +10,7 @@ import { getAppUrl } from '@/lib/site';
 
 const API_KEY = process.env.NOWPAYMENTS_API_KEY || '';
 const NP_BASE = 'https://api.nowpayments.io/v1';
+const PAY_CURRENCY = 'usdttrc20';
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         price_amount: usdPrice,
         price_currency: 'usd',
-        pay_currency: 'usdttrc20',
+        pay_currency: PAY_CURRENCY,
         order_id: orderId,
         order_description: coupon
           ? `${plan.description} · ${couponRewardLabel(coupon)} (${coupon.code})`
@@ -80,16 +81,22 @@ export async function POST(req: NextRequest) {
     }
 
     if (data.id != null) {
-      await fetch(`${NP_BASE}/invoice-payment`, {
+      const locked = await fetch(`${NP_BASE}/invoice-payment`, {
         method: 'POST',
         headers: {
           'x-api-key': API_KEY,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ iid: data.id, pay_currency: 'usdttrc20' }),
-      }).catch((err) => {
-        console.error('NowPayments invoice-payment lock error:', err);
+        body: JSON.stringify({ iid: data.id, pay_currency: PAY_CURRENCY }),
       });
+      const lockData = (await locked.json().catch(() => null)) as { message?: string; pay_address?: string } | null;
+      if (!locked.ok || !lockData?.pay_address) {
+        console.error('NowPayments invoice-payment error:', lockData);
+        return NextResponse.json(
+          { message: lockData?.message || 'Failed to create USDT payment.' },
+          { status: 500 },
+        );
+      }
     }
 
     await connectDB();

@@ -231,14 +231,14 @@ export default function TermsPage() {
             </p>
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Starter: 500 Stars for USD $8.00 crypto, or 500 Telegram Stars (about USD $8 to $13), for 60 image generations or 30 spicy videos.</li>
+              <li>Starter: 500 Stars for USD $16.00 crypto, or 500 Telegram Stars (about USD $8 to $13), for 60 image generations or 30 spicy videos.</li>
               <li>Flirt: 1,000 Stars for USD $25.00 crypto, or 1,000 Telegram Stars (about USD $16 to $25), for 120 image generations or 60 spicy videos.</li>
               <li>Desire: 2,500 Stars for USD $63.00 crypto, or 2,500 Telegram Stars (about USD $63), for 300 image generations or 150 spicy videos.</li>
               <li>Passion: 5,000 Telegram Stars or USD $125.00 crypto, for 600 image generations or 300 spicy videos (about USD $80 to $125), including up to 20 concurrent jobs.</li>
               <li>Ecstasy: 10,000 Telegram Stars or USD $250.00 crypto, for 1,200 image generations or 600 spicy videos (about USD $160 to $250), including up to 20 concurrent jobs.</li>
             </ul>
             <p>
-              Crypto (USDT) checkout charges the pack USD price, with a USD $8.50 minimum. Telegram Stars checkout charges the matching
+              Crypto (USDT) checkout charges the pack USD price, with a USD $12.00 minimum. Telegram Stars checkout charges the matching
               Telegram Stars amount. In both cases the pack credits Stars to your wallet so you can use the generations shown at
               checkout. Promotional coupons may reduce the amount you pay. They do not reduce the Stars credited for that pack.
             </p>

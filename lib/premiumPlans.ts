@@ -31,8 +31,8 @@ export const BASE_USD = LIST_USD;
 export const STARS_USD_RATE = LIST_USD / LIST_STARS;
 export const MINI_STARS = 500;
 export const MINI_IMAGES = 60;
-/** NOWPayments USDT minimum. Invoices below this fail. Coupons cannot go under it. */
-export const CRYPTO_MIN_USD = 8.5;
+/** NOWPayments USDT TRC20 will not create a payment below this. Coupons cannot go under it. Stars Mini is unchanged. */
+export const CRYPTO_MIN_USD = 12;
 /** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
 export const CRYPTO_DISCOUNT_PERCENT = 40;
 
@@ -257,7 +257,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     tier: 'Mini',
     subtitle: 'Starter',
     stars: MINI_STARS,
-    price: 8,
+    price: 16,
     features: features({
       proExports: 'check',
       ultraHd: 'check',
