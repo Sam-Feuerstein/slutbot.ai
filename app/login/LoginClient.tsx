@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FeaturedOn from '@/app/components/FeaturedOn';
 import BrandLogo from '@/app/components/BrandLogo';
+import TelegramLoginButton from '@/app/components/TelegramLoginButton';
 import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import { safeNextPath } from '@/lib/site';
@@ -15,16 +16,6 @@ export { storeAuthSession, clearAuthSession };
 const LOGIN_BG_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
 const LOGIN_BG_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
 
-function TelegramMark() {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
-      <path
-        fill="currentColor"
-        d="M21.5 3.4 18.2 20c-.25 1.1-.9 1.37-1.82.85l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.15L17.9 6.4c.4-.35-.09-.54-.62-.2L6.7 13.18 1.72 11.6c-1.08-.34-1.1-1.08.24-1.6L20.12 2.7c.9-.34 1.68.2 1.38.7z"
-      />
-    </svg>
-  );
-}
 
 function GoogleMark() {
   return (
@@ -82,10 +73,6 @@ export default function LoginClient() {
 
   const googleHref = useMemo(
     () => `/api/auth/google?redirect=${encodeURIComponent(redirect)}`,
-    [redirect],
-  );
-  const telegramHref = useMemo(
-    () => `/api/auth/telegram?redirect=${encodeURIComponent(redirect)}`,
     [redirect],
   );
 
@@ -228,13 +215,10 @@ export default function LoginClient() {
               {isSignup ? 'Create account with Google' : 'Continue with Google'}
             </Link>
 
-            <Link
-              href={telegramHref}
-              className="mt-3 flex w-full items-center justify-center gap-2.5 rounded-full bg-[#229ED9] py-3.5 text-sm font-bold text-white transition hover:bg-[#1b8ec4]"
-            >
-              <TelegramMark />
-              {isSignup ? 'Create account with Telegram' : 'Continue with Telegram'}
-            </Link>
+            <TelegramLoginButton
+              redirect={redirect}
+              label={isSignup ? 'Create account with Telegram' : 'Continue with Telegram'}
+            />
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-white/35">
               By continuing, you agree to our{' '}

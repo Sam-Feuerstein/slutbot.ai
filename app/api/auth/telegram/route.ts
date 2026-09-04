@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   try {
     await assertTelegramLoginBotAllowed();
-    const url = buildTelegramAuthUrl(origin);
+    const url = buildTelegramAuthUrl();
     const response = NextResponse.redirect(url);
     response.cookies.set(TELEGRAM_OAUTH_STATE_COOKIE, signTelegramOAuthState(redirect), {
       httpOnly: true,

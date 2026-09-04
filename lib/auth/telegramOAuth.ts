@@ -8,9 +8,15 @@ import { envValue } from '@/lib/env';
 import { trialGrantFields } from '@/lib/trial/grant';
 import { telegramPlaceholderEmail } from '@/lib/auth/signInMethod';
 import { isBlockedErogramBot } from '@/lib/payments/telegram';
+import { SITE_URL } from '@/lib/site';
+import {
+  normalizeTelegramLoginParams,
+  parseTelegramAuthResult,
+} from '@/lib/auth/telegramLoginParse';
 
-const AUTH_MAX_AGE_SEC = 60 * 60;
-const TELEGRAM_AUTH_FIELDS = ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date'] as const;
+export { normalizeTelegramLoginParams, parseTelegramAuthResult };
+
+const AUTH_MAX_AGE_SEC = 60 * 60 * 24;
 
 export type TelegramLoginProfile = {
   id: string;
@@ -29,11 +35,15 @@ export function telegramBotIdFromToken(token = telegramLoginBotToken()) {
   return /^\d{5,20}$/.test(id) ? id : '';
 }
 
+export function telegramOAuthOrigin() {
+  return SITE_URL.replace(/\/$/, '');
+}
+
 export function isTelegramLoginConfigured() {
   return Boolean(telegramLoginBotToken() && telegramBotIdFromToken());
 }
 
-export function buildTelegramAuthUrl(origin: string) {
+export function buildTelegramAuthUrl(origin = telegramOAuthOrigin()) {
   const botId = telegramBotIdFromToken();
   if (!botId) {
     throw new Error('Telegram sign-in is not configured.');
@@ -82,36 +92,35 @@ export function verifyTelegramLoginAuth(
   botToken = telegramLoginBotToken(),
 ): TelegramLoginProfile | null {
   if (!botToken) return null;
-  const hash = String(params.hash || '').toLowerCase();
-  if (!/^[0-9a-f]{64}$/.test(hash)) return null;
 
-  const id = String(params.id || '').trim();
-  if (!/^\d{5,20}$/.test(id)) return null;
+  const normalized = normalizeTelegramLoginParams(
+    Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value != null && String(value).length > 0),
+    ) as Record<string, unknown>,
+  );
+  if (!normalized) return null;
 
-  const authDate = Number(params.auth_date);
+  const authDate = Number(normalized.auth_date);
   if (!Number.isFinite(authDate) || authDate <= 0) return null;
   if (Math.abs(Date.now() / 1000 - authDate) > AUTH_MAX_AGE_SEC) return null;
 
-  const checkParts = TELEGRAM_AUTH_FIELDS.filter((key) => {
-    const value = params[key];
-    return typeof value === 'string' && value.length > 0;
-  })
-    .slice()
+  const checkParts = Object.keys(normalized)
+    .filter((key) => key !== 'hash')
     .sort()
-    .map((key) => `${key}=${params[key]}`);
+    .map((key) => `${key}=${normalized[key]}`);
 
   const secret = createHash('sha256').update(botToken).digest();
   const computed = createHmac('sha256', secret).update(checkParts.join('\n')).digest('hex');
-  if (!timingSafeHexEqual(computed, hash)) return null;
+  if (!timingSafeHexEqual(computed, normalized.hash)) return null;
 
   return {
-    id,
-    firstName: String(params.first_name || '').trim(),
-    lastName: String(params.last_name || '').trim(),
-    username: String(params.username || '')
+    id: normalized.id,
+    firstName: String(normalized.first_name || '').trim(),
+    lastName: String(normalized.last_name || '').trim(),
+    username: String(normalized.username || '')
       .trim()
       .replace(/^@/, ''),
-    photoUrl: String(params.photo_url || '').trim(),
+    photoUrl: String(normalized.photo_url || '').trim(),
   };
 }
 
