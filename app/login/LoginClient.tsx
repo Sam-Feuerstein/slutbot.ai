@@ -7,7 +7,6 @@ import { ChevronLeft } from 'lucide-react';
 import FeaturedOn from '@/app/components/FeaturedOn';
 import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
-import GuestSignupOffer from '@/app/components/GuestSignupOffer';
 import { safeNextPath } from '@/lib/site';
 
 export { storeAuthSession, clearAuthSession };
@@ -172,7 +171,7 @@ export default function LoginClient() {
                 }`}
                 aria-current={isSignup ? 'page' : undefined}
               >
-                Create free account
+                Create account
               </Link>
               <Link
                 href={loginModeHref('signin', redirect)}
@@ -191,7 +190,6 @@ export default function LoginClient() {
               <h1 className="text-center text-2xl font-black tracking-tight text-white drop-shadow-[0_0_12px_rgba(255,45,120,0.35)]">
                 {isSignup ? 'Create your account' : 'Welcome back'}
               </h1>
-              <GuestSignupOffer asText className="mt-3" />
             </div>
 
             {error ? <p className="mt-4 text-center text-sm text-[#ffb0c8]">{error}</p> : null}
@@ -201,7 +199,7 @@ export default function LoginClient() {
               className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full border border-[#dadce0] bg-white py-3.5 text-sm font-bold text-[#3c4043] shadow-[0_1px_3px_rgba(60,64,67,0.15)] transition hover:bg-[#f8f9fa] hover:shadow-[0_2px_6px_rgba(60,64,67,0.2)]"
             >
               <GoogleMark />
-              {isSignup ? 'Create free account with Google' : 'Continue with Google'}
+              {isSignup ? 'Create account with Google' : 'Continue with Google'}
             </Link>
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-white/35">

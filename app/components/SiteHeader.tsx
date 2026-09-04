@@ -304,7 +304,6 @@ export default function SiteHeader() {
               ))}
               {!signedIn ? (
                 <div className="mt-1 space-y-1">
-                  <GuestSignupOffer />
                   <Link
                     href={loginHref(pathname)}
                     onClick={() => setMenuOpen(false)}

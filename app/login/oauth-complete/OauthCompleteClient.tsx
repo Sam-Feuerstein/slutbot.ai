@@ -44,9 +44,7 @@ export default function OauthCompleteClient() {
         });
         localStorage.setItem('slutbot-desires', String(data.desires ?? 0));
         localStorage.setItem('slutbot-desires-server', String(data.desires ?? 0));
-        if (typeof data.trialCredits === 'number') {
-          localStorage.setItem('slutbot-trial-credits', String(Math.max(0, data.trialCredits)));
-        }
+        localStorage.setItem('slutbot-trial-credits', '0');
         window.dispatchEvent(new CustomEvent('slutbot:desires-updated'));
         router.replace(redirect);
       } catch {

@@ -2,7 +2,6 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotUser } from '@/lib/models';
 import { ADMIN_INFINITE_DESIRES, isAdminAppUserEmail } from '@/lib/auth/adminUser';
 import { getGenerationDesireCost, type VideoQuality } from '@/lib/generation/costs';
-import { isTrialEligibleCountry } from '@/lib/geo/tier1';
 import type { VideoModel } from '@/lib/imageToVideo/types';
 import type { CreditSource } from '@/lib/users/wallet';
 
@@ -15,14 +14,6 @@ export type GenerationChargePlan = {
   spendable: number;
   error?: 'not_enough';
 };
-
-function canSpendTrial(signupCountry: string, currentCountry: string, trialCredits: number): boolean {
-  return (
-    trialCredits > 0 &&
-    isTrialEligibleCountry(signupCountry) &&
-    isTrialEligibleCountry(currentCountry)
-  );
-}
 
 export async function planGenerationCharge(input: {
   userId: string;
@@ -50,11 +41,9 @@ export async function planGenerationCharge(input: {
 
   await connectDB();
   const user = (await SlutbotUser.findById(input.userId)
-    .select('desires trialCredits signupCountry banned')
+    .select('desires banned')
     .lean()) as {
     desires?: number;
-    trialCredits?: number;
-    signupCountry?: string;
     banned?: boolean;
   } | null;
 
@@ -70,28 +59,14 @@ export async function planGenerationCharge(input: {
     };
   }
 
-  const paid = Math.max(0, Math.round(user.desires ?? 0));
-  const trial = Math.max(0, Math.round(user.trialCredits ?? 0));
-  const spendable = paid + trial;
-  const trialOk = canSpendTrial(user.signupCountry || '', input.currentCountry, trial);
+  const spendable = Math.max(0, Math.round(user.desires ?? 0));
 
-  if (paid >= requestedCost) {
+  if (spendable >= requestedCost) {
     return {
       cost: requestedCost,
       quality,
       videoModel,
       paidWith: 'paid',
-      lockVideo: false,
-      spendable,
-    };
-  }
-
-  if (trialOk && trial >= requestedCost) {
-    return {
-      cost: requestedCost,
-      quality,
-      videoModel,
-      paidWith: 'trial',
       lockVideo: false,
       spendable,
     };

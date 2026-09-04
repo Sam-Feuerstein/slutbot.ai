@@ -1,12 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isTrialEligibleCountry, resolveRequestCountry } from '@/lib/geo/tier1';
-import { TRIAL_CREDITS } from '@/lib/trial/config';
+import { NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
-  const country = resolveRequestCountry(req.headers);
-  const stars = isTrialEligibleCountry(country) ? TRIAL_CREDITS : 0;
+export async function GET() {
   return NextResponse.json(
-    { stars },
+    { stars: 0 },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );
 }

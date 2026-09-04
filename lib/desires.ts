@@ -172,10 +172,7 @@ export async function refreshDesiresFromServer(_clientIdOverride?: string) {
       trialCredits?: number;
       clientId?: string;
     };
-    const trial = Number(data.trialCredits);
-    if (Number.isFinite(trial) && trial >= 0) {
-      setTrialCredits(trial);
-    }
+    setTrialCredits(0);
     const server = Number(data.desires);
     if (Number.isFinite(server) && server >= 0) {
       setDesires(server);

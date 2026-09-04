@@ -12,7 +12,7 @@ type BalanceUser = {
 
 export function spendableFromUser(user: BalanceUser): number {
   if (isAdminAppUserEmail(user.email)) return ADMIN_INFINITE_DESIRES;
-  return Math.max(0, Math.round(user.desires ?? 0)) + Math.max(0, Math.round(user.trialCredits ?? 0));
+  return Math.max(0, Math.round(user.desires ?? 0));
 }
 
 export function publicBalanceFields(user: BalanceUser) {
@@ -25,11 +25,10 @@ export function publicBalanceFields(user: BalanceUser) {
     };
   }
   const paidDesires = Math.max(0, Math.round(user.desires ?? 0));
-  const trialCredits = Math.max(0, Math.round(user.trialCredits ?? 0));
   return {
-    desires: paidDesires + trialCredits,
+    desires: paidDesires,
     paidDesires,
-    trialCredits,
+    trialCredits: 0,
   };
 }
 

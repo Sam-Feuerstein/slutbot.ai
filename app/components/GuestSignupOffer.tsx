@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signupOfferCopy, useGuestSignupStars } from '@/lib/signupOffer';
+import { signupOfferCopy } from '@/lib/signupOffer';
 import { loginHref } from '@/lib/site';
 
 const YELLOW_BTN =
@@ -18,10 +18,7 @@ export default function GuestSignupOffer({
   asText?: boolean;
 }) {
   const pathname = usePathname();
-  const stars = useGuestSignupStars();
-  if (!stars) return null;
-
-  const copy = signupOfferCopy(stars);
+  const copy = compact ? 'Sign in' : signupOfferCopy();
   const styles = [
     YELLOW_BTN,
     compact

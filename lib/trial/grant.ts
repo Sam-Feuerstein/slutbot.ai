@@ -1,9 +1,5 @@
 import { createHmac } from 'crypto';
-import connectDB from '@/lib/db/mongodb';
-import { SlutbotUser } from '@/lib/models';
-import { isTrialEligibleCountry } from '@/lib/geo/tier1';
 import { requireJwtSecret } from '@/lib/auth/secrets';
-import { TRIAL_CREDITS } from '@/lib/trial/config';
 
 export type TrialGrantFields = {
   signupCountry: string;
@@ -39,30 +35,9 @@ function emptyGrant(signupCountry: string, signupIpHash = ''): TrialGrantFields 
   };
 }
 
-/** One trial per public IP. Extra accounts from the same IP can sign up, but get no free credits. */
+/** New accounts never receive trial Stars. Generation requires a paid balance. */
 export async function trialGrantFields(country: string, ip = ''): Promise<TrialGrantFields> {
   const signupCountry = (country || '').trim().toUpperCase();
   const signupIpHash = hashSignupIp(ip);
-
-  if (!isTrialEligibleCountry(signupCountry)) {
-    return emptyGrant(signupCountry, signupIpHash);
-  }
-
-  if (!signupIpHash) {
-    return emptyGrant(signupCountry);
-  }
-
-  await connectDB();
-  const alreadyGranted = await SlutbotUser.exists({ signupIpHash, trialGranted: true });
-  if (alreadyGranted) {
-    return emptyGrant(signupCountry, signupIpHash);
-  }
-
-  return {
-    signupCountry,
-    trialCredits: TRIAL_CREDITS,
-    trialGranted: true,
-    trialGrantedAt: new Date(),
-    signupIpHash,
-  };
+  return emptyGrant(signupCountry, signupIpHash);
 }

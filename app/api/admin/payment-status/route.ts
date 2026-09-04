@@ -10,7 +10,5 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     nowpayments: Boolean(process.env.NOWPAYMENTS_API_KEY),
     telegram: telegramPaymentBotConfigured(),
-    webhookForward: Boolean(process.env.EROGRAM_PAYMENTS_WEBHOOK_URL),
-    source: 'erogram-env',
   });
 }

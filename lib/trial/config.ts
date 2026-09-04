@@ -1,7 +1,5 @@
-import { DESIRE_COSTS } from '@/lib/generation/costs';
-
-/** Enough for 2 images or 1 standard 480p video. */
-export const TRIAL_CREDITS = DESIRE_COSTS.videoBasic;
+/** Trial Stars are disabled. New users must buy credits to generate. */
+export const TRIAL_CREDITS = 0;
 
 /**
  * ffmpeg gblur sigma for locked trial videos. Higher = more blur.

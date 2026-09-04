@@ -1,9 +1,25 @@
-const BOT_TOKEN = process.env.TELEGRAM_PAYMENT_BOT_TOKEN || '';
-const EROGRAM_WEBHOOK = (process.env.EROGRAM_PAYMENTS_WEBHOOK_URL || 'https://erogram.pro/api/payments/webhook').replace(
-  /\/$/,
-  '',
-);
-const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+import { envValue } from '@/lib/env';
+import { getAppUrl } from '@/lib/site';
+
+/** Never point this app's webhook at these bots — they belong to Erogram. */
+const BLOCKED_BOT_USERNAMES = new Set(['erogramvipbot']);
+
+function botToken() {
+  return envValue('TELEGRAM_PAYMENT_BOT_TOKEN');
+}
+
+function webhookSecret() {
+  return envValue('TELEGRAM_WEBHOOK_SECRET');
+}
+
+export function slutbotStarsWebhookUrl() {
+  return `${getAppUrl()}/api/payments/webhook`;
+}
+
+export function isBlockedErogramBot(username?: string | null) {
+  const name = (username || '').trim().replace(/^@/, '').toLowerCase();
+  return Boolean(name) && BLOCKED_BOT_USERNAMES.has(name);
+}
 
 type InvoicePayload = {
   source: 'slutbot';
@@ -30,8 +46,9 @@ export function parseSlutbotPayload(raw: string): InvoicePayload | null {
 }
 
 export async function answerPreCheckoutQuery(id: string, ok: boolean, errorMessage?: string) {
-  if (!BOT_TOKEN) return;
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
+  const token = botToken();
+  if (!token) return;
+  await fetch(`https://api.telegram.org/bot${token}/answerPreCheckoutQuery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -49,11 +66,21 @@ export async function createStarsInvoiceLink(input: {
   planId: string;
   starsAmount: number;
 }): Promise<{ url?: string; error?: string; telegram?: unknown }> {
-  if (!BOT_TOKEN) {
+  if (!botToken()) {
     return { error: 'Payments are not configured. Contact admin.' };
   }
 
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
+  const identity = await getTelegramBotIdentity();
+  if ('error' in identity) {
+    return { error: identity.error };
+  }
+  if (isBlockedErogramBot(identity.username)) {
+    return {
+      error: 'Stars checkout needs a dedicated AI SLUTBOT bot. The Erogram bot token is blocked.',
+    };
+  }
+
+  const res = await fetch(`https://api.telegram.org/bot${botToken()}/createInvoiceLink`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -79,8 +106,9 @@ export async function createStarsInvoiceLink(input: {
 
 /** Keep Erogram VIP working if this app ever receives the shared bot webhook. */
 export async function forwardNonSlutbotUpdateToErogram(update: unknown, secret: string | null) {
-  if (!EROGRAM_WEBHOOK) return;
-  await fetch(EROGRAM_WEBHOOK, {
+  const target = (envValue('EROGRAM_PAYMENTS_WEBHOOK_URL') || '').replace(/\/$/, '');
+  if (!target) return;
+  await fetch(target, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -92,9 +120,85 @@ export async function forwardNonSlutbotUpdateToErogram(update: unknown, secret: 
 }
 
 export function telegramWebhookSecret(): string {
-  return WEBHOOK_SECRET;
+  return webhookSecret();
 }
 
 export function telegramPaymentBotConfigured(): boolean {
-  return Boolean(BOT_TOKEN);
+  return Boolean(botToken());
+}
+
+type TelegramApiResult<T> = { ok: boolean; result?: T; description?: string };
+
+async function telegramApi<T>(method: string, body?: Record<string, unknown>): Promise<TelegramApiResult<T>> {
+  const token = botToken();
+  if (!token) return { ok: false, description: 'TELEGRAM_PAYMENT_BOT_TOKEN is missing.' };
+  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return (await res.json()) as TelegramApiResult<T>;
+}
+
+export async function getTelegramBotIdentity(): Promise<{ username: string; id: number } | { error: string }> {
+  const data = await telegramApi<{ username?: string; id?: number }>('getMe');
+  if (!data.ok || !data.result?.username || !data.result.id) {
+    return { error: data.description || 'Could not read bot identity.' };
+  }
+  return { username: data.result.username, id: data.result.id };
+}
+
+export async function getTelegramWebhookInfo(): Promise<{
+  url: string;
+  pendingUpdateCount: number;
+  lastErrorMessage: string;
+} | { error: string }> {
+  const data = await telegramApi<{
+    url?: string;
+    pending_update_count?: number;
+    last_error_message?: string;
+  }>('getWebhookInfo');
+  if (!data.ok || !data.result) {
+    return { error: data.description || 'Could not read webhook.' };
+  }
+  return {
+    url: data.result.url || '',
+    pendingUpdateCount: data.result.pending_update_count || 0,
+    lastErrorMessage: data.result.last_error_message || '',
+  };
+}
+
+export async function setSlutbotTelegramWebhook(): Promise<
+  | { ok: true; username: string; url: string }
+  | { ok: false; error: string }
+> {
+  const identity = await getTelegramBotIdentity();
+  if ('error' in identity) return { ok: false, error: identity.error };
+  if (isBlockedErogramBot(identity.username)) {
+    return {
+      ok: false,
+      error: `@${identity.username} is the Erogram bot. Put a NEW AI SLUTBOT bot token in TELEGRAM_PAYMENT_BOT_TOKEN. Erogramx is not touched.`,
+    };
+  }
+
+  const secret = webhookSecret();
+  if (!secret) return { ok: false, error: 'TELEGRAM_WEBHOOK_SECRET is missing.' };
+  if (!/^[A-Za-z0-9_-]{1,256}$/.test(secret)) {
+    return {
+      ok: false,
+      error: 'TELEGRAM_WEBHOOK_SECRET must be 1–256 letters, numbers, _ or - (Telegram rule).',
+    };
+  }
+
+  const url = slutbotStarsWebhookUrl();
+  const data = await telegramApi<true>('setWebhook', {
+    url,
+    secret_token: secret,
+    allowed_updates: ['message', 'pre_checkout_query'],
+    drop_pending_updates: false,
+  });
+  if (!data.ok) {
+    return { ok: false, error: data.description || 'setWebhook failed.' };
+  }
+  return { ok: true, username: identity.username, url };
 }

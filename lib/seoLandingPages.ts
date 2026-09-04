@@ -19,7 +19,7 @@ const BENEFITS = [
   { title: 'Simple workflow', body: 'Upload, pick your settings, and let AI SLUTBOT handle the rest.' },
   { title: 'Private by design', body: 'Your uploads stay on your terms. We keep the flow discreet.' },
   { title: 'High quality', body: 'Modern neural models deliver sharp, realistic AI outputs.' },
-  { title: 'Start free', body: 'Try the generator with Stars — no complicated signup traps.' },
+  { title: 'Pay with Stars', body: 'Buy Stars, then generate — costs are shown before each run.' },
 ];
 
 export const SEO_LANDING_BENEFITS = BENEFITS;
@@ -85,9 +85,9 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
           'Undress AI is an adult AI generation tool on AI SLUTBOT. You upload a photo, choose settings, and our models produce a new AI-generated image or video based on your inputs.',
       },
       {
-        question: 'Is Undress AI free to try?',
+        question: 'How much does Undress AI cost?',
         answer:
-          'You can start with Stars on AI SLUTBOT. Pack pricing and generation costs are shown before you confirm each run.',
+          'You generate with paid Stars on AI SLUTBOT. Pack pricing and generation costs are shown before you confirm each run.',
       },
       {
         question: 'Who can use Undress AI?',
@@ -206,10 +206,10 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
     [
       'For fun experiments or serious creative sessions.',
       'Intuitive controls — no Photoshop degree required.',
-      'Free-to-try entry via Stars on the Platform.',
+      'Transparent Star pricing on the Platform.',
       'Extend stills into short AI videos when you want motion.',
     ],
-    'Create with Nude AI for free',
+    'Create with Nude AI',
     'Upload your photo and let AI SLUTBOT handle the rest. Fast, secure, and anonymous.',
     'Nude AI provides basic nude image generation, but AI SLUTBOT elevates the experience with its advanced AI nude generator tools and superior image quality. We empower users to create high-quality, realistic nude images, offering intricate customization and a seamless user experience that consistently delivers better results and artistic freedom.',
     [
@@ -219,8 +219,8 @@ export const SEO_LANDING_PAGES: SeoLandingPage[] = [
           'Nude AI uses machine learning to generate new adult imagery from your upload and prompts. AI SLUTBOT hosts the models and returns downloadable results.',
       },
       {
-        question: 'Is Nude AI free to use?',
-        answer: 'You can start with Stars. Each generation shows its cost before you confirm.',
+        question: 'How much does Nude AI cost?',
+        answer: 'You generate with paid Stars. Each generation shows its cost before you confirm.',
       },
       {
         question: 'Is Nude AI suitable for beginners?',

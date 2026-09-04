@@ -3,8 +3,8 @@ import { normalizeCountryCode } from '@/lib/starsGeo/countries';
 import { envValue } from '@/lib/env';
 
 /**
- * High-income allowlist for the free trial. Everyone else (including unknown)
- * pays for Stars with no trial grant.
+ * High-income country allowlist (legacy trial geo). Trial grants are disabled;
+ * generation requires paid Stars for every country.
  */
 export const TIER1_COUNTRIES = new Set([
   'US',
