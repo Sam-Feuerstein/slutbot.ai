@@ -29,7 +29,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
     <>
       <link rel="preload" as="image" href={CHECKOUT_PROMO_POSTER} />
       <link rel="preload" as="video" href={CHECKOUT_PROMO_VIDEO} type="video/mp4" />
-      <Suspense fallback={<div className="min-h-dvh bg-white" />}>
+      <Suspense fallback={<div className="min-h-dvh bg-[#0a0208]" />}>
         <CheckoutClient plan={plan} />
       </Suspense>
     </>

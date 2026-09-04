@@ -116,7 +116,7 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
     {
       title: 'Step 3 — Buy Telegram Stars',
       paragraphs: [
-        'Since you don’t have any Stars yet, click the “Confirm and Pay” button showing your pack’s Star amount (for example, 1,500 Stars for the Flirt pack).',
+        'Since you don’t have any Stars yet, click the “Confirm and Pay” button showing your pack’s Star amount (for example, 1,500 Stars).',
       ],
       images: ['/payments/tutorials/stars/tg-stars-variants.avif'],
     },

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     vars: {
       name: 'Test',
       email: to,
-      plan: 'Flirt',
+      plan: '1,500 Stars',
       amount: '$19.94',
       desires: '1,500',
       stars: '1,500',

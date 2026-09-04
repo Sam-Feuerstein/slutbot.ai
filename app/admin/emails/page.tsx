@@ -248,7 +248,7 @@ export default function AdminEmailsPage() {
 
   const previewVars = {
     ...baseEmailVars({ name: 'Alex', email: testTo || 'alex@example.com' }),
-    plan: 'Flirt',
+    plan: '1,500 Stars',
     amount: '$19.94',
     desires: '1,500',
     stars: '1,500',

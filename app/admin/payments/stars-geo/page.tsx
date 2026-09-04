@@ -332,7 +332,7 @@ export default function StarsGeoAdminPage() {
               </Field>
             ) : (
               (data?.packs || []).map((pack) => (
-                <Field key={pack.id} label={`${pack.tier} Stars`} hint={`Catalog ${pack.baseStars.toLocaleString()}`}>
+                <Field key={pack.id} label={pack.tier} hint={`Catalog ${pack.baseStars.toLocaleString()}`}>
                   <input
                     type="number"
                     min={1}

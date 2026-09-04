@@ -123,7 +123,7 @@ export default function AdminAppPage() {
       }
       window.dispatchEvent(
         new CustomEvent('slutbot:admin-sale-toast', {
-          detail: { planLabel: 'AI SLUTBOT Flirt', method: 'crypto', username: 'test', usd: 9.99 },
+          detail: { planLabel: 'AI SLUTBOT 1,500 Stars', method: 'crypto', username: 'test', usd: 9.99 },
         }),
       );
       setPushNote('Test alert sent. Check this browser or the installed app.');

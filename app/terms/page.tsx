@@ -231,10 +231,10 @@ export default function TermsPage() {
             </p>
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Spark: 750 Telegram Stars (about USD $9.97), for 92 image generations or 46 spicy videos.</li>
-              <li>Flirt: 1,500 Telegram Stars (about USD $19.94), for 184 image generations or 92 spicy videos.</li>
-              <li>Desire: 2,500 Telegram Stars (about USD $33.23), for 312 image generations or 156 spicy videos.</li>
-              <li>Passion: 5,000 Telegram Stars (about USD $66.47), for 624 image generations or 312 spicy videos, including up to 20 concurrent jobs.</li>
+              <li>750 Telegram Stars (about USD $9.97), for 72 image generations or 36 spicy videos.</li>
+              <li>1,500 Telegram Stars (about USD $19.94), for 150 image generations or 75 spicy videos.</li>
+              <li>2,500 Telegram Stars (about USD $33.23), for 260 image generations or 130 spicy videos.</li>
+              <li>5,000 Telegram Stars (about USD $66.47), for 576 image generations or 288 spicy videos, including up to 20 concurrent jobs.</li>
             </ul>
             <p>
               Telegram Stars checkout charges the matching Telegram Stars amount. The pack credits Stars to your wallet so you can use the generations shown at

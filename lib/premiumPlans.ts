@@ -4,13 +4,14 @@ export type PlanFeatureState = 'star' | 'check' | 'off';
 
 export type PremiumPlan = {
   id: string;
+  name: string;
   tier: string;
   subtitle?: string;
   desires: number;
   pricePerDesire: number;
   price: number;
   stars: number;
-  badge?: 'Best value' | 'Most chosen';
+  badge?: 'Best value' | 'Bestseller';
   bonusPercent?: number;
   bonusImageGenerations?: number;
   bonusVideoGenerations?: number;
@@ -30,7 +31,7 @@ export const BASE_STARS = LIST_STARS;
 export const BASE_USD = LIST_USD;
 export const STARS_USD_RATE = LIST_USD / LIST_STARS;
 export const MINI_STARS = 750;
-export const MINI_IMAGES = 92;
+export const MINI_IMAGES = 72;
 export const TELEGRAM_STAR_AMOUNTS = [750, 1500, 2500, 5000] as const;
 
 export function isTelegramStarAmount(stars: number): boolean {
@@ -84,6 +85,10 @@ export function formatStarsCount(stars: number): string {
   return `${Math.round(stars).toLocaleString('en-US')} Telegram Stars`;
 }
 
+export function planStarsLabel(stars: number): string {
+  return `${Math.round(stars).toLocaleString('en-US')} Stars`;
+}
+
 export function formatUsdWhole(usd: number): string {
   return `$${usdCeilDollars(usd)}`;
 }
@@ -129,13 +134,44 @@ export function planInvoiceCopy(plan: PremiumPlan): string {
   return `${images} IMG OR ${videos} SPICY VIDEO GENERATION / Never expires.`;
 }
 
-export function planMoreGenerationsCopy(_plan: PremiumPlan): string | null {
-  return null;
+export function planOfferBaseline(plan: PremiumPlan): { images: number; videos: number } {
+  const images = Math.round((plan.stars * MINI_IMAGES) / MINI_STARS);
+  return { images, videos: images / 2 };
+}
+
+export function planMoreGenerationsCopy(plan: PremiumPlan): string | null {
+  return planTotalSavedCopy(plan);
+}
+
+export function planTotalSavedCopy(plan: PremiumPlan): string | null {
+  const percent = planOfferBonusPercent(plan);
+  if (percent < 1) return null;
+  const baseline = planOfferBaseline(plan);
+  const extraImages = plan.imageGenerations - baseline.images;
+  const extraVideos = plan.videoGenerations - baseline.videos;
+  if (extraImages <= 0 || extraVideos <= 0) return null;
+  const images = extraImages.toLocaleString('en-US');
+  const videos = extraVideos.toLocaleString('en-US');
+  const videoWord = extraVideos === 1 ? 'video' : 'videos';
+  return `+${images} images or +${videos} ${videoWord}`;
+}
+
+export function planOfferMoreBadgeLabel(plan: PremiumPlan): string | null {
+  const percent = planOfferBonusPercent(plan);
+  if (percent < 1) return null;
+  return `GET ${percent}% MORE`;
+}
+
+export function planOfferBonusPercent(plan: PremiumPlan): number {
+  const baselineImages = Math.round((plan.stars * MINI_IMAGES) / MINI_STARS);
+  if (baselineImages < 1) return 0;
+  return Math.max(0, Math.round((plan.imageGenerations / baselineImages - 1) * 100));
 }
 
 export function planBonusPercentLabel(plan: PremiumPlan): string | null {
-  if (!plan.bonusPercent) return null;
-  return `+${plan.bonusPercent}%`;
+  const percent = plan.bonusPercent ?? planOfferBonusPercent(plan);
+  if (percent < 1) return null;
+  return `+${percent}%`;
 }
 
 export function planBonusGenerationCopy(plan: PremiumPlan): string | null {
@@ -169,7 +205,7 @@ function features(
 
 function definePlan(input: {
   id: string;
-  tier: string;
+  name: string;
   subtitle?: string;
   stars: number;
   price?: number;
@@ -190,6 +226,7 @@ function definePlan(input: {
   );
   return {
     ...input,
+    tier: planStarsLabel(input.stars),
     price,
     desires,
     pricePerDesire: Number((price / desires).toFixed(4)),
@@ -201,11 +238,11 @@ function definePlan(input: {
 export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
     id: 'passion',
-    tier: 'Passion',
+    name: 'The Aislutboss',
     stars: 5000,
     price: usdTelegramFromStars(5000),
-    imageGenerations: 624,
-    videoGenerations: 312,
+    imageGenerations: 576,
+    videoGenerations: 288,
     badge: 'Best value',
     concurrentGenerations: 20,
     features: features({
@@ -221,11 +258,11 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'desire',
-    tier: 'Desire',
+    name: 'The Player',
     stars: 2500,
     price: usdTelegramFromStars(2500),
-    imageGenerations: 312,
-    videoGenerations: 156,
+    imageGenerations: 260,
+    videoGenerations: 130,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -239,12 +276,12 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'flirt',
-    tier: 'Flirt',
+    name: 'The novice',
     stars: 1500,
     price: usdTelegramFromStars(1500),
-    imageGenerations: 184,
-    videoGenerations: 92,
-    badge: 'Most chosen',
+    imageGenerations: 150,
+    videoGenerations: 75,
+    badge: 'Bestseller',
     features: features({
       proExports: 'check',
       ultraHd: 'check',
@@ -257,12 +294,11 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'spark',
-    tier: 'Spark',
-    subtitle: 'Starter',
+    name: 'The Starter',
     stars: 750,
     price: usdTelegramFromStars(750),
-    imageGenerations: 92,
-    videoGenerations: 46,
+    imageGenerations: 72,
+    videoGenerations: 36,
     features: features({
       proExports: 'check',
       ultraHd: 'check',
@@ -281,8 +317,8 @@ for (const plan of PREMIUM_PLANS) {
   if (!isTelegramStarAmount(plan.stars)) {
     throw new Error(`Pack ${plan.id} is not a Telegram Star option`);
   }
-  if (plan.imageGenerations % 2 !== 0 || plan.videoGenerations % 2 !== 0) {
-    throw new Error(`Pack ${plan.id} generation counts must be even`);
+  if (plan.imageGenerations % 2 !== 0) {
+    throw new Error(`Pack ${plan.id} image generation count must be even`);
   }
   if (plan.imageGenerations !== plan.videoGenerations * 2) {
     throw new Error(`Pack ${plan.id} must be 2 images per video`);

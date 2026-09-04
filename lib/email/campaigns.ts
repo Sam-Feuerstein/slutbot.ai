@@ -44,7 +44,7 @@ export function parseCampaignAudience(value?: string | null): CampaignAudienceId
 
 function planLabel(planId?: string | null) {
   const plan = planId ? getCheckoutPlan(planId) : null;
-  return plan?.tier || 'Flirt';
+  return plan?.tier || '1,500 Stars';
 }
 
 function sendableUserFilter() {
