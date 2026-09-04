@@ -4,6 +4,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import { adjustUserDesires, setUserDesires } from '@/lib/users/wallet';
+import { signInMethodLabel } from '@/lib/auth/signInMethod';
 
 type UserLean = {
   _id: unknown;
@@ -16,6 +17,10 @@ type UserLean = {
   videoGens?: number;
   createdAt?: Date;
   lastLoginAt?: Date | null;
+  googleId?: string | null;
+  telegramId?: string | null;
+  telegramUsername?: string;
+  passwordHash?: string | null;
 };
 
 function serializeUser(user: UserLean) {
@@ -30,6 +35,8 @@ function serializeUser(user: UserLean) {
     videoGens: user.videoGens ?? 0,
     joinedAt: user.createdAt ? new Date(user.createdAt).toISOString() : '',
     lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt).toISOString() : '',
+    signIn: signInMethodLabel(user),
+    telegramUsername: user.telegramUsername || '',
   };
 }
 

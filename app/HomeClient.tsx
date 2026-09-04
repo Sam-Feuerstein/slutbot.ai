@@ -26,23 +26,19 @@ export default async function HomeClient() {
       listHeroDemos(),
     ]);
     heroDemos = hero;
-    if (publicExamples.length) {
-      examples = publicExamples.map((row) => ({
-        id: row.id,
-        title: row.title,
-        poster: row.poster,
-        video: row.video,
-        source: row.source,
-      }));
-    }
-    if (publicBeforeAfter.length) {
-      beforeAfter = publicBeforeAfter.map((row) => ({
-        id: row.id,
-        before: row.before,
-        after: row.after,
-        combined: row.combined,
-      }));
-    }
+    examples = publicExamples.map((row) => ({
+      id: row.id,
+      title: row.title,
+      poster: row.poster,
+      video: row.video,
+      source: row.source,
+    }));
+    beforeAfter = publicBeforeAfter.map((row) => ({
+      id: row.id,
+      before: row.before,
+      after: row.after,
+      combined: row.combined,
+    }));
   } catch {
     // Fall back to static seed assets if Mongo is unavailable.
   }

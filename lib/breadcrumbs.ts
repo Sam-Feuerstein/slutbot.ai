@@ -34,11 +34,6 @@ const STATIC_TRAILS: Record<string, BreadcrumbItem[]> = {
   '/anti-trafficking': [HOME, { name: 'Anti-Trafficking & Abuse Policy', path: '/anti-trafficking' }],
   '/2257': [HOME, { name: '2257 Compliance Statement', path: '/2257' }],
   '/content-removal': [HOME, { name: 'Content Removal & Complaints', path: '/content-removal' }],
-  '/payments/crypto-tutorial': [
-    HOME,
-    GENERATOR,
-    { name: 'Crypto Payment Tutorial', path: '/payments/crypto-tutorial' },
-  ],
   '/payments/telegram-stars-tutorial': [
     HOME,
     GENERATOR,

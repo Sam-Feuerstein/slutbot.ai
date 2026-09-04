@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
-  serverExternalPackages: ['web-push', 'ffmpeg-static'],
+  serverExternalPackages: ['web-push', 'ffmpeg-static', 'nodemailer'],
   images: {
     remotePatterns: mediaRemotePatterns(),
     formats: ['image/avif', 'image/webp'],

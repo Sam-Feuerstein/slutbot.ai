@@ -4,6 +4,7 @@ import { ADMIN_COOKIE, adminCookieOptions } from '@/lib/auth/adminSession';
 
 export const USER_SESSION_COOKIE = 'slutbot-session';
 export const OAUTH_LOGIN_COOKIE = 'slutbot_oauth_login';
+export const TELEGRAM_OAUTH_STATE_COOKIE = 'slutbot_telegram_oauth';
 const MAX_AGE_SEC = 60 * 60 * 24 * 30;
 
 export function sessionCookieOptions(clear = false) {

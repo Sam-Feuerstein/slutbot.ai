@@ -137,7 +137,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   aria-hidden
                   className="pointer-events-none absolute -left-6 -top-7 h-24 w-40 bg-[radial-gradient(closest-side,rgba(255,45,120,0.18),transparent)]"
                 />
-                <BrandLogo className="h-[48px] w-auto" />
+                <BrandLogo className="text-[1.75rem]" />
               </div>
             <p className="mt-1 text-xs text-white/40">Admin</p>
           </div>
@@ -177,7 +177,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-white/8 bg-[#070406]/80 px-4 py-3 backdrop-blur-xl lg:hidden">
             <div className="flex items-center justify-between gap-3">
-              <BrandLogo className="h-[38px] w-auto" />
+              <BrandLogo className="text-[1.5rem]" />
               <Link href="/" className="text-xs text-white/50">
                 Site
               </Link>

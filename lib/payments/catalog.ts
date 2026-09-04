@@ -36,7 +36,7 @@ function toCheckoutPlan(plan: PremiumPlan): CheckoutPlan {
     desires: plan.desires,
     usdPrice: plan.price,
     starsAmount: plan.stars,
-    label: 'AI SLUTBOT',
+    label: `AI SLUTBOT ${plan.tier}`,
     description: planInvoiceCopy(plan),
   };
 }

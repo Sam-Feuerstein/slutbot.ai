@@ -12,6 +12,7 @@ import {
   samplePreviewGeneration,
 } from '@/lib/desires';
 import { sampleRefTag } from '@/lib/samples/refTag';
+import AdminSampleDeleteButton from './AdminSampleDeleteButton';
 
 export default function ExploreExampleLightbox({
   example,
@@ -23,6 +24,7 @@ export default function ExploreExampleLightbox({
   onNext,
   onClose,
   onTry,
+  showAdminDelete = false,
 }: {
   example: ExampleVideo;
   index: number;
@@ -33,6 +35,7 @@ export default function ExploreExampleLightbox({
   onNext: () => void;
   onClose: () => void;
   onTry: () => void;
+  showAdminDelete?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const beforeSrc = example.source || example.poster;
@@ -122,14 +125,19 @@ export default function ExploreExampleLightbox({
                 {index + 1}/{total}
               </span>
             </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-              aria-label="Close preview"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {showAdminDelete ? (
+                <AdminSampleDeleteButton sampleId={example.id} title={example.title || refTag} />
+              ) : null}
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Close preview"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 pt-3 sm:gap-2.5 sm:px-4 sm:pt-3.5">

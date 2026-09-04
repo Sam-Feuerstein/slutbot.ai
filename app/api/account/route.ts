@@ -5,6 +5,7 @@ import { SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
 import { PREMIUM_PLANS, planInvoiceCopy } from '@/lib/premiumPlans';
 import { publicBalanceFields } from '@/lib/users/wallet';
+import { isTelegramPlaceholderEmail, signInMethodLabel } from '@/lib/auth/signInMethod';
 
 function planLabel(planId: string) {
   const plan = PREMIUM_PLANS.find((item) => item.id === planId);
@@ -48,6 +49,10 @@ export async function GET(req: NextRequest) {
     avatarUrl: user.avatarUrl || '',
     hasPassword: Boolean(user.passwordHash),
     googleLinked: Boolean(user.googleId),
+    telegramLinked: Boolean(user.telegramId),
+    telegramUsername: user.telegramUsername || '',
+    signInLabel: signInMethodLabel(user),
+    loginEmail: isTelegramPlaceholderEmail(user.email) ? '' : user.email,
     imageGens: user.imageGens ?? 0,
     videoGens: user.videoGens ?? 0,
     joinedAt: user.createdAt ? new Date(user.createdAt).toISOString() : '',
@@ -85,7 +90,7 @@ export async function PATCH(req: NextRequest) {
   if (body.newPassword) {
     if (!user.passwordHash) {
       return NextResponse.json(
-        { message: 'This account uses Google sign-in. Password cannot be changed here.' },
+        { message: 'This account does not use a password. Sign in with Google or Telegram.' },
         { status: 400 },
       );
     }

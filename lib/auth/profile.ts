@@ -1,4 +1,5 @@
 import { getAuthEpoch, isSignedIn } from '@/lib/auth/session';
+import { isTelegramPlaceholderEmail } from '@/lib/auth/signInMethod';
 
 export type UserProfile = {
   name: string;
@@ -13,7 +14,7 @@ export function displayName(profile: Pick<UserProfile, 'name' | 'email'>): strin
   const name = profile.name?.trim();
   if (name) return name;
   const email = profile.email?.trim();
-  if (!email) return 'Account';
+  if (!email || isTelegramPlaceholderEmail(email)) return 'Account';
   const local = email.split('@')[0]?.trim();
   return local || 'Account';
 }

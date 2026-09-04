@@ -17,6 +17,8 @@ type UserDetail = {
   videoGens: number;
   joinedAt: string;
   lastLoginAt: string;
+  signIn?: string;
+  telegramUsername?: string;
 };
 
 type Purchase = {
@@ -129,6 +131,15 @@ export default function AdminUserPage() {
       <Panel>
         <h2 className="text-lg font-black">Account</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <Field label="Sign-in">
+            <input
+              value={
+                user.telegramUsername ? `${user.signIn || 'Telegram'} (@${user.telegramUsername})` : user.signIn || '—'
+              }
+              readOnly
+              className={inputClass}
+            />
+          </Field>
           <Field label="Email">
             <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
           </Field>

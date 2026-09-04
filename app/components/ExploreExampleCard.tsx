@@ -7,17 +7,20 @@ import type { ExampleVideo } from '@/lib/exampleVideos';
 import { trackSampleClick } from '@/lib/samples/client';
 import { sampleRefTag } from '@/lib/samples/refTag';
 import { generatorModePath } from '@/lib/site';
+import AdminSampleDeleteButton from './AdminSampleDeleteButton';
 
 export default function ExploreExampleCard({
   example,
   playing = false,
   eager = false,
   onOpenPreview,
+  showAdminDelete = false,
 }: {
   example: ExampleVideo;
   playing?: boolean;
   eager?: boolean;
   onOpenPreview?: () => void;
+  showAdminDelete?: boolean;
 }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -70,6 +73,13 @@ export default function ExploreExampleCard({
       className="group/item relative flex aspect-[9/16] w-full cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-2xl bg-[#161616] text-white outline-none transition-shadow duration-300 focus-visible:ring-2 focus-visible:ring-[#ff2d78] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
       aria-label={`${refTag}, try it yourself`}
     >
+      {showAdminDelete ? (
+        <AdminSampleDeleteButton
+          sampleId={example.id}
+          title={example.title || refTag}
+          className="absolute right-2 top-2 z-20"
+        />
+      ) : null}
       <div className="card-video-mask relative h-full w-full">
         <Image
           src={example.poster}

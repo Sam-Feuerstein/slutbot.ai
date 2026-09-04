@@ -79,7 +79,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <meta name="apple-mobile-web-app-capable" content="yes" />
             <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
             <meta name="apple-mobile-web-app-title" content="AI SLUTBOT" />
-            <link rel="preload" as="image" href="/brand/aislutbot-logo.png" type="image/png" />
             <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM site summary" />
       </head>
       <body>

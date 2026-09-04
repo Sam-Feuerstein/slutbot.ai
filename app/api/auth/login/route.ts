@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const user = await SlutbotUser.findOne({ email });
     if (!user?.passwordHash) {
       return NextResponse.json(
-        { message: user?.googleId ? 'Use Continue with Google for this account.' : 'Invalid credentials.' },
+        { message: user?.googleId || user?.telegramId ? 'Use Google or Telegram to sign in for this account.' : 'Invalid credentials.' },
         { status: 401 },
       );
     }

@@ -1,26 +1,29 @@
-import Image from 'next/image';
+import { Bebas_Neue } from 'next/font/google';
 
-export const BRAND_LOGO_SRC = '/brand/aislutbot-logo.png';
+const brandMark = Bebas_Neue({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
-export default function BrandLogo({
-  className = 'h-9 w-auto max-w-full sm:h-[58px]',
-  preload = false,
-  priority = false,
-}: {
+type BrandLogoProps = {
   className?: string;
+  /** Kept for compatibility with older call sites. */
   preload?: boolean;
   priority?: boolean;
-}) {
+};
+
+export default function BrandLogo({ className = '' }: BrandLogoProps) {
   return (
-    <Image
-      src={BRAND_LOGO_SRC}
-      alt="AI SLUTBOT"
-      width={456}
-      height={128}
-      preload={preload || priority}
-      sizes="(max-width: 640px) 228px, 280px"
-      className={`block max-w-full object-contain object-left ${className}`}
-      style={{ width: 'auto' }}
-    />
+    <span
+      className={`${brandMark.className} inline-flex select-none items-baseline leading-none ${className}`}
+      aria-label="AISLUTBOT"
+    >
+      <span className="inline-flex items-baseline uppercase tracking-[0.04em]">
+        <span className="text-white">AI</span>
+        <span className="text-[#ff2d78]">SLUT</span>
+        <span className="text-white">BOT</span>
+      </span>
+    </span>
   );
 }

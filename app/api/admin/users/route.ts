@@ -5,6 +5,7 @@ import { SlutbotUser } from '@/lib/models';
 import { newClientId } from '@/lib/auth/slutbotAuth';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import { setUserDesires } from '@/lib/users/wallet';
+import { signInMethodLabel } from '@/lib/auth/signInMethod';
 
 async function denyAdmin(req: NextRequest) {
   if (!(await adminSessionOk(req))) {
@@ -24,6 +25,10 @@ function serializeUser(user: {
   videoGens?: number;
   createdAt?: Date;
   lastLoginAt?: Date | null;
+  googleId?: string | null;
+  telegramId?: string | null;
+  telegramUsername?: string;
+  passwordHash?: string | null;
 }) {
   return {
     id: String(user._id),
@@ -36,6 +41,8 @@ function serializeUser(user: {
     videoGens: user.videoGens ?? 0,
     joinedAt: user.createdAt ? new Date(user.createdAt).toISOString() : '',
     lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt).toISOString() : '',
+    signIn: signInMethodLabel(user),
+    telegramUsername: user.telegramUsername || '',
   };
 }
 
@@ -56,9 +63,15 @@ export async function GET(req: NextRequest) {
     videoGens?: number;
     createdAt?: Date;
     lastLoginAt?: Date | null;
+    googleId?: string | null;
+    telegramId?: string | null;
+    telegramUsername?: string;
+    passwordHash?: string | null;
   }>;
   const filtered = q
-    ? users.filter((u) => [u.email, u.name, u.clientId].join(' ').toLowerCase().includes(q))
+    ? users.filter((u) =>
+        [u.email, u.name, u.clientId, u.telegramUsername, u.telegramId].join(' ').toLowerCase().includes(q),
+      )
     : users;
 
   return NextResponse.json({ users: filtered.map(serializeUser) });

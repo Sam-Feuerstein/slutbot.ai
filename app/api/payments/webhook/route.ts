@@ -4,6 +4,7 @@ import { creditDesires } from '@/lib/payments/fulfill';
 import {
   answerPreCheckoutQuery,
   forwardNonSlutbotUpdateToErogram,
+  notifyTelegramPaymentReceived,
   parseSlutbotPayload,
   telegramWebhookSecret,
 } from '@/lib/payments/telegram';
@@ -16,6 +17,8 @@ type TelegramUpdate = {
   };
   message?: {
     text?: string;
+    chat?: { id?: number };
+    from?: { id?: number };
     successful_payment?: {
       invoice_payload?: string;
       total_amount?: number;
@@ -60,12 +63,13 @@ export async function POST(req: NextRequest) {
         await answerPreCheckoutQuery(query.id, false, 'Invalid payment data');
         return NextResponse.json({ ok: true });
       }
-      if (typeof query.total_amount === 'number') {
-        const expected = payload.stars ?? plan.starsAmount;
-        if (query.total_amount !== expected) {
-          await answerPreCheckoutQuery(query.id, false, 'This pack price changed. Open checkout again.');
-          return NextResponse.json({ ok: true });
-        }
+      if (typeof query.total_amount === 'number' && query.total_amount !== plan.starsAmount) {
+        await answerPreCheckoutQuery(query.id, false, 'This pack price changed. Open checkout again.');
+        return NextResponse.json({ ok: true });
+      }
+      if (payload.stars != null && payload.stars !== plan.starsAmount) {
+        await answerPreCheckoutQuery(query.id, false, 'This pack price changed. Open checkout again.');
+        return NextResponse.json({ ok: true });
       }
 
       await answerPreCheckoutQuery(query.id, true);
@@ -85,17 +89,46 @@ export async function POST(req: NextRequest) {
       const plan = getCheckoutPlan(payload.plan);
       const chargeId = payment.provider_payment_charge_id || payment.telegram_payment_charge_id || '';
       if (!plan || !chargeId) {
-        return NextResponse.json({ ok: true });
+        console.error('Telegram successful_payment missing plan or charge id', {
+          plan: payload.plan,
+          chargeId,
+        });
+        return NextResponse.json({ ok: false }, { status: 500 });
+      }
+      if (typeof payment.total_amount === 'number' && payment.total_amount !== plan.starsAmount) {
+        console.error('Telegram paid amount does not match catalog Stars — still crediting pack', {
+          plan: payload.plan,
+          paid: payment.total_amount,
+          expected: plan.starsAmount,
+        });
       }
 
-      await creditDesires({
-        clientId: payload.clientId,
-        planId: payload.plan,
-        provider: 'telegram_stars',
-        chargeId,
-        usdAmount: plan.usdPrice,
-        starsAmount: payment.total_amount ?? 0,
-      });
+      try {
+        const result = await creditDesires({
+          clientId: payload.clientId,
+          planId: payload.plan,
+          provider: 'telegram_stars',
+          chargeId,
+          usdAmount: plan.usdPrice,
+          starsAmount: plan.starsAmount,
+        });
+        if (!result.ok) {
+          console.error('Telegram fulfill failed:', result.error);
+          return NextResponse.json({ ok: false }, { status: 500 });
+        }
+
+        const chatId = update.message.chat?.id ?? update.message.from?.id;
+        if (chatId && !result.already) {
+          try {
+            await notifyTelegramPaymentReceived(chatId, result.desires ?? plan.desires);
+          } catch (err) {
+            console.error('Could not send Telegram payment confirmation:', err);
+          }
+        }
+      } catch (err) {
+        console.error('Webhook fulfill error:', err);
+        return NextResponse.json({ ok: false }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ ok: true });

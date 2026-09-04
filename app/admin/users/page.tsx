@@ -14,6 +14,8 @@ type AdminUser = {
   imageGens: number;
   videoGens: number;
   joinedAt: string;
+  signIn?: string;
+  telegramUsername?: string;
 };
 
 export default function AdminUsersPage() {
@@ -117,6 +119,7 @@ export default function AdminUsersPage() {
             <thead className="text-[11px] uppercase tracking-[0.16em] text-white/35">
               <tr className="border-b border-white/8">
                 <th className="px-5 py-4 font-semibold">User</th>
+                <th className="px-5 py-4 font-semibold">Sign-in</th>
                 <th className="px-5 py-4 font-semibold">Joined</th>
                 <th className="px-5 py-4 font-semibold">Stars</th>
                 <th className="px-5 py-4 font-semibold">Gens</th>
@@ -126,13 +129,13 @@ export default function AdminUsersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-white/40">
+                  <td colSpan={6} className="px-5 py-8 text-white/40">
                     Loading…
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-white/40">
+                  <td colSpan={6} className="px-5 py-8 text-white/40">
                     No users yet.
                   </td>
                 </tr>
@@ -144,6 +147,12 @@ export default function AdminUsersPage() {
                         {user.email}
                       </Link>
                       {user.name ? <p className="mt-0.5 text-xs text-white/40">{user.name}</p> : null}
+                    </td>
+                    <td className="px-5 py-4 text-white/60">
+                      {user.signIn || '—'}
+                      {user.telegramUsername ? (
+                        <p className="mt-0.5 text-xs text-white/40">@{user.telegramUsername}</p>
+                      ) : null}
                     </td>
                     <td className="px-5 py-4 text-white/60">{user.joinedAt.slice(0, 10)}</td>
                     <td className="px-5 py-4 text-lg font-black">{user.desires}</td>

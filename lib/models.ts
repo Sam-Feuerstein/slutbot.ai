@@ -29,6 +29,8 @@ const slutbotUserSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     passwordHash: { type: String, default: null },
     googleId: { type: String, default: null, index: true, sparse: true },
+    telegramId: { type: String, default: null, index: true, sparse: true },
+    telegramUsername: { type: String, default: '', trim: true },
     name: { type: String, default: '' },
     avatarUrl: { type: String, default: '' },
     clientId: { type: String, required: true, unique: true, index: true },
@@ -43,6 +45,7 @@ const slutbotUserSchema = new Schema(
     videoGens: { type: Number, default: 0 },
     lastLoginAt: { type: Date, default: null },
     pwaInstalledAt: { type: Date, default: null },
+    welcomeEmailSentAt: { type: Date, default: null },
   },
   { timestamps: true, collection: 'slutbotusers' },
 );
@@ -144,6 +147,16 @@ const platformSettingsSchema = new Schema(
     },
     starsGeoEnabled: { type: Boolean, default: true },
     starsGeoRoundUpTo: { type: Number, default: 50 },
+    emailWelcomeSubject: { type: String, default: '' },
+    emailWelcomeBody: { type: String, default: '' },
+    emailPurchaseSubject: { type: String, default: '' },
+    emailPurchaseBody: { type: String, default: '' },
+    emailOfferSubject: { type: String, default: '' },
+    emailOfferBody: { type: String, default: '' },
+    emailResetSubject: { type: String, default: '' },
+    emailResetBody: { type: String, default: '' },
+    /** Once true, empty gallery stays empty — admin deletes are not re-seeded. */
+    samplesSeeded: { type: Boolean, default: false },
   },
   { timestamps: true, collection: 'platformsettings' },
 );
@@ -352,3 +365,20 @@ sampleClickSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 9
 sampleClickSchema.index({ sampleId: 1, createdAt: -1 });
 
 export const SampleClick = models.SampleClick || model('SampleClick', sampleClickSchema);
+
+const emailCampaignSendSchema = new Schema(
+  {
+    audience: { type: String, required: true, index: true },
+    template: { type: String, required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'SlutbotUser', required: true, index: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    planId: { type: String, default: '' },
+    status: { type: String, enum: ['sent', 'failed', 'skipped'], default: 'sent', index: true },
+    error: { type: String, default: '' },
+  },
+  { timestamps: true, collection: 'emailcampaignsends' },
+);
+emailCampaignSendSchema.index({ userId: 1, template: 1, audience: 1, createdAt: -1 });
+
+export const EmailCampaignSend =
+  models.EmailCampaignSend || model('EmailCampaignSend', emailCampaignSendSchema);

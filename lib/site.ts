@@ -39,11 +39,7 @@ export function checkoutHref(input?: {
   reason?: string;
 }) {
   const params = new URLSearchParams({ plan: input?.plan?.trim() || 'flirt' });
-  if (input?.method === 'crypto') {
-    params.set('method', 'crypto');
-  } else {
-    params.set('method', 'stars');
-  }
+  params.set('method', 'stars');
   const reason = input?.reason?.trim();
   if (reason) {
     // Keep codes short so login → checkout redirects stay readable.

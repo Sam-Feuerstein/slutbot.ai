@@ -153,7 +153,7 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '
   }
 
   const trial = await trialGrantFields(country, ip);
-  return SlutbotUser.create({
+  const created = await SlutbotUser.create({
     email: profile.email,
     name: profile.name,
     googleId: profile.id,
@@ -164,4 +164,5 @@ export async function findOrCreateGoogleUser(profile: GoogleProfile, country = '
     lastLoginAt: new Date(),
     ...trial,
   });
+  return created;
 }

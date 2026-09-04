@@ -23,15 +23,25 @@ export type PremiumPlan = {
   }[];
 };
 
-/** Pack USD: 1,000 Stars = $25, rounded up to a whole dollar. Crypto invoices this same USD. NOWPayments cannot go below CRYPTO_MIN_USD. */
-export const LIST_STARS = 1000;
-export const LIST_USD = 25;
+/** Telegram charges ~$9.97 for 750 Stars. Catalog invoices must use these Star amounts only. */
+export const LIST_STARS = 750;
+export const LIST_USD = 9.97;
 export const BASE_STARS = LIST_STARS;
 export const BASE_USD = LIST_USD;
 export const STARS_USD_RATE = LIST_USD / LIST_STARS;
-export const MINI_STARS = 500;
-export const MINI_IMAGES = 60;
-/** NOWPayments USDT TRC20 will not create a payment below this. Coupons cannot go under it. Stars Mini is unchanged. */
+export const MINI_STARS = 750;
+export const MINI_IMAGES = 92;
+export const TELEGRAM_STAR_AMOUNTS = [750, 1500, 2500, 5000] as const;
+
+export function isTelegramStarAmount(stars: number): boolean {
+  return (TELEGRAM_STAR_AMOUNTS as readonly number[]).includes(Math.round(stars));
+}
+
+export function usdTelegramFromStars(stars: number): number {
+  const raw = (Math.max(0, Number(stars) || 0) * LIST_USD) / LIST_STARS;
+  return Math.round(raw * 100) / 100;
+}
+/** NOWPayments USDT TRC20 will not create a payment below this. Coupons cannot go under it. */
 export const CRYPTO_MIN_USD = 12;
 /** Discount applied only when paying with USDT via NOWPayments. Stars stay at full pack price. */
 export const CRYPTO_DISCOUNT_PERCENT = 40;
@@ -45,7 +55,7 @@ function usdCeilDollars(value: number): number {
 }
 
 export function usdListFromStars(stars: number): number {
-  return usdCeilCents((Math.max(0, Number(stars) || 0) * LIST_USD) / LIST_STARS);
+  return usdTelegramFromStars(stars);
 }
 
 export function usdMinFromStars(stars: number): number {
@@ -78,9 +88,9 @@ export function formatUsdWhole(usd: number): string {
   return `$${usdCeilDollars(usd)}`;
 }
 
-/** High list USD for a Stars invoice: 1,000 Stars = $25, rounded up to a whole dollar. */
+/** Whole-dollar ceiling of the Telegram USD rate (checkout crypto still uses exact plan.price). */
 export function usdHighFromStars(stars: number): number {
-  return usdCeilDollars(usdListFromStars(stars));
+  return usdCeilDollars(usdTelegramFromStars(stars));
 }
 
 export function formatAroundUsd(stars: number): string {
@@ -190,9 +200,12 @@ function definePlan(input: {
 
 export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
-    id: 'ecstasy',
-    tier: 'Ecstasy',
-    stars: 10000,
+    id: 'passion',
+    tier: 'Passion',
+    stars: 5000,
+    price: usdTelegramFromStars(5000),
+    imageGenerations: 624,
+    videoGenerations: 312,
     badge: 'Best value',
     concurrentGenerations: 20,
     features: features({
@@ -207,25 +220,12 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     }),
   }),
   definePlan({
-    id: 'passion',
-    tier: 'Passion',
-    stars: 5000,
-    concurrentGenerations: 20,
-    features: features({
-      hd: 'star',
-      proExports: 'star',
-      ultraHd: 'star',
-      history48h: 'check',
-      faster: 'check',
-      fullVideo: 'check',
-      highQuality: 'check',
-      priority: 'check',
-    }),
-  }),
-  definePlan({
     id: 'desire',
     tier: 'Desire',
     stars: 2500,
+    price: usdTelegramFromStars(2500),
+    imageGenerations: 312,
+    videoGenerations: 156,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -240,7 +240,10 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
     id: 'flirt',
     tier: 'Flirt',
-    stars: 1000,
+    stars: 1500,
+    price: usdTelegramFromStars(1500),
+    imageGenerations: 184,
+    videoGenerations: 92,
     badge: 'Most chosen',
     features: features({
       proExports: 'check',
@@ -253,11 +256,13 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     }),
   }),
   definePlan({
-    id: 'mini',
-    tier: 'Mini',
+    id: 'spark',
+    tier: 'Spark',
     subtitle: 'Starter',
-    stars: MINI_STARS,
-    price: 16,
+    stars: 750,
+    price: usdTelegramFromStars(750),
+    imageGenerations: 92,
+    videoGenerations: 46,
     features: features({
       proExports: 'check',
       ultraHd: 'check',
@@ -271,3 +276,15 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
 ];
 
 export const DEFAULT_PLAN_INDEX = PREMIUM_PLANS.findIndex((plan) => plan.id === 'flirt');
+
+for (const plan of PREMIUM_PLANS) {
+  if (!isTelegramStarAmount(plan.stars)) {
+    throw new Error(`Pack ${plan.id} is not a Telegram Star option`);
+  }
+  if (plan.imageGenerations % 2 !== 0 || plan.videoGenerations % 2 !== 0) {
+    throw new Error(`Pack ${plan.id} generation counts must be even`);
+  }
+  if (plan.imageGenerations !== plan.videoGenerations * 2) {
+    throw new Error(`Pack ${plan.id} must be 2 images per video`);
+  }
+}

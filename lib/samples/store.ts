@@ -1,7 +1,7 @@
 import connectDB from '@/lib/db/mongodb';
 import { getExampleSourceThumb, PART_2_VIDEO_IDS } from '@/lib/exampleVideos';
-import { SampleClick, SampleLike, SampleShowcase } from '@/lib/models';
-import { DEFAULT_HERO_SAMPLES, seedSampleInputs } from './seed';
+import { PlatformSettings, SampleClick, SampleLike, SampleShowcase } from '@/lib/models';
+import { seedSampleInputs } from './seed';
 import type {
   PublicBeforeAfterSample,
   PublicExampleSample,
@@ -85,58 +85,32 @@ function validateInput(input: SampleInput): void {
   }
 }
 
-async function ensureHeroDefaults() {
-  // Only create missing default hero docs. Never overwrite an existing heroSlot —
-  // admin assignments must stick across restarts / re-seeds.
-  for (const row of DEFAULT_HERO_SAMPLES) {
-    const existing = (await SampleShowcase.findOne({ sampleId: row.id }).lean()) as SampleDoc | null;
-    if (existing) continue;
-    await SampleShowcase.create({
-      sampleId: row.id,
-      kind: 'example',
-      title: row.title || 'Hero',
-      posterUrl: row.posterUrl || '',
-      videoUrl: row.videoUrl || '',
-      beforeUrl: '',
-      afterUrl: '',
-      combinedUrl: '',
-      sortOrder: row.sortOrder ?? 0,
-      enabled: true,
-      pinned: false,
-      heroSlot: row.heroSlot || 0,
-    }).catch(() => undefined);
-  }
+async function markSamplesSeeded() {
+  await PlatformSettings.collection.updateOne(
+    { key: 'platform' },
+    { $set: { samplesSeeded: true } },
+    { upsert: true },
+  );
 }
 
-async function ensurePart2Samples() {
+async function syncExistingPart2Media() {
   const { EXAMPLE_VIDEOS } = await import('@/lib/exampleVideos');
   const part2Set = new Set<string>(PART_2_VIDEO_IDS);
   const part2 = EXAMPLE_VIDEOS.filter((row) => part2Set.has(row.id as typeof PART_2_VIDEO_IDS[number]));
 
   for (let i = 0; i < part2.length; i++) {
     const row = part2[i];
-    // Only sync media/order. Never clobber admin-managed fields (heroSlot, enabled, pinned).
+    // Update media only if the card still exists. Never recreate a deleted sample.
     await SampleShowcase.updateOne(
       { sampleId: row.id },
       {
         $set: {
           kind: 'example',
-          title: row.title || 'Sample',
           posterUrl: row.poster,
           videoUrl: row.video || '',
           sourceUrl: row.source || getExampleSourceThumb(row.id, Boolean(row.video)) || '',
-          sortOrder: -40 + i,
-        },
-        $setOnInsert: {
-          beforeUrl: '',
-          afterUrl: '',
-          combinedUrl: '',
-          enabled: true,
-          pinned: false,
-          heroSlot: 0,
         },
       },
-      { upsert: true },
     );
   }
 }
@@ -145,8 +119,13 @@ async function ensureSeeded() {
   if (!seedPromise) {
     seedPromise = (async () => {
       await connectDB();
+      const settings = (await PlatformSettings.findOne({ key: 'platform' }).lean()) as {
+        samplesSeeded?: boolean;
+      } | null;
+      const alreadySeeded = Boolean(settings?.samplesSeeded);
       const count = await SampleShowcase.countDocuments();
-      if (count === 0) {
+
+      if (!alreadySeeded && count === 0) {
         const seeds = seedSampleInputs();
         if (seeds.length) {
           await SampleShowcase.insertMany(
@@ -168,10 +147,12 @@ async function ensureSeeded() {
             { ordered: false },
           ).catch(() => undefined);
         }
-      } else {
-        await ensureHeroDefaults();
+        await markSamplesSeeded();
+      } else if (!alreadySeeded) {
+        await markSamplesSeeded();
       }
-      await ensurePart2Samples();
+
+      await syncExistingPart2Media();
     })().catch((err) => {
       seedPromise = null;
       throw err;
@@ -220,40 +201,43 @@ export async function listPublicBeforeAfter(): Promise<PublicBeforeAfterSample[]
   }));
 }
 
+function toHeroDemo(row: SampleDoc): PublicHeroDemo {
+  return {
+    id: String(row.sampleId || ''),
+    poster: clip(row.posterUrl || '', 500),
+    video: clip(row.videoUrl || '', 500) || undefined,
+  };
+}
+
 export async function listHeroDemos(): Promise<[PublicHeroDemo, PublicHeroDemo]> {
   await ensureSeeded();
   const rows = (await SampleShowcase.find({
     kind: 'example',
     enabled: true,
-    heroSlot: { $in: [1, 2] },
-  }).lean()) as SampleDoc[];
+  })
+    .sort({ sortOrder: 1, createdAt: 1 })
+    .lean()) as SampleDoc[];
 
   const bySlot = new Map<number, SampleDoc>();
   for (const row of rows) {
     const slot = normalizeHeroSlot(row.heroSlot);
-    if (slot) bySlot.set(slot, row);
+    if (slot && row.posterUrl && !bySlot.has(slot)) bySlot.set(slot, row);
   }
 
-  const fallback = (slot: 1 | 2): PublicHeroDemo => {
-    const seed = DEFAULT_HERO_SAMPLES[slot - 1];
-    return {
-      id: seed.id || `hero-${slot}`,
-      poster: seed.posterUrl || '',
-      video: seed.videoUrl || undefined,
-    };
+  const used = new Set<string>();
+  const pick = (slot: 1 | 2): PublicHeroDemo => {
+    const assigned = bySlot.get(slot);
+    if (assigned?.posterUrl) {
+      used.add(String(assigned.sampleId || ''));
+      return toHeroDemo(assigned);
+    }
+    const next = rows.find((row) => row.posterUrl && !used.has(String(row.sampleId || '')));
+    if (!next) return { id: '', poster: '', video: undefined };
+    used.add(String(next.sampleId || ''));
+    return toHeroDemo(next);
   };
 
-  const toDemo = (slot: 1 | 2): PublicHeroDemo => {
-    const row = bySlot.get(slot);
-    if (!row?.posterUrl) return fallback(slot);
-    return {
-      id: String(row.sampleId || ''),
-      poster: clip(row.posterUrl, 500),
-      video: clip(row.videoUrl || '', 500) || undefined,
-    };
-  };
-
-  return [toDemo(1), toDemo(2)];
+  return [pick(1), pick(2)];
 }
 
 /** Assign which example samples appear in the homepage hero (left=1, right=2). */
@@ -371,6 +355,8 @@ export async function deleteSample(id: string): Promise<void> {
     SampleLike.deleteMany({ sampleId }),
     SampleClick.deleteMany({ sampleId }),
   ]);
+  // Next list must re-check seed logic in this process (same as a fresh serverless isolate).
+  seedPromise = null;
 }
 
 export async function setSampleEnabled(id: string, enabled: boolean): Promise<SampleRecord> {

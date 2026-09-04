@@ -34,7 +34,9 @@ export default function SiteFooter() {
       <div className="safe-x mx-auto max-w-[1600px] py-8 sm:py-12 lg:py-14">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           <div>
-            <BrandLogo className="h-[58px] w-auto" />
+            <Link href="/" aria-label="AISLUTBOT home" className="inline-block">
+              <BrandLogo className="text-[2.4rem] sm:text-[2.6rem]" />
+            </Link>
             <p className="mt-3 max-w-[22rem] text-sm leading-relaxed text-white/55">
               Experience AI SLUTBOT the cutting edge of AI nude video and image generation. Bring
               your AI SLUT BOT to life in just a few clicks.

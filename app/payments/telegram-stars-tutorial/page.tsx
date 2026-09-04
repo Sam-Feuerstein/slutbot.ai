@@ -12,10 +12,6 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function TelegramStarsPaymentTutorialPage() {
   return (
-    <PaymentTutorialLayout
-      tutorial={TELEGRAM_STARS_PAYMENT_TUTORIAL}
-      alternateHref="/payments/crypto-tutorial"
-      alternateLabel="Cryptocurrency payment tutorial"
-    />
+    <PaymentTutorialLayout tutorial={TELEGRAM_STARS_PAYMENT_TUTORIAL} />
   );
 }

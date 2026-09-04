@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FeaturedOn from '@/app/components/FeaturedOn';
+import BrandLogo from '@/app/components/BrandLogo';
 import { storeAuthSession, clearAuthSession } from '@/lib/auth/session';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import { safeNextPath } from '@/lib/site';
@@ -13,7 +14,17 @@ export { storeAuthSession, clearAuthSession };
 
 const LOGIN_BG_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
 const LOGIN_BG_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
-const LOGIN_LOGO_SRC = '/brand/slutbot-ai-login.png?v=3';
+
+function TelegramMark() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
+      <path
+        fill="currentColor"
+        d="M21.5 3.4 18.2 20c-.25 1.1-.9 1.37-1.82.85l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.15L17.9 6.4c.4-.35-.09-.54-.62-.2L6.7 13.18 1.72 11.6c-1.08-.34-1.1-1.08.24-1.6L20.12 2.7c.9-.34 1.68.2 1.38.7z"
+      />
+    </svg>
+  );
+}
 
 function GoogleMark() {
   return (
@@ -51,7 +62,6 @@ function loginBackPath(redirect: string) {
   if (
     pathname === '/login' ||
     pathname.startsWith('/login/') ||
-    pathname.startsWith('/checkout') ||
     pathname.startsWith('/account') ||
     pathname.startsWith('/admin')
   ) {
@@ -64,6 +74,7 @@ export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = safeNextPath(searchParams.get('redirect'));
+  const fromCheckout = redirect.startsWith('/checkout');
   const backPath = loginBackPath(redirect);
   const isSignup = searchParams.get('mode') !== 'signin';
 
@@ -71,6 +82,10 @@ export default function LoginClient() {
 
   const googleHref = useMemo(
     () => `/api/auth/google?redirect=${encodeURIComponent(redirect)}`,
+    [redirect],
+  );
+  const telegramHref = useMemo(
+    () => `/api/auth/telegram?redirect=${encodeURIComponent(redirect)}`,
     [redirect],
   );
 
@@ -188,8 +203,19 @@ export default function LoginClient() {
 
             <div>
               <h1 className="text-center text-2xl font-black tracking-tight text-white drop-shadow-[0_0_12px_rgba(255,45,120,0.35)]">
-                {isSignup ? 'Create your account' : 'Welcome back'}
+                {isSignup
+                  ? fromCheckout
+                    ? 'Create account to complete payment'
+                    : 'Create your account'
+                  : fromCheckout
+                    ? 'Sign in to complete payment'
+                    : 'Welcome back'}
               </h1>
+              {fromCheckout ? (
+                <p className="mt-2 text-center text-sm text-white/55">
+                  Then we’ll send you back to checkout to finish.
+                </p>
+              ) : null}
             </div>
 
             {error ? <p className="mt-4 text-center text-sm text-[#ffb0c8]">{error}</p> : null}
@@ -200,6 +226,14 @@ export default function LoginClient() {
             >
               <GoogleMark />
               {isSignup ? 'Create account with Google' : 'Continue with Google'}
+            </Link>
+
+            <Link
+              href={telegramHref}
+              className="mt-3 flex w-full items-center justify-center gap-2.5 rounded-full bg-[#229ED9] py-3.5 text-sm font-bold text-white transition hover:bg-[#1b8ec4]"
+            >
+              <TelegramMark />
+              {isSignup ? 'Create account with Telegram' : 'Continue with Telegram'}
             </Link>
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-white/35">
@@ -224,15 +258,7 @@ export default function LoginClient() {
         />
         <div className="safe-x mx-auto flex max-w-[720px] flex-col items-center px-4 py-6 pb-[max(1.25rem,var(--safe-bottom))] sm:py-8">
           <FeaturedOn variant="login-content" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={LOGIN_LOGO_SRC}
-            alt="SLUTBOT AI"
-            width={512}
-            height={512}
-            decoding="async"
-            className="mt-5 h-auto w-12 shrink-0 bg-transparent object-contain sm:mt-6 sm:w-14"
-          />
+          <BrandLogo className="mt-5 text-[2rem] sm:mt-6 sm:text-[2.3rem]" />
         </div>
       </footer>
     </div>

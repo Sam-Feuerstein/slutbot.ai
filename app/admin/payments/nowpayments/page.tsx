@@ -23,7 +23,7 @@ export default function NowPaymentsPage() {
       <PageHeader
         kicker="Crypto"
         title="NOWPayments"
-        description="Same API key as Erogram. Invoices use this account; IPN comes back here so Erogram VIP is never mixed with AI SLUTBOT packs."
+        description="Public crypto checkout is off. This page is leftover NOWPayments wiring only."
         action={
           <div className="flex items-center gap-3">
             <StatusChip connected={connected} />
@@ -61,7 +61,7 @@ export default function NowPaymentsPage() {
         <Panel>
           <h2 className="text-lg font-black">USD pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            Live invoices bill these catalog USD amounts. Conversion base: 1,000 Stars = $25.
+            Live invoices bill these catalog USD amounts. Telegram Stars stay 750 / 1,500 / 2,500 / 5,000. Crypto uses the pack USD (USDT 40% off, $12 minimum).
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {

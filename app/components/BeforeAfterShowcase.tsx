@@ -4,10 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { X, ZoomIn } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAdminSession } from '@/lib/auth/useAdminSession';
 import type { BeforeAfterPair } from '@/lib/beforeAfterExamples';
 import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
+import { SAMPLE_DELETED_EVENT } from '@/lib/samples/adminDelete';
 import { trackSampleClick } from '@/lib/samples/client';
 import { generatorModePath } from '@/lib/site';
+import AdminSampleDeleteButton from './AdminSampleDeleteButton';
 
 function BeforeAfterImage({
   src,
@@ -45,13 +49,22 @@ function BeforeAfterCard({
   pair,
   eager,
   onZoom,
+  showAdminDelete,
 }: {
   pair: BeforeAfterPair;
   eager?: boolean;
   onZoom: (pair: BeforeAfterPair) => void;
+  showAdminDelete?: boolean;
 }) {
   return (
-    <article className="min-w-[min(88vw,22rem)] shrink-0 snap-center sm:min-w-0">
+    <article className="relative min-w-[min(88vw,22rem)] shrink-0 snap-center sm:min-w-0">
+      {showAdminDelete ? (
+        <AdminSampleDeleteButton
+          sampleId={pair.id}
+          title="Before / after"
+          className="absolute right-2 top-2 z-20"
+        />
+      ) : null}
       <button
         type="button"
         onClick={() => {
@@ -155,8 +168,27 @@ export default function BeforeAfterShowcase({
 }: {
   pairs?: BeforeAfterPair[];
 }) {
+  const router = useRouter();
+  const isAdmin = useAdminSession();
+  const [items, setItems] = useState(pairs);
   const [zoomPair, setZoomPair] = useState<BeforeAfterPair | null>(null);
   const closeZoom = useCallback(() => setZoomPair(null), []);
+
+  useEffect(() => {
+    setItems(pairs);
+  }, [pairs]);
+
+  useEffect(() => {
+    const onDeleted = (event: Event) => {
+      const id = (event as CustomEvent<{ id?: string }>).detail?.id;
+      if (!id) return;
+      setItems((prev) => prev.filter((row) => row.id !== id));
+      setZoomPair((current) => (current?.id === id ? null : current));
+      router.refresh();
+    };
+    window.addEventListener(SAMPLE_DELETED_EVENT, onDeleted);
+    return () => window.removeEventListener(SAMPLE_DELETED_EVENT, onDeleted);
+  }, [router]);
 
   return (
     <section className="rounded-2xl border border-black/10 bg-white px-4 py-6 sm:rounded-[28px] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
@@ -166,8 +198,14 @@ export default function BeforeAfterShowcase({
       </h2>
 
       <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 snap-x snap-mandatory scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 md:grid-cols-3 md:gap-x-6 md:gap-y-10">
-        {pairs.map((pair, index) => (
-          <BeforeAfterCard key={pair.id} pair={pair} eager={index < 2} onZoom={setZoomPair} />
+        {items.map((pair, index) => (
+          <BeforeAfterCard
+            key={pair.id}
+            pair={pair}
+            eager={index < 2}
+            onZoom={setZoomPair}
+            showAdminDelete={isAdmin}
+          />
         ))}
       </div>
 

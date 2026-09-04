@@ -78,12 +78,15 @@ export default function AdminSamplesPage() {
   const [heroSlot2, setHeroSlot2] = useState('');
   const [savingHero, setSavingHero] = useState(false);
   const [heroAssigning, setHeroAssigning] = useState('');
+  const [deletingId, setDeletingId] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+      setError('');
+    }
     try {
-      const res = await fetch('/api/admin/samples', { headers: adminHeaders() });
+      const res = await fetch('/api/admin/samples', { headers: adminHeaders(), cache: 'no-store' });
       const json = (await res.json()) as { samples?: SampleWithMetrics[]; message?: string };
       if (!res.ok) {
         setError(json.message || 'Could not load samples.');
@@ -96,7 +99,7 @@ export default function AdminSamplesPage() {
     } catch {
       setError('Could not load samples.');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -331,16 +334,28 @@ export default function AdminSamplesPage() {
 
   async function removeSample(sample: SampleWithMetrics) {
     if (!window.confirm(`Delete “${sample.title}”? This cannot be undone.`)) return;
-    const res = await fetch(`/api/admin/samples?id=${encodeURIComponent(sample.id)}`, {
-      method: 'DELETE',
-      headers: adminHeaders(),
-    });
-    if (!res.ok) {
-      const json = (await res.json()) as { message?: string };
-      setError(json.message || 'Could not delete.');
-      return;
+    setDeletingId(sample.id);
+    setError('');
+    setNote('');
+    try {
+      const res = await fetch(`/api/admin/samples?id=${encodeURIComponent(sample.id)}`, {
+        method: 'DELETE',
+        headers: adminHeaders(),
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { message?: string };
+        setError(json.message || 'Could not delete.');
+        return;
+      }
+      setSamples((prev) => prev.filter((row) => row.id !== sample.id));
+      setNote(`Deleted “${sample.title}”.`);
+      await load(true);
+    } catch {
+      setError('Could not delete.');
+    } finally {
+      setDeletingId('');
     }
-    await load();
   }
 
   async function move(sample: SampleWithMetrics, direction: -1 | 1) {
@@ -610,6 +625,7 @@ export default function AdminSamplesPage() {
         <h2 className="text-lg font-black">
           {tab === 'example' ? 'Example cards' : 'Before / after cards'}
         </h2>
+        {error ? <p className="basis-full text-sm text-rose-300">{error}</p> : null}
         <label className="flex items-center gap-2 text-sm text-white/55">
           Sort
           <select
@@ -749,7 +765,12 @@ export default function AdminSamplesPage() {
                     >
                       Countries
                     </button>
-                    <IconBtn label="Delete" onClick={() => void removeSample(sample)} danger>
+                    <IconBtn
+                      label="Delete"
+                      onClick={() => void removeSample(sample)}
+                      disabled={deletingId === sample.id}
+                      danger
+                    >
                       <Trash2 className="h-4 w-4" />
                     </IconBtn>
                   </div>

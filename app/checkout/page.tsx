@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation';
 import { PREMIUM_PLANS } from '@/lib/premiumPlans';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import { buildPageMetadata } from '@/lib/seo';
-import CheckoutClient, { type CheckoutMethod } from './CheckoutClient';
+import CheckoutClient from './CheckoutClient';
 
 export const metadata = buildPageMetadata({
   title: 'Checkout',
-  description: 'Pay for AI SLUTBOT Stars with Telegram Stars or cryptocurrency.',
+  description: 'Pay for AI SLUTBOT Stars with Telegram Stars.',
   path: '/checkout',
   noIndex: true,
 });
@@ -19,20 +19,18 @@ type SearchParams = Promise<{ plan?: string; method?: string }>;
 
 export default async function CheckoutPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  const requested = params.plan === 'mini' ? 'spark' : params.plan;
   const plan =
-    PREMIUM_PLANS.find((item) => item.id === params.plan) ??
+    PREMIUM_PLANS.find((item) => item.id === requested) ??
     PREMIUM_PLANS.find((item) => item.id === 'flirt');
   if (!plan) redirect('/tool');
-
-  // Treat legacy ?method=card as Stars (Credit / Debit Card option)
-  const initialMethod: CheckoutMethod = params.method === 'crypto' ? 'crypto' : 'stars';
 
   return (
     <>
       <link rel="preload" as="image" href={CHECKOUT_PROMO_POSTER} />
       <link rel="preload" as="video" href={CHECKOUT_PROMO_VIDEO} type="video/mp4" />
       <Suspense fallback={<div className="min-h-dvh bg-white" />}>
-        <CheckoutClient plan={plan} initialMethod={initialMethod} />
+        <CheckoutClient plan={plan} />
       </Suspense>
     </>
   );

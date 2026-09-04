@@ -3,9 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { prefersReducedMedia } from '@/lib/media/autoplay';
+import { useAdminSession } from '@/lib/auth/useAdminSession';
+import { SAMPLE_DELETED_EVENT } from '@/lib/samples/adminDelete';
 import type { PublicHeroDemo } from '@/lib/samples';
 import { generatorModePath } from '@/lib/site';
+import AdminSampleDeleteButton from './AdminSampleDeleteButton';
 
 const FALLBACK_DEMOS: [PublicHeroDemo, PublicHeroDemo] = [
   { id: 'example-ex-1', poster: '/examples/example-ex-1.jpg', video: '/examples/example-ex-1.mp4' },
@@ -15,15 +19,19 @@ const FALLBACK_DEMOS: [PublicHeroDemo, PublicHeroDemo] = [
 const STEPS = ['Upload photo', 'Generate video or image', 'Save it.'] as const;
 
 function DemoMedia({
+  id,
   poster,
   videoSrc,
   priority = false,
   autoplay = false,
+  showAdminDelete = false,
 }: {
+  id?: string;
   poster: string;
   videoSrc?: string;
   priority?: boolean;
   autoplay?: boolean;
+  showAdminDelete?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playVideo, setPlayVideo] = useState(false);
@@ -40,7 +48,14 @@ function DemoMedia({
   }, [playVideo]);
 
   return (
-    <figure className="min-w-0 flex-1">
+    <figure className="relative min-w-0 flex-1">
+      {showAdminDelete && id ? (
+        <AdminSampleDeleteButton
+          sampleId={id}
+          title="Hero sample"
+          className="absolute right-3 top-3 z-20"
+        />
+      ) : null}
       <div className="relative overflow-hidden rounded-lg border-[4px] border-[#ff2d78] bg-[#ff2d78] p-1 shadow-[5px_5px_0_0_#000] sm:rounded-xl sm:border-[5px] sm:p-1.5 sm:shadow-[6px_6px_0_0_#000]">
         <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-black sm:rounded-lg">
           <Image
@@ -95,17 +110,59 @@ export default function PromoBanner({
 }: {
   demos?: [PublicHeroDemo, PublicHeroDemo];
 }) {
-  const left = demos[0] || FALLBACK_DEMOS[0];
-  const right = demos[1] || FALLBACK_DEMOS[1];
+  const router = useRouter();
+  const isAdmin = useAdminSession();
+  const [items, setItems] = useState(demos);
+
+  useEffect(() => {
+    setItems(demos);
+  }, [demos]);
+
+  useEffect(() => {
+    const onDeleted = (event: Event) => {
+      const id = (event as CustomEvent<{ id?: string }>).detail?.id;
+      if (!id) return;
+      setItems((prev) => prev.map((row) => (row.id === id ? { id: '', poster: '' } : row)) as typeof prev);
+      router.refresh();
+    };
+    window.addEventListener(SAMPLE_DELETED_EVENT, onDeleted);
+    return () => window.removeEventListener(SAMPLE_DELETED_EVENT, onDeleted);
+  }, [router]);
+
+  const left = items[0]?.poster ? items[0] : null;
+  const right = items[1]?.poster ? items[1] : null;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-black/10 bg-white px-4 py-6 sm:rounded-[28px] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
       <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
         <div className="min-w-0">
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <DemoMedia poster={left.poster} videoSrc={left.video} priority autoplay />
-            <DemoMedia poster={right.poster} videoSrc={right.video} autoplay />
-          </div>
+          {left || right ? (
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {left ? (
+                <DemoMedia
+                  id={left.id}
+                  poster={left.poster}
+                  videoSrc={left.video}
+                  priority
+                  autoplay
+                  showAdminDelete={isAdmin}
+                />
+              ) : (
+                <div />
+              )}
+              {right ? (
+                <DemoMedia
+                  id={right.id}
+                  poster={right.poster}
+                  videoSrc={right.video}
+                  autoplay
+                  showAdminDelete={isAdmin}
+                />
+              ) : (
+                <div />
+              )}
+            </div>
+          ) : null}
 
           <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:flex-wrap">
             <Link

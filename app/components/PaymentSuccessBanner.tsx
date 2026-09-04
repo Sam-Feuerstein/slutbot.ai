@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { CURRENCY_NAME, refreshDesiresFromServer } from '@/lib/desires';
 import { GENERATOR_PATH } from '@/lib/site';
 
-const BALANCE_BEFORE_KEY = 'slutbot-payment-balance-before';
+export const BALANCE_BEFORE_KEY = 'slutbot-payment-balance-before';
 
 export default function PaymentSuccessBanner() {
   const searchParams = useSearchParams();

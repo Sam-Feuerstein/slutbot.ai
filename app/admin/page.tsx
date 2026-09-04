@@ -21,7 +21,7 @@ const CARDS = [
   {
     href: '/admin/emails',
     title: 'Email',
-    copy: 'Offers, purchase receipts, and password restore templates.',
+    copy: 'Welcome email, purchase receipts, and SMTP from hello@aislutbot.com.',
     key: 'email' as const,
   },
   {

@@ -140,8 +140,7 @@ export default function TelegramStarsPage() {
         <Panel>
           <h2 className="text-lg font-black">Stars pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            These fields are a local preview. Live Telegram invoices use catalog Stars. List USD is 1,000 Stars = $25.
-            Crypto still uses the NOWPayments USD prices.
+            Live Telegram invoices use catalog Stars. Telegram list is 750 Stars ≈ $9.97.
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {

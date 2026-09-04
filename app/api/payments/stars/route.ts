@@ -5,10 +5,7 @@ import { getCheckoutPlan } from '@/lib/payments/catalog';
 import { paymentAuthRequiredResponse, requireSlutbotUser } from '@/lib/payments/requireAuth';
 import { createStarsInvoiceLink, telegramPaymentBotConfigured } from '@/lib/payments/telegram';
 import { countryFromHeaders } from '@/lib/starsGeo/detect';
-import { resolveCheckoutPriceCoupon } from '@/lib/coupons/store';
-import { applyCouponToStars } from '@/lib/coupons/pricing';
-import { usdListFromStars } from '@/lib/premiumPlans';
-import { isCryptoCouponCode } from '@/lib/payments/cryptoCoupon';
+import { isTelegramStarAmount, usdTelegramFromStars } from '@/lib/premiumPlans';
 
 export async function POST(req: NextRequest) {
   if (!telegramPaymentBotConfigured()) {
@@ -19,7 +16,7 @@ export async function POST(req: NextRequest) {
   const user = await requireSlutbotUser(req);
   if (!user) return paymentAuthRequiredResponse();
 
-  const body = (await req.json().catch(() => null)) as { plan?: string; couponCode?: string } | null;
+  const body = (await req.json().catch(() => null)) as { plan?: string } | null;
   const planId = body?.plan?.trim() || '';
   const clientId = user.clientId;
 
@@ -28,28 +25,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Invalid plan' }, { status: 400 });
   }
 
-  let coupon = null;
-  if (body?.couponCode?.trim()) {
-    if (isCryptoCouponCode(body.couponCode)) {
-      return NextResponse.json(
-        { message: 'This coupon only works with USDT crypto payment.' },
-        { status: 400 },
-      );
-    }
-    try {
-      coupon = await resolveCheckoutPriceCoupon({ code: body.couponCode, userId: user.id });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Invalid coupon code.';
-      return NextResponse.json({ message }, { status: 400 });
-    }
+  if (!isTelegramStarAmount(plan.starsAmount)) {
+    return NextResponse.json({ message: 'Invalid plan' }, { status: 400 });
   }
 
-  const starsAmount = applyCouponToStars({
-    catalogStars: plan.starsAmount,
-    geoStars: plan.starsAmount,
-    coupon,
-    roundUpTo: 1,
-  });
+  const starsAmount = plan.starsAmount;
 
   try {
     const created = await createStarsInvoiceLink({
@@ -72,16 +52,11 @@ export async function POST(req: NextRequest) {
       planId: plan.id,
       provider: 'telegram_stars',
       status: 'pending',
-      usdAmount: usdListFromStars(starsAmount),
+      usdAmount: usdTelegramFromStars(starsAmount),
       starsAmount,
-      // Invoice starsAmount can be discounted. Wallet always gets full pack Stars.
       desires: plan.desires,
       invoiceUrl: created.url,
       country: countryFromHeaders(req.headers),
-      couponCode: coupon?.code || '',
-      couponType: coupon?.type || '',
-      couponDiscountPercent: coupon?.discountPercent || 0,
-      couponDiscountUsd: coupon?.discountUsd || 0,
     });
 
     return NextResponse.json({ url: created.url, starsAmount });

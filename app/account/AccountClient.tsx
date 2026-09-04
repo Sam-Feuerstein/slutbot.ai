@@ -28,6 +28,10 @@ type AccountData = {
   avatarUrl?: string;
   hasPassword: boolean;
   googleLinked: boolean;
+  telegramLinked: boolean;
+  telegramUsername: string;
+  signInLabel: string;
+  loginEmail: string;
   imageGens: number;
   videoGens: number;
   joinedAt: string;
@@ -281,13 +285,7 @@ export default function AccountClient() {
                 </div>
                 <div>
                   <dt className="text-white/45">Sign-in</dt>
-                  <dd className="font-semibold">
-                    {account.googleLinked && account.hasPassword
-                      ? 'Google + email'
-                      : account.googleLinked
-                        ? 'Google'
-                        : 'Email & password'}
-                  </dd>
+                  <dd className="font-semibold">{account.signInLabel}</dd>
                 </div>
               </dl>
             </section>
@@ -321,10 +319,13 @@ export default function AccountClient() {
               <h2 className="text-lg font-bold">Profile</h2>
               <form className="mt-4 space-y-3" onSubmit={saveProfile}>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-white/45">
-                  Email
+                  {account.telegramLinked && !account.loginEmail ? 'Telegram' : 'Email'}
                   <input
-                    type="email"
-                    value={account.email}
+                    type={account.loginEmail ? 'email' : 'text'}
+                    value={
+                      account.loginEmail ||
+                      (account.telegramUsername ? `@${account.telegramUsername}` : 'Telegram')
+                    }
                     readOnly
                     className="mt-1.5 w-full rounded-2xl border border-white/10 bg-black/40 px-3.5 py-3 text-base text-white/70"
                   />
@@ -395,7 +396,11 @@ export default function AccountClient() {
               <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
                 <h2 className="text-lg font-bold">Password</h2>
                 <p className="mt-2 text-sm text-white/55">
-                  This account signs in with Google. Password management is handled by Google.
+                  {account.telegramLinked && account.googleLinked
+                    ? 'This account signs in with Google or Telegram.'
+                    : account.telegramLinked
+                      ? 'This account signs in with Telegram. There is no password on file.'
+                      : 'This account signs in with Google. Password management is handled by Google.'}
                 </p>
               </section>
             )}

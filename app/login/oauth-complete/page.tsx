@@ -11,7 +11,7 @@ export default function OauthCompletePage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center bg-[#090505] text-white">
-          Completing Google sign-in…
+          Completing sign-in…
         </div>
       }
     >

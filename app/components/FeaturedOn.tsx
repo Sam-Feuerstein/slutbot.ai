@@ -1,3 +1,11 @@
+import { Archivo_Black } from 'next/font/google';
+
+const erogramxMark = Archivo_Black({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
 type Publication = {
   name: string;
   href: string;
@@ -7,6 +15,10 @@ type Publication = {
 };
 
 const FEATURED_PUBLICATIONS: Publication[] = [
+  {
+    name: 'EROGRAMX',
+    href: 'https://erogram.pro/',
+  },
   {
     name: 'The New York Times',
     href: 'https://www.nytimes.com/',
@@ -33,10 +45,6 @@ const FEATURED_PUBLICATIONS: Publication[] = [
     height: 414,
   },
   {
-    name: 'Futurism',
-    href: 'https://futurism.com/',
-  },
-  {
     name: 'Wired',
     href: 'https://www.wired.com/',
     logo: '/featured/wired.svg',
@@ -46,6 +54,17 @@ const FEATURED_PUBLICATIONS: Publication[] = [
 ];
 
 function PublicationMark({ name }: { name: string }) {
+  if (name === 'EROGRAMX') {
+    return (
+      <span
+        className={`${erogramxMark.className} inline-flex items-baseline text-[13px] leading-none tracking-[-0.04em] text-white sm:text-[16px]`}
+      >
+        <span className="relative z-10">EROGRAM</span>
+        <span className="relative z-0 -ml-0.5 text-[1.1em] leading-none tracking-tight">X</span>
+      </span>
+    );
+  }
+
   if (name === 'New York Post') {
     return (
       <span className="flex flex-col items-center justify-center text-white">
@@ -54,12 +73,6 @@ function PublicationMark({ name }: { name: string }) {
           POST
         </span>
       </span>
-    );
-  }
-
-  if (name === 'Futurism') {
-    return (
-      <span className="text-[13px] font-extrabold tracking-[0.28em] text-white">FUTURISM</span>
     );
   }
 

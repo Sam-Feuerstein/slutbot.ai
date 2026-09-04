@@ -1,5 +1,6 @@
 import { envValue } from '@/lib/env';
-import { getAppUrl } from '@/lib/site';
+import { GENERATOR_PATH, getAppUrl } from '@/lib/site';
+import { isTelegramStarAmount } from '@/lib/premiumPlans';
 
 /** Never point this app's webhook at these bots — they belong to Erogram. */
 const BLOCKED_BOT_USERNAMES = new Set(['erogramvipbot']);
@@ -45,6 +46,29 @@ export function parseSlutbotPayload(raw: string): InvoicePayload | null {
   }
 }
 
+export async function sendTelegramText(chatId: number, text: string) {
+  const token = botToken();
+  if (!token || !Number.isFinite(chatId)) return;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      disable_web_page_preview: true,
+    }),
+  });
+}
+
+export async function notifyTelegramPaymentReceived(chatId: number, stars: number) {
+  const url = `${getAppUrl()}${GENERATOR_PATH}`;
+  const amount = Math.max(0, Math.round(stars)).toLocaleString('en-US');
+  await sendTelegramText(
+    chatId,
+    `Payment received. ${amount} Stars were added to your AI SLUTBOT wallet.\n\nOpen the app:\n${url}`,
+  );
+}
+
 export async function answerPreCheckoutQuery(id: string, ok: boolean, errorMessage?: string) {
   const token = botToken();
   if (!token) return;
@@ -80,6 +104,11 @@ export async function createStarsInvoiceLink(input: {
     };
   }
 
+  const starsAmount = Math.round(input.starsAmount);
+  if (!isTelegramStarAmount(starsAmount)) {
+    return { error: 'This pack is not a Telegram Stars payment option. Open checkout again.' };
+  }
+
   const res = await fetch(`https://api.telegram.org/bot${botToken()}/createInvoiceLink`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,10 +119,10 @@ export async function createStarsInvoiceLink(input: {
         source: 'slutbot',
         clientId: input.clientId,
         plan: input.planId,
-        stars: input.starsAmount,
+        stars: starsAmount,
       } satisfies InvoicePayload),
       currency: 'XTR',
-      prices: [{ label: input.label, amount: input.starsAmount }],
+      prices: [{ label: input.label, amount: starsAmount }],
     }),
   });
 

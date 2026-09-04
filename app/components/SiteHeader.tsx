@@ -29,7 +29,7 @@ import {
   remainingGenerationsCopy,
 } from '@/lib/desires';
 import GuestSignupOffer from './GuestSignupOffer';
-import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH, ARCHIVE_PATH } from '@/lib/site';
+import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH, ARCHIVE_PATH, checkoutHref } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -138,15 +138,8 @@ export default function SiteHeader() {
         }`}
       >
         <div className="safe-x relative mx-auto flex min-h-[4.75rem] max-w-[1600px] items-center justify-between gap-2 overflow-hidden py-1.5 sm:min-h-[5.5rem] sm:gap-4 sm:overflow-visible sm:py-2.5">
-          <Link
-            href="/"
-            aria-label="AI SLUTBOT home"
-            className="flex min-w-0 flex-col items-start gap-0.5 overflow-hidden sm:translate-y-0.5 sm:gap-1"
-          >
-            <BrandLogo className="h-14 w-auto max-w-[min(100%,14rem)] sm:h-[73px] sm:max-w-full" preload />
-            <span className="max-w-[min(100%,14rem)] truncate text-[9px] font-semibold leading-tight tracking-[0.05em] text-white/65 sm:max-w-none sm:text-[11px] sm:tracking-[0.06em]">
-              #1 Nude image and Video Generator
-            </span>
+          <Link href="/" aria-label="AI SLUTBOT home" className="min-w-0 overflow-hidden">
+            <BrandLogo className="text-[2.15rem] sm:text-[2.8rem]" />
           </Link>
 
           <div className="relative z-10 flex shrink-0 items-center gap-1.5 sm:gap-2.5">
@@ -280,7 +273,22 @@ export default function SiteHeader() {
                   (480p)
                 </p>
               </button>
-            ) : null}
+            ) : (
+              <Link
+                href={checkoutHref({ plan: 'flirt' })}
+                onClick={() => setMenuOpen(false)}
+                className="relative mb-2.5 block w-full rounded-lg border border-[#ff2d78]/35 bg-black/25 px-2.5 py-2.5 text-left transition-colors hover:bg-black/35"
+              >
+                <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
+                  <SparkleIcon className="h-3.5 w-3.5 shrink-0 text-[#ff2d78]" />
+                  <span>Buy Stars</span>
+                  <span className="ml-auto shrink-0 text-[10px] font-semibold text-[#ff9dbe]">See pricing</span>
+                </p>
+                <p className="mt-1 text-[10px] leading-snug text-white/45">
+                  Choose a pack, then sign in or create an account to pay.
+                </p>
+              </Link>
+            )}
 
             <Link
               href={GENERATOR_PATH}

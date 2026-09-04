@@ -11,14 +11,14 @@ export default function OauthCompleteClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = safeNextPath(searchParams.get('redirect'));
-  const [message, setMessage] = useState('Completing Google sign-in…');
+  const [message, setMessage] = useState('Completing sign-in…');
 
   useEffect(() => {
     let cancelled = false;
 
     async function complete() {
       try {
-        const res = await fetch('/api/auth/google/complete', { credentials: 'include' });
+        const res = await fetch('/api/auth/oauth/complete', { credentials: 'include' });
         const data = (await res.json()) as {
           clientId?: string;
           email?: string;
@@ -32,7 +32,7 @@ export default function OauthCompleteClient() {
         if (cancelled) return;
 
         if (!res.ok || !data.clientId) {
-          setMessage(data.message || 'Google sign-in failed.');
+          setMessage(data.message || 'Sign-in failed.');
           return;
         }
 
@@ -49,7 +49,7 @@ export default function OauthCompleteClient() {
         router.replace(redirect);
       } catch {
         if (!cancelled) {
-          setMessage('Google sign-in failed.');
+          setMessage('Sign-in failed.');
         }
       }
     }
@@ -64,7 +64,7 @@ export default function OauthCompleteClient() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[#090505] px-4 py-[max(1.5rem,var(--safe-top))] text-white">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 text-center shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
-        <BrandLogo className="mx-auto mb-5 h-[51px] w-auto" />
+        <BrandLogo className="mx-auto mb-5 text-[2.15rem] sm:text-[2.4rem]" />
         <p className="text-sm text-white/70">{message}</p>
       </div>
     </div>
