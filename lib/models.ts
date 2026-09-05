@@ -191,6 +191,7 @@ const analyticsEventSchema = new Schema(
   { timestamps: true, collection: 'analyticsevents' },
 );
 analyticsEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 });
+analyticsEventSchema.index({ name: 1, createdAt: 1 });
 
 export const AnalyticsEvent = models.AnalyticsEvent || model('AnalyticsEvent', analyticsEventSchema);
 

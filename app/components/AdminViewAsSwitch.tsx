@@ -9,14 +9,16 @@ const OPTIONS: { id: AccountTier; label: string }[] = [
   { id: 'ultra', label: 'ULTRA' },
 ];
 
-export default function AdminViewAsSwitch() {
+export default function AdminViewAsSwitch({ compact = false }: { compact?: boolean }) {
   const { canPreview, preview, setPreview } = useViewAs();
   if (!canPreview || !preview) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2">
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">View as</span>
-      <div className="inline-flex rounded-full border border-white/15 bg-black/50 p-0.5">
+    <div className={`flex items-center gap-1.5 ${compact ? '' : 'justify-center gap-2'}`}>
+      <span className={`font-bold uppercase tracking-[0.16em] text-white/70 ${compact ? 'hidden text-[9px] sm:inline' : 'text-[10px] text-white/45'}`}>
+        View as
+      </span>
+      <div className="inline-flex rounded-full border border-white/20 bg-black/60 p-0.5 backdrop-blur-md">
         {OPTIONS.map((option) => {
           const active = preview === option.id;
           return (

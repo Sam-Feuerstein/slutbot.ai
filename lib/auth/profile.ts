@@ -54,14 +54,14 @@ export function clearUserProfile() {
   window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT));
 }
 
-export async function fetchUserProfile(): Promise<UserProfile | null> {
+export async function fetchUserProfile(): Promise<(UserProfile & { isAdmin?: boolean }) | null> {
   const epoch = getAuthEpoch();
   if (!isSignedIn()) return null;
 
   try {
     const res = await fetch('/api/auth/me', { credentials: 'include' });
     if (epoch !== getAuthEpoch() || !isSignedIn() || !res.ok) return null;
-    const data = (await res.json()) as UserProfile;
+    const data = (await res.json()) as UserProfile & { isAdmin?: boolean };
     if (epoch !== getAuthEpoch() || !isSignedIn() || !data.email) return null;
     const profile: UserProfile = {
       name: data.name || '',
@@ -69,7 +69,7 @@ export async function fetchUserProfile(): Promise<UserProfile | null> {
       avatarUrl: data.avatarUrl || '',
     };
     cacheUserProfile(profile);
-    return profile;
+    return { ...profile, isAdmin: Boolean(data.isAdmin) };
   } catch {
     return readCachedUserProfile();
   }

@@ -55,8 +55,8 @@ function AdminLoginForm() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-      <form onSubmit={onSubmit} className="w-full rounded-[28px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+    <div className="mx-auto flex min-h-[100dvh] max-w-md items-center px-4 py-8 pt-[max(2rem,var(--safe-top))] pb-[max(2rem,var(--safe-bottom))]">
+      <form onSubmit={onSubmit} className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[28px] sm:p-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ff6b9d]">Admin</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">Sign in</h1>
         <p className="mt-2 text-sm text-white/50">Use your admin login and password.</p>

@@ -5,6 +5,7 @@ import { CRYPTO_DISCOUNT_PERCENT } from '@/lib/premiumPlans';
 import { CRYPTO_COUPON_CODE, normalizeCryptoCouponCode } from '@/lib/payments/cryptoCoupon';
 import {
   asPriceCouponType,
+  couponLookupCode,
   normalizeCouponCode,
   type Coupon,
   type CouponInput,
@@ -161,7 +162,7 @@ export async function listCoupons(): Promise<Coupon[]> {
 
 export async function getCouponByCode(code: string): Promise<Coupon | null> {
   await connectDB();
-  const doc = (await SlutbotCoupon.findOne({ code: normalizeCouponCode(code) }).lean()) as CouponDoc | null;
+  const doc = (await SlutbotCoupon.findOne({ code: couponLookupCode(code) }).lean()) as CouponDoc | null;
   return doc ? toCoupon(doc) : null;
 }
 

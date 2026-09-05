@@ -478,20 +478,9 @@ export default function CheckoutClient({ plan }: Props) {
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[#0a0208] text-white">
-      <video
-        src={CHECKOUT_PROMO_VIDEO}
-        poster={CHECKOUT_PROMO_POSTER}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        className="absolute inset-0 h-full w-full object-cover object-top"
-        aria-hidden
-      />
-      <div className="absolute inset-0 bg-[#0a0208]/38" aria-hidden />
+      <div className="absolute inset-0 z-[1] hidden bg-[#0a0208]/38 sm:block" aria-hidden />
       <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.12),transparent_55%),linear-gradient(180deg,rgba(10,2,8,0.2)_0%,rgba(10,2,8,0.55)_100%)]"
+        className="absolute inset-0 z-[1] hidden bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.12),transparent_55%),linear-gradient(180deg,rgba(10,2,8,0.2)_0%,rgba(10,2,8,0.55)_100%)] sm:block"
         aria-hidden
       />
 
@@ -533,11 +522,38 @@ export default function CheckoutClient({ plan }: Props) {
         </div>
       ) : null}
 
-      <nav className="relative z-20 flex items-center gap-2 px-4 pt-[max(0.75rem,var(--safe-top))] sm:px-6">
+      <div className="relative z-10 h-[32vh] w-full sm:absolute sm:inset-0 sm:z-0 sm:h-full">
+        <video
+          src={CHECKOUT_PROMO_VIDEO}
+          poster={CHECKOUT_PROMO_POSTER}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-cover object-top"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-[#0a0208]/38 sm:hidden" aria-hidden />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,45,120,0.12),transparent_55%),linear-gradient(180deg,rgba(10,2,8,0.2)_0%,rgba(10,2,8,0.55)_100%)] sm:hidden"
+          aria-hidden
+        />
+        <p className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-5 pt-8 text-center sm:hidden">
+          <span className="inline-flex flex-wrap items-baseline justify-center gap-x-2 leading-none">
+            <BrandLogo className="text-[1.55rem]" />
+            <span className="text-[1.05rem] font-black uppercase tracking-[0.08em] text-white">
+              Undress Anyone
+            </span>
+          </span>
+        </p>
+      </div>
+
+      <nav className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 bg-gradient-to-b from-black/70 to-transparent px-3 pb-6 pt-[max(0.75rem,var(--safe-top))] sm:relative sm:bg-none sm:px-6 sm:pb-0">
         <Link
           href="/tool"
           aria-label="Back"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/55"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/55"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
             <path
@@ -549,25 +565,24 @@ export default function CheckoutClient({ plan }: Props) {
             />
           </svg>
         </Link>
-        <Link href="/" className="inline-block">
-          <BrandLogo className="text-[1.25rem] sm:text-[1.35rem]" />
+        <Link href="/" className="text-sm font-medium text-white/45 hover:text-white/70">
+          Home
         </Link>
-        <span className="text-white/40">/</span>
-        <span className="text-sm font-medium text-white/90">Checkout</span>
+        <span className="text-sm font-medium text-white/25">/</span>
+        <span className="text-sm font-medium text-white/45">Checkout</span>
+        <div className="ml-auto min-w-0">
+          <AdminViewAsSwitch compact />
+        </div>
       </nav>
 
-      <main className="relative z-10 flex flex-1 items-start justify-center px-4 py-5 sm:items-center sm:py-8">
-        <div className="relative w-full max-w-[560px] overflow-hidden rounded-2xl border border-[#ff2d78]/35 bg-[#140810]/82 p-4 shadow-[0_0_40px_rgba(255,45,120,0.18),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-5">
+      <main className="relative z-10 -mt-4 flex flex-1 items-start justify-center px-4 py-3 sm:mt-0 sm:items-center sm:py-8">
+        <div className="relative w-full max-w-[560px] overflow-hidden rounded-2xl border border-[#ff2d78]/35 bg-[#140810]/82 bg-gradient-to-b from-[#140810]/55 via-[#140810]/82 to-[#140810]/88 p-4 shadow-[0_0_40px_rgba(255,45,120,0.18),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-md sm:bg-[#140810]/82 sm:bg-none sm:p-5">
           <div
             className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff2d78]/80 to-transparent"
             aria-hidden
           />
 
-          <div className="mb-3">
-            <AdminViewAsSwitch />
-          </div>
-          <h1 className="text-center text-xl font-black tracking-tight text-white sm:text-2xl">Choose a pack</h1>
-          <p className="mt-1 text-center text-sm text-white/60">
+          <p className="text-center text-sm text-white/60">
             {isCrypto
               ? 'One-time payment. Credits never expire. Pay with USDT (TRC20).'
               : 'One-time payment. Stars never expire. Pay by card in Telegram.'}

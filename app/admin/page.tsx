@@ -51,6 +51,13 @@ type Overview = {
   freeUsers: number;
   pwaInstalls: number;
   totalVisits: number;
+  hourVisits: number;
+  todayVisits: number;
+  hourlyVisits: Array<{ hour: string; visits: number }>;
+  todayImages: number;
+  todayVideos: number;
+  hourImages: number;
+  hourVideos: number;
   dailyVisits: Array<{ day: string; visits: number }>;
   visitsByCountry: Array<{ country: string; visits: number }>;
   daily: Array<{ day: string; paid: number; free: number }>;
@@ -115,8 +122,8 @@ function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
   const active = hover != null ? points[hover] : null;
 
   return (
-    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Unique daily visits">
+    <div className="relative" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[180px] w-full sm:h-[220px]" role="img" aria-label="Unique daily visits">
         <defs>
           <linearGradient id="visitsFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#ff2d78" stopOpacity="0.35" />
@@ -140,9 +147,11 @@ function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
         {points.map((p, i) => (
           <g key={p.day}>
             <circle cx={p.x} cy={p.y} r={hover === i ? 5 : 3.5} fill="#ff2d78" />
-            <text x={p.x} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
-              {formatDay(p.day)}
-            </text>
+            {i % 2 === 0 || i === points.length - 1 ? (
+              <text x={p.x} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+                {formatDay(p.day)}
+              </text>
+            ) : null}
             <rect
               x={p.x - step / 2}
               y={pad.t}
@@ -223,8 +232,8 @@ function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
   const activeX = hover != null ? pad.l + hover * groupW + barW : 0;
 
   return (
-    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Paid vs free users by signup day">
+    <div className="relative" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[180px] w-full sm:h-[220px]" role="img" aria-label="Paid vs free users by signup day">
         {daily.map((row, i) => {
           const x0 = pad.l + i * groupW;
           const paidH = (row.paid / max) * innerH;
@@ -248,9 +257,11 @@ function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
                 fill="#6b7280"
               />
               <rect x={x0} y={pad.t} width={groupW} height={innerH} fill="transparent" />
-              <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
-                {formatDay(row.day)}
-              </text>
+              {i % 2 === 0 || i === daily.length - 1 ? (
+                <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+                  {formatDay(row.day)}
+                </text>
+              ) : null}
             </g>
           );
         })}
@@ -290,8 +301,8 @@ function DailyGenerationsChart({ daily }: { daily: Overview['dailyGenerations'] 
   const activeX = hover != null ? pad.l + hover * groupW + barW : 0;
 
   return (
-    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Images and videos generated per day">
+    <div className="relative" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[180px] w-full sm:h-[220px]" role="img" aria-label="Images and videos generated per day">
         {daily.map((row, i) => {
           const x0 = pad.l + i * groupW;
           const imageH = (row.images / max) * innerH;
@@ -315,9 +326,11 @@ function DailyGenerationsChart({ daily }: { daily: Overview['dailyGenerations'] 
                 fill="#60a5fa"
               />
               <rect x={x0} y={pad.t} width={groupW} height={innerH} fill="transparent" />
-              <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
-                {formatDay(row.day)}
-              </text>
+              {i % 2 === 0 || i === daily.length - 1 ? (
+                <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+                  {formatDay(row.day)}
+                </text>
+              ) : null}
             </g>
           );
         })}
@@ -346,19 +359,84 @@ function DailyGenerationsChart({ daily }: { daily: Overview['dailyGenerations'] 
   );
 }
 
+function formatHourLabel(hour: string) {
+  const hh = Number(hour.slice(11, 13));
+  return `${String(hh).padStart(2, '0')}h`;
+}
+
+function HourlyVisitsStrip({ hourly }: { hourly: Overview['hourlyVisits'] }) {
+  const max = Math.max(1, ...hourly.map((row) => row.visits));
+  if (!hourly.length) return <p className="text-sm text-white/40">No hourly visits yet.</p>;
+  return (
+    <div>
+      <div className="flex h-16 items-end gap-0.5 sm:h-20 sm:gap-1">
+        {hourly.map((row) => (
+          <div key={row.hour} className="flex min-w-0 flex-1 flex-col items-center justify-end">
+            <span className="mb-1 hidden text-[9px] tabular-nums text-white/40 sm:block">
+              {row.visits || ''}
+            </span>
+            <div
+              className="w-full rounded-t bg-[#ff2d78]"
+              style={{ height: `${Math.max(row.visits ? 8 : 2, (row.visits / max) * 100)}%` }}
+              title={`${formatHourLabel(row.hour)} · ${row.visits} unique`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex justify-between text-[9px] text-white/30 sm:text-[10px]">
+        <span>{formatHourLabel(hourly[0].hour)}</span>
+        <span>Last 24h UTC</span>
+        <span>{formatHourLabel(hourly[hourly.length - 1].hour)}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <Panel className="!p-4 sm:!p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">{label}</p>
+      <p className="mt-2 text-2xl font-black tracking-tight tabular-nums sm:mt-3 sm:text-3xl">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-white/40">{hint}</p> : null}
+    </Panel>
+  );
+}
+
 export default function AdminOverviewPage() {
   const env = usePaymentEnvStatus();
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    void fetch('/api/admin/overview')
-      .then(async (res) => {
-        const json = (await res.json()) as Overview & { message?: string };
-        if (!res.ok) throw new Error(json.message || 'Could not load overview.');
-        setData(json);
-      })
-      .catch((err: Error) => setError(err.message));
+    let cancelled = false;
+    const load = () => {
+      void fetch('/api/admin/overview')
+        .then(async (res) => {
+          const json = (await res.json()) as Overview & { message?: string };
+          if (!res.ok) throw new Error(json.message || 'Could not load overview.');
+          if (!cancelled) {
+            setData(json);
+            setError('');
+          }
+        })
+        .catch((err: Error) => {
+          if (!cancelled) setError(err.message);
+        });
+    };
+    load();
+    const timer = window.setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const connected = {
@@ -373,36 +451,67 @@ export default function AdminOverviewPage() {
       <PageHeader
         kicker="Control room"
         title="Live admin overview"
-        description="Totals from real users and paid invoices. No demo numbers."
+        description="Live visits and generations at the top. Totals below are from real users and paid invoices. Refreshes every 30 seconds."
       />
 
       {error ? <p className="mb-4 text-sm text-rose-300">{error}</p> : null}
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Panel className="!p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total paid</p>
-          <p className="mt-3 text-3xl font-black tracking-tight">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Visits this hour"
+          value={data ? data.hourVisits.toLocaleString('en-US') : '—'}
+          hint="Unique browsers, current UTC hour"
+        />
+        <StatCard
+          label="Visits today"
+          value={data ? data.todayVisits.toLocaleString('en-US') : '—'}
+          hint="Unique visitors since 00:00 UTC"
+        />
+        <StatCard
+          label="Photos today"
+          value={data ? data.todayImages.toLocaleString('en-US') : '—'}
+          hint={data ? `${data.hourImages} this hour` : 'Image generations'}
+        />
+        <StatCard
+          label="Videos today"
+          value={data ? data.todayVideos.toLocaleString('en-US') : '—'}
+          hint={data ? `${data.hourVideos} this hour` : 'Video generations'}
+        />
+      </div>
+
+      <Panel className="mb-6">
+        <h2 className="text-base font-black sm:text-lg">Hourly visits</h2>
+        <p className="mt-1 text-sm text-white/45">Unique visitors in each of the last 24 UTC hours.</p>
+        <div className="mt-4">
+          {data ? <HourlyVisitsStrip hourly={data.hourlyVisits || []} /> : <p className="text-sm text-white/40">Loading…</p>}
+        </div>
+      </Panel>
+
+      <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+        <Panel className="!p-4 sm:!p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">Total paid</p>
+          <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">
             {data ? formatUsd(data.totalPaid) : '—'}
           </p>
           <p className="mt-1 text-xs text-white/40">
             {data ? `${data.paidUsers} paid users` : ''}
           </p>
         </Panel>
-        <Panel className="!p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total users</p>
-          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalUsers : '—'}</p>
+        <Panel className="!p-4 sm:!p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">Total users</p>
+          <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">{data ? data.totalUsers : '—'}</p>
           <p className="mt-1 text-xs text-white/40">
             {data ? `${data.freeUsers} free` : ''}
           </p>
         </Panel>
-        <Panel className="!p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Total visits</p>
-          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.totalVisits.toLocaleString('en-US') : '—'}</p>
+        <Panel className="!p-4 sm:!p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">Total visits</p>
+          <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">{data ? data.totalVisits.toLocaleString('en-US') : '—'}</p>
           <p className="mt-1 text-xs text-white/40">Unique visitors (all time)</p>
         </Panel>
-        <Panel className="!p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">App installs</p>
-          <p className="mt-3 text-3xl font-black tracking-tight">{data ? data.pwaInstalls : '—'}</p>
+        <Panel className="!p-4 sm:!p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">App installs</p>
+          <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">{data ? data.pwaInstalls : '—'}</p>
           <p className="mt-1 text-xs text-white/40">
             <Link href="/admin/app" className="text-[#ff6b9d] hover:text-white">Open list →</Link>
           </p>

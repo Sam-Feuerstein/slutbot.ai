@@ -78,17 +78,17 @@ export default function AdminUsersPage() {
         title="Users"
         description="Create test accounts, set passwords, and allocate Stars."
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search email, name"
-              className={`${inputClass} w-56`}
+              className={`${inputClass} w-full sm:w-56`}
             />
             <button
               type="button"
               onClick={() => setShowCreate((v) => !v)}
-              className="rounded-full bg-[#ff2d78] px-5 py-2.5 text-sm font-bold text-white"
+              className="min-h-11 rounded-full bg-[#ff2d78] px-5 py-2.5 text-sm font-bold text-white"
             >
               {showCreate ? 'Close' : 'Add user'}
             </button>
@@ -113,9 +113,46 @@ export default function AdminUsersPage() {
 
       {error ? <p className="mb-4 text-sm text-[#ffb0c8]">{error}</p> : null}
 
-      <Panel className="overflow-hidden !p-0">
+      <div className="space-y-3 sm:hidden">
+        {loading ? (
+          <Panel>
+            <p className="text-sm text-white/40">Loading…</p>
+          </Panel>
+        ) : users.length === 0 ? (
+          <Panel>
+            <p className="text-sm text-white/40">No users yet.</p>
+          </Panel>
+        ) : (
+          users.map((user) => (
+            <Link key={user.id} href={`/admin/users/${user.id}`} className="block">
+              <Panel className="!p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-white">{user.email}</p>
+                    {user.name ? <p className="mt-0.5 text-xs text-white/40">{user.name}</p> : null}
+                    <p className="mt-2 text-xs text-white/50">
+                      {user.signIn || '—'}
+                      {user.telegramUsername ? ` · @${user.telegramUsername}` : ''}
+                    </p>
+                  </div>
+                  {user.banned ? (
+                    <span className="shrink-0 rounded-full bg-red-500/15 px-2.5 py-1 text-[11px] font-bold text-red-300">Banned</span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[11px] font-bold text-emerald-300">Active</span>
+                  )}
+                </div>
+                <p className="mt-3 text-sm text-white/70">
+                  <span className="font-black text-white">{user.desires}</span> Stars · {user.imageGens} img · {user.videoGens} vid
+                </p>
+              </Panel>
+            </Link>
+          ))
+        )}
+      </div>
+
+      <Panel className="hidden overflow-hidden !p-0 sm:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="text-[11px] uppercase tracking-[0.16em] text-white/35">
               <tr className="border-b border-white/8">
                 <th className="px-5 py-4 font-semibold">User</th>

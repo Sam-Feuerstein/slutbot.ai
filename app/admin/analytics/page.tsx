@@ -42,7 +42,7 @@ function DailyVisitsMiniChart({ byDay }: { byDay: Summary['byDay'] }) {
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-[180px] w-full min-w-[560px]" role="img" aria-label="Daily unique visits">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[160px] w-full sm:h-[180px]" role="img" aria-label="Daily unique visits">
         {byDay.map((row, i) => {
           const barH = (row.uniqueVisits / max) * innerH;
           const x = pad.l + i * (innerW / byDay.length) + 2;

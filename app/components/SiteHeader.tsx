@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Download, LogOut, User, X } from 'lucide-react';
+import { Download, LogOut, Shield, User, X } from 'lucide-react';
 import FeaturedOn from './FeaturedOn';
 import BrandLogo from './BrandLogo';
 import Breadcrumbs from './Breadcrumbs';
@@ -17,6 +17,7 @@ import {
   type UserProfile,
 } from '@/lib/auth/profile';
 import { signOutClient } from '@/lib/auth/session';
+import { useAdminSession } from '@/lib/auth/useAdminSession';
 import {
   CURRENCY_NAME,
   DESIRES_UPDATED_EVENT,
@@ -72,6 +73,9 @@ export default function SiteHeader() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showDownloadApp, setShowDownloadApp] = useState(true);
   const [installHint, setInstallHint] = useState('');
+  const [appAdmin, setAppAdmin] = useState(false);
+  const adminCookie = useAdminSession();
+  const showAdminEntry = appAdmin || adminCookie;
 
   const refreshAuth = useCallback(() => {
     const token = getAuthToken();
@@ -81,6 +85,7 @@ export default function SiteHeader() {
     if (!token) {
       setProfile(null);
       setDesires(0);
+      setAppAdmin(false);
       return;
     }
 
@@ -88,7 +93,10 @@ export default function SiteHeader() {
     if (cached) setProfile(cached);
 
     void fetchUserProfile().then((fresh) => {
-      if (fresh && getAuthToken()) setProfile(fresh);
+      if (fresh && getAuthToken()) {
+        setProfile(fresh);
+        setAppAdmin(Boolean(fresh.isAdmin));
+      }
     });
   }, []);
 
@@ -166,7 +174,7 @@ export default function SiteHeader() {
         }`}
       >
         <div className="safe-x relative mx-auto flex min-h-[4.75rem] max-w-[1600px] items-center justify-between gap-2 overflow-hidden py-1.5 sm:min-h-[5.5rem] sm:gap-4 sm:overflow-visible sm:py-2.5">
-          <Link href="/" aria-label="AI SLUTBOT home" className="min-w-0 overflow-hidden">
+          <Link href="/" aria-label="AI SLUTBOT home" className="min-w-0 shrink">
             <BrandLogo className="text-[2.15rem] sm:text-[2.8rem]" />
           </Link>
 
@@ -186,7 +194,7 @@ export default function SiteHeader() {
               {signedIn ? (
                 <Link
                   href={ARCHIVE_PATH}
-                  className={`inline-flex h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-white/10 px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow,background-color] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white/15 hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em] ${
+                  className={`hidden h-9 items-center whitespace-nowrap rounded-md border-[2.5px] border-black bg-white/10 px-2 text-[9px] font-black uppercase tracking-[0.04em] text-white shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow,background-color] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-white/15 hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:inline-flex sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em] ${
                     pathname === ARCHIVE_PATH ? 'bg-white/20' : ''
                   }`}
                 >
@@ -209,6 +217,16 @@ export default function SiteHeader() {
                   </span>
                   <span className="shrink-0 text-[10px] font-semibold text-white/70 sm:text-[11px]">{CURRENCY_NAME}</span>
                 </button>
+              ) : null}
+
+              {showAdminEntry ? (
+                <Link
+                  href="/admin"
+                  className="hidden h-9 shrink-0 items-center gap-1 rounded-md border-[2.5px] border-black bg-white px-2 text-[9px] font-black uppercase tracking-[0.04em] text-black shadow-[3px_3px_0_0_#000] transition-[transform,box-shadow] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:inline-flex sm:h-10 sm:px-3 sm:text-[10px] sm:tracking-[0.06em]"
+                >
+                  <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  Admin
+                </Link>
               ) : null}
             </div>
 
@@ -338,6 +356,16 @@ export default function SiteHeader() {
                   {label}
                 </Link>
               ))}
+              {showAdminEntry ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-1 flex items-center gap-1.5 rounded-lg border border-[#ff2d78]/35 bg-[#ff2d78]/15 px-2 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-[#ff2d78]/25"
+                >
+                  <Shield className="h-3.5 w-3.5" />
+                  Admin
+                </Link>
+              ) : null}
             </nav>
 
             <div className="relative mt-2 shrink-0 space-y-1.5">

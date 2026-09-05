@@ -171,6 +171,66 @@ export async function getTotalVisits(): Promise<number> {
   return Math.max(0, Math.round(legacy?.count ?? 0));
 }
 
+function utcHourKey(date: Date): string {
+  return date.toISOString().slice(0, 13);
+}
+
+function lastHours(n: number): string[] {
+  const hours: string[] = [];
+  const now = new Date();
+  const current = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours()),
+  );
+  for (let i = n - 1; i >= 0; i -= 1) {
+    hours.push(utcHourKey(new Date(current.getTime() - i * 60 * 60 * 1000)));
+  }
+  return hours;
+}
+
+/** Unique visits this UTC hour, today, and the last 24 hours. */
+export async function getLiveTrafficPulse() {
+  await connectDB();
+  const now = new Date();
+  const hourStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours()),
+  );
+  const since24h = new Date(hourStart.getTime() - 23 * 60 * 60 * 1000);
+  const today = utcDay();
+  const hourList = lastHours(24);
+
+  type HourRow = { _id?: string; visits?: number };
+
+  const [hourlyRows, todayVisits] = await Promise.all([
+    AnalyticsEvent.aggregate([
+      { $match: { name: 'page_view', createdAt: { $gte: since24h } } },
+      {
+        $group: {
+          _id: {
+            hour: { $dateToString: { format: '%Y-%m-%dT%H', date: '$createdAt', timezone: 'UTC' } },
+            visitor: {
+              $cond: [{ $gt: [{ $strLenCP: { $ifNull: ['$clientId', ''] } }, 0] }, '$clientId', '$_id'],
+            },
+          },
+        },
+      },
+      { $group: { _id: '$_id.hour', visits: { $sum: 1 } } },
+    ]),
+    AnalyticsDailyVisitor.countDocuments({ day: today }),
+  ]);
+
+  const hourlyMap = Object.fromEntries(
+    (hourlyRows as HourRow[]).map((row) => [String(row._id || ''), Math.max(0, Math.round(row.visits ?? 0))]),
+  );
+  const hourly = hourList.map((hour) => ({ hour, visits: hourlyMap[hour] ?? 0 }));
+  const hourVisits = hourly[hourly.length - 1]?.visits ?? 0;
+
+  return {
+    hourVisits,
+    todayVisits: Math.max(0, Math.round(todayVisits || 0)),
+    hourly,
+  };
+}
+
 export async function getVisitDashboardStats(days = 14) {
   await connectDB();
   const dayList = lastDays(days);

@@ -15,15 +15,17 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-      <div className="max-w-2xl">
+    <div className="mb-5 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
+      <div className="max-w-2xl min-w-0">
         {kicker ? (
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ff6b9d]">{kicker}</p>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#ff6b9d] sm:mb-2 sm:text-[11px]">
+            {kicker}
+          </p>
         ) : null}
-        <h1 className="text-3xl font-black tracking-tight text-white sm:text-[34px]">{title}</h1>
-        {description ? <p className="mt-2 text-sm leading-relaxed text-white/50">{description}</p> : null}
+        <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl sm:text-[34px]">{title}</h1>
+        {description ? <p className="mt-1.5 text-sm leading-relaxed text-white/50 sm:mt-2">{description}</p> : null}
       </div>
-      {action}
+      {action ? <div className="w-full min-w-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }
@@ -31,7 +33,7 @@ export function PageHeader({
 export function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] sm:p-6 ${className}`}
+      className={`rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-4 shadow-[0_20px_80px_rgba(0,0,0,0.35)] sm:rounded-[28px] sm:p-6 ${className}`}
     >
       {children}
     </section>

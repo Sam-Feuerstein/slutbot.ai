@@ -46,12 +46,26 @@ export function normalizeCouponCode(value: string): string {
 }
 
 /** Crypto launch coupon — 25% off the three highest packs only. */
-export const EROGRAM_CRYPTO_COUPON_CODE = 'EROGRAM30OFF';
+export const EROGRAM_CRYPTO_COUPON_CODE = 'EROGRAM25OFF';
+const EROGRAM_CRYPTO_COUPON_ALIASES = ['EROGRAM30OFF'] as const;
 export const EROGRAM_CRYPTO_COUPON_PLAN_IDS = ['desire', 'passion', 'legend'] as const;
+
+export function isErogramCryptoCoupon(code: string | undefined | null): boolean {
+  const normalized = normalizeCouponCode(code || '');
+  return (
+    normalized === EROGRAM_CRYPTO_COUPON_CODE ||
+    (EROGRAM_CRYPTO_COUPON_ALIASES as readonly string[]).includes(normalized)
+  );
+}
+
+export function couponLookupCode(code: string): string {
+  const normalized = normalizeCouponCode(code);
+  return isErogramCryptoCoupon(normalized) ? EROGRAM_CRYPTO_COUPON_CODE : normalized;
+}
 
 export function couponAppliesToPlan(code: string | undefined | null, planId: string): boolean {
   if (!code) return false;
-  if (normalizeCouponCode(code) !== EROGRAM_CRYPTO_COUPON_CODE) return true;
+  if (!isErogramCryptoCoupon(code)) return true;
   return (EROGRAM_CRYPTO_COUPON_PLAN_IDS as readonly string[]).includes(planId);
 }
 

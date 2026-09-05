@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import { AiToolGeneration, GenerationJob, SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { adminSessionOk } from '@/lib/auth/adminSession';
-import { getTotalVisits, getVisitDashboardStats } from '@/lib/analytics';
+import { getLiveTrafficPulse, getTotalVisits, getVisitDashboardStats } from '@/lib/analytics';
 import { countPwaInstalls } from '@/lib/pwaInstall';
 
 function utcDay(date: Date) {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
 
   await connectDB();
-  const [users, paidPayments, pwaInstalls, totalVisits, visitStats] = await Promise.all([
+  const [users, paidPayments, pwaInstalls, totalVisits, visitStats, traffic] = await Promise.all([
     SlutbotUser.find({}).select('_id clientId createdAt').lean(),
     SlutbotPayment.find({ status: 'paid' }).select('userId clientId usdAmount').lean(),
     countPwaInstalls().catch(() => 0),
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       dailyVisits: [],
       visitsByCountry: [],
     })),
+    getLiveTrafficPulse().catch(() => ({ hourVisits: 0, todayVisits: 0, hourly: [] })),
   ]);
 
   const paidUserIds = new Set(
@@ -118,6 +119,24 @@ export async function GET(req: NextRequest) {
   const dailyGenerations = days.map((day) => dailyGens[day]);
   const totalImages = dailyGenerations.reduce((sum, row) => sum + row.images, 0);
   const totalVideos = dailyGenerations.reduce((sum, row) => sum + row.videos, 0);
+  const todayKey = days[days.length - 1];
+  const todayGenerations = dailyGens[todayKey] || { day: todayKey, images: 0, videos: 0 };
+
+  const now = new Date();
+  const hourStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours()),
+  );
+  const hourMatch = {
+    createdAt: { $gte: hourStart },
+    status: { $in: ['completed', 'charged', 'ingesting'] },
+    paidWith: { $ne: 'admin' },
+  };
+  const [hourImageJobs, hourVideoJobs, hourImageOut, hourVideoOut] = await Promise.all([
+    GenerationJob.countDocuments({ ...hourMatch, mode: 'image' }),
+    GenerationJob.countDocuments({ ...hourMatch, mode: 'video' }),
+    AiToolGeneration.countDocuments({ createdAt: { $gte: hourStart }, mode: 'image' }),
+    AiToolGeneration.countDocuments({ createdAt: { $gte: hourStart }, mode: 'video' }),
+  ]);
 
   return NextResponse.json({
     totalPaid: Math.round(totalPaid * 100) / 100,
@@ -126,6 +145,13 @@ export async function GET(req: NextRequest) {
     freeUsers,
     pwaInstalls,
     totalVisits,
+    hourVisits: traffic.hourVisits,
+    todayVisits: traffic.todayVisits,
+    hourlyVisits: traffic.hourly,
+    todayImages: todayGenerations.images,
+    todayVideos: todayGenerations.videos,
+    hourImages: Math.max(hourImageJobs, hourImageOut),
+    hourVideos: Math.max(hourVideoJobs, hourVideoOut),
     dailyVisits: visitStats.dailyVisits,
     visitsByCountry: visitStats.visitsByCountry,
     daily: days.map((day) => dailyMap[day]),
