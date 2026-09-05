@@ -117,6 +117,18 @@ export function cryptoInvoiceUsd(usd: number): number {
   return Math.round(Math.max(CRYPTO_MIN_USD, Number(usd) || 0) * 100) / 100;
 }
 
+/** Crypto price must MATCH the Telegram Stars USD value exactly (no discount). */
+export function cryptoUsdForStars(stars: number): number {
+  return cryptoInvoiceUsd(usdTelegramFromStars(stars));
+}
+
+/** Crypto packs start at the novice — the 750 Starter is sold out on crypto. */
+export const CRYPTO_MIN_STARS = 1500;
+
+export function isCryptoAvailableForStars(stars: number): boolean {
+  return Math.round(Number(stars) || 0) >= CRYPTO_MIN_STARS;
+}
+
 export function cryptoUsdPrice(usd: number): number {
   const discounted = Math.round(usd * (100 - CRYPTO_DISCOUNT_PERCENT)) / 100;
   return cryptoInvoiceUsd(discounted);

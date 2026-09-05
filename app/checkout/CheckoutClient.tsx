@@ -18,10 +18,13 @@ import {
   planOfferBaseline,
   planOfferMoreBadgeLabel,
   planStarsLabel,
+  cryptoUsdForStars,
+  isCryptoAvailableForStars,
+  formatUsdPrice,
   type PremiumPlan,
 } from '@/lib/premiumPlans';
 
-export type CheckoutMethod = 'stars';
+export type CheckoutMethod = 'stars' | 'crypto';
 
 type Props = {
   plan: PremiumPlan;
@@ -104,7 +107,9 @@ export default function CheckoutClient({ plan }: Props) {
   const [authReady, setAuthReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [planId, setPlanId] = useState(plan.id);
-  const method: CheckoutMethod = 'stars';
+  const [method, setMethod] = useState<CheckoutMethod>(
+    searchParams.get('method') === 'crypto' ? 'crypto' : 'stars',
+  );
   const [agreed, setAgreed] = useState(false);
   const [agreedNoMinors, setAgreedNoMinors] = useState(false);
   const [buying, setBuying] = useState(false);
@@ -122,17 +127,20 @@ export default function CheckoutClient({ plan }: Props) {
 
   const selected = PREMIUM_PLANS.find((item) => item.id === planId) ?? plan;
   const selectedStars = selected.stars;
+  const isCrypto = method === 'crypto';
+  const cryptoUnavailable = isCrypto && !isCryptoAvailableForStars(selectedStars);
   const payLabel = useMemo(() => {
-    if (buying) return 'Opening Telegram…';
+    if (buying) return isCrypto ? 'Opening crypto checkout…' : 'Opening Telegram…';
+    if (isCrypto) return `Pay ${formatUsdPrice(cryptoUsdForStars(selectedStars))} in crypto`;
     return `Pay ${planStarsLabel(selectedStars)}`;
-  }, [buying, selectedStars]);
+  }, [buying, selectedStars, isCrypto]);
 
   const checkoutPath = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('plan', planId);
-    params.set('method', 'stars');
+    params.set('method', method);
     return `/checkout?${params.toString()}`;
-  }, [searchParams, planId]);
+  }, [searchParams, planId, method]);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,14 +198,18 @@ export default function CheckoutClient({ plan }: Props) {
     check();
     if (pollRef.current) window.clearInterval(pollRef.current);
     let ticks = 0;
+    // Poll every 6s for ~8 minutes. The page also re-checks the balance on
+    // focus/visibilitychange, so returning from Telegram updates instantly —
+    // this interval is just the fallback, so a slower cadence is fine and cuts
+    // /api/wallet invocations by a third.
     pollRef.current = window.setInterval(() => {
       ticks += 1;
       check();
-      if (ticks >= 120 && pollRef.current) {
+      if (ticks >= 80 && pollRef.current) {
         window.clearInterval(pollRef.current);
         pollRef.current = null;
       }
-    }, 4000);
+    }, 6000);
   };
   watchForPaymentRef.current = watchForPayment;
 
@@ -231,11 +243,11 @@ export default function CheckoutClient({ plan }: Props) {
     trackEvent('checkout_view', { kind: 'view', plan: plan.id, method: 'stars' });
   }, [plan.id]);
 
-  const replaceCheckout = (nextPlan: string) => {
+  const replaceCheckout = (nextPlan: string, nextMethod: CheckoutMethod) => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     params.set('plan', nextPlan);
-    params.set('method', 'stars');
+    params.set('method', nextMethod);
     const next = `/checkout?${params.toString()}`;
     window.history.replaceState(window.history.state, '', next);
   };
@@ -243,7 +255,24 @@ export default function CheckoutClient({ plan }: Props) {
   const selectPlan = (id: string) => {
     setPlanId(id);
     trackEvent('checkout_plan', { kind: 'click', plan: id, method });
-    replaceCheckout(id);
+    replaceCheckout(id, method);
+  };
+
+  const selectMethod = (next: CheckoutMethod) => {
+    if (next === method) return;
+    setMethod(next);
+    setNote('');
+    trackEvent('checkout_method', { kind: 'click', plan: planId, method: next });
+    // Crypto starts at the novice — bump off the sold-out Starter automatically.
+    let nextPlan = planId;
+    if (next === 'crypto' && !isCryptoAvailableForStars(selectedStars)) {
+      const fallback = PACKS.find((pack) => isCryptoAvailableForStars(pack.stars));
+      if (fallback) {
+        nextPlan = fallback.id;
+        setPlanId(fallback.id);
+      }
+    }
+    replaceCheckout(nextPlan, next);
   };
 
   const startCheckout = async (opts?: { agreed?: boolean; agreedNoMinors?: boolean }) => {
@@ -264,15 +293,24 @@ export default function CheckoutClient({ plan }: Props) {
       router.push(loginHref(checkoutPath));
       return;
     }
+    if (isCrypto && !isCryptoAvailableForStars(selected.stars)) {
+      setNote('This pack is card-only. Pick a larger pack to pay with crypto.');
+      return;
+    }
     clearPayIntent();
     trackEvent('checkout_pay', { kind: 'click', plan: selected.id, method });
     setBuying(true);
     setNote('');
     setTermsNote('');
     setMinorsNote('');
-    setToast('Opening Telegram for a secure card payment…');
+    setToast(
+      isCrypto
+        ? 'Opening secure crypto checkout…'
+        : 'Opening Telegram for a secure card payment…',
+    );
     try {
-      const res = await fetch('/api/payments/stars', {
+      const endpoint = isCrypto ? '/api/payments/nowpayments' : '/api/payments/stars';
+      const res = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -317,7 +355,11 @@ export default function CheckoutClient({ plan }: Props) {
         return;
       } else {
         setPaymentUrl(null);
-        setToast('Finish in Telegram. This page updates when Stars land.');
+        setToast(
+          isCrypto
+            ? 'Finish the crypto payment. This page updates when your balance lands.'
+            : 'Finish in Telegram. This page updates when Stars land.',
+        );
       }
 
       watchForPayment(balanceBeforePayment.current);
@@ -430,7 +472,9 @@ export default function CheckoutClient({ plan }: Props) {
 
           <h1 className="text-center text-xl font-black tracking-tight text-white sm:text-2xl">Choose a pack</h1>
           <p className="mt-1 text-center text-sm text-white/60">
-            One-time payment. Stars never expire. Pay by card in Telegram.
+            {isCrypto
+              ? 'One-time payment. Credits never expire. Pay with USDT (TRC20).'
+              : 'One-time payment. Stars never expire. Pay by card in Telegram.'}
           </p>
 
           {checkoutBanner ? (
@@ -439,7 +483,41 @@ export default function CheckoutClient({ plan }: Props) {
             </p>
           ) : null}
 
-          <div className="mt-4 rounded-xl bg-white p-3 sm:p-4">
+          {/* Payment method toggle */}
+          <div
+            className="mt-4 grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/35 p-1"
+            role="tablist"
+            aria-label="Payment method"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!isCrypto}
+              onClick={() => selectMethod('stars')}
+              className={`rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:text-sm ${
+                !isCrypto
+                  ? 'bg-[#ff2d78] text-white shadow-[0_0_16px_rgba(255,45,120,0.35)]'
+                  : 'text-white/55 hover:text-white/80'
+              }`}
+            >
+              Credit/Debit Card
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isCrypto}
+              onClick={() => selectMethod('crypto')}
+              className={`rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:text-sm ${
+                isCrypto
+                  ? 'bg-[#ff2d78] text-white shadow-[0_0_16px_rgba(255,45,120,0.35)]'
+                  : 'text-white/55 hover:text-white/80'
+              }`}
+            >
+              Crypto
+            </button>
+          </div>
+
+          <div className="mt-3 rounded-xl bg-white p-3 sm:p-4">
             <div className="grid grid-cols-1 gap-1.5" role="radiogroup" aria-label="Packs">
               {PACKS.map((pack) => {
                 const active = pack.id === selected.id;
@@ -449,25 +527,36 @@ export default function CheckoutClient({ plan }: Props) {
                 const extraVideos = Math.max(0, pack.videoGenerations - baseline.videos);
                 const showImages = pack.imageGenerations + extraImages;
                 const showVideos = pack.videoGenerations + extraVideos;
+                const soldOut = isCrypto && !isCryptoAvailableForStars(pack.stars);
+                const priceLabel = isCrypto
+                  ? formatUsdPrice(cryptoUsdForStars(pack.stars))
+                  : planStarsLabel(pack.stars);
                 return (
                   <button
                     key={pack.id}
                     type="button"
                     role="radio"
                     aria-checked={active}
-                    onClick={() => selectPlan(pack.id)}
+                    aria-disabled={soldOut}
+                    disabled={soldOut}
+                    onClick={() => {
+                      if (soldOut) return;
+                      selectPlan(pack.id);
+                    }}
                     className={`relative flex w-full items-center gap-2.5 rounded-xl border px-3 py-1.5 text-left transition ${
-                      active
-                        ? 'border-[#ff2d78] bg-[#ff2d78]/10 shadow-[0_0_0_1px_rgba(255,45,120,0.25)]'
-                        : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
+                      soldOut
+                        ? 'cursor-not-allowed border-zinc-200 bg-zinc-100 opacity-60'
+                        : active
+                          ? 'border-[#ff2d78] bg-[#ff2d78]/10 shadow-[0_0_0_1px_rgba(255,45,120,0.25)]'
+                          : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
                     }`}
                   >
                     <span
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                        active ? 'border-[#ff2d78]' : 'border-zinc-400'
+                        active && !soldOut ? 'border-[#ff2d78]' : 'border-zinc-400'
                       }`}
                     >
-                      {active ? <span className="h-2 w-2 rounded-full bg-[#ff2d78]" /> : null}
+                      {active && !soldOut ? <span className="h-2 w-2 rounded-full bg-[#ff2d78]" /> : null}
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
@@ -475,15 +564,23 @@ export default function CheckoutClient({ plan }: Props) {
                           {pack.name} {showImages.toLocaleString('en-US')} images or{' '}
                           {showVideos.toLocaleString('en-US')} videos
                         </span>
-                        {moreBadge ? (
+                        {soldOut ? (
+                          <span className="shrink-0 rounded-md bg-zinc-400 px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white sm:text-[8px]">
+                            Sold out
+                          </span>
+                        ) : moreBadge ? (
                           <span className="shrink-0 rounded-md bg-[#ff2d78] px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white shadow-[0_1px_0_rgba(255,255,255,0.25)_inset] sm:text-[8px]">
                             {moreBadge}
                           </span>
                         ) : null}
                       </span>
                     </span>
-                    <span className="shrink-0 text-right text-[12px] font-bold text-zinc-900 sm:text-[13px]">
-                      {planStarsLabel(pack.stars)}
+                    <span
+                      className={`shrink-0 text-right text-[12px] font-bold sm:text-[13px] ${
+                        soldOut ? 'text-zinc-400 line-through' : 'text-zinc-900'
+                      }`}
+                    >
+                      {priceLabel}
                     </span>
                   </button>
                 );
@@ -491,16 +588,24 @@ export default function CheckoutClient({ plan }: Props) {
             </div>
 
             <div className="mt-4 border-t border-zinc-200 pt-3">
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
-                <TelegramIcon className="h-[22px] w-[22px] shrink-0 rounded-md" />
-                Secure debit/credit card payment via Telegram
-              </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/payments/wallet-logos.png"
-                alt="Mastercard, Visa, Google Pay, Apple Pay"
-                className="mx-auto mt-2 block h-[31px] w-auto max-w-[220px] object-contain sm:h-[36px] sm:max-w-[260px]"
-              />
+              {isCrypto ? (
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
+                  Pay with USDT (TRC20) · Same USD price as card
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
+                    <TelegramIcon className="h-[22px] w-[22px] shrink-0 rounded-md" />
+                    Secure debit/credit card payment via Telegram
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/payments/wallet-logos.png"
+                    alt="Mastercard, Visa, Google Pay, Apple Pay"
+                    className="mx-auto mt-2 block h-[31px] w-auto max-w-[220px] object-contain sm:h-[36px] sm:max-w-[260px]"
+                  />
+                </>
+              )}
             </div>
 
             <label
@@ -552,7 +657,7 @@ export default function CheckoutClient({ plan }: Props) {
             <button
               ref={payButtonRef}
               type="button"
-              disabled={buying}
+              disabled={buying || cryptoUnavailable}
               onClick={() => void startCheckout()}
               className="mt-3 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff2d78] to-[#ff1a6b] px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(255,45,120,0.35)] hover:from-[#ff4d8f] hover:to-[#ff2d78] disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -574,21 +679,33 @@ export default function CheckoutClient({ plan }: Props) {
             {note ? <p className="mt-2 text-center text-xs text-[#c81e5a]">{note}</p> : null}
 
             <p className="mt-3 text-center text-sm leading-relaxed text-zinc-600">
-              Complete payment in Telegram. This page updates when you come back — Stars are added as soon as Telegram
-              confirms.
+              {isCrypto
+                ? 'Complete the crypto payment. This page updates when you come back — credits are added as soon as the payment confirms.'
+                : 'Complete payment in Telegram. This page updates when you come back — Stars are added as soon as Telegram confirms.'}
             </p>
             <p className="mt-2 text-center text-sm">
-              <a
-                href="/payments/telegram-stars-tutorial"
-                onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
-                className="font-semibold text-[#ff2d78] underline underline-offset-2 hover:text-[#c81e5a]"
-              >
-                Telegram Payment Tutorial
-              </a>
-              {' · '}
-              <a href={`mailto:${HELLO_EMAIL}`} className="text-zinc-500 underline underline-offset-2 hover:text-zinc-800">
-                {HELLO_EMAIL}
-              </a>
+              {isCrypto ? (
+                <a
+                  href={`mailto:${HELLO_EMAIL}`}
+                  className="text-zinc-500 underline underline-offset-2 hover:text-zinc-800"
+                >
+                  {HELLO_EMAIL}
+                </a>
+              ) : (
+                <>
+                  <a
+                    href="/payments/telegram-stars-tutorial"
+                    onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
+                    className="font-semibold text-[#ff2d78] underline underline-offset-2 hover:text-[#c81e5a]"
+                  >
+                    Telegram Payment Tutorial
+                  </a>
+                  {' · '}
+                  <a href={`mailto:${HELLO_EMAIL}`} className="text-zinc-500 underline underline-offset-2 hover:text-zinc-800">
+                    {HELLO_EMAIL}
+                  </a>
+                </>
+              )}
             </p>
 
             <p className="mt-3 text-center text-[11px] text-black">
