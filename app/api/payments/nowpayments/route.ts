@@ -12,6 +12,21 @@ import { countryFromHeaders } from '@/lib/starsGeo/detect';
 
 const API_KEY = process.env.NOWPAYMENTS_API_KEY || '';
 const NP_BASE = 'https://api.nowpayments.io/v1';
+const PAY_CURRENCY = 'usdttrc20';
+
+function usdtTrc20CheckoutUrl(invoiceUrl: string, paymentId?: string) {
+  try {
+    const url = new URL(invoiceUrl);
+    url.searchParams.set('paymentCurrency', PAY_CURRENCY);
+    if (paymentId) url.searchParams.set('paymentId', paymentId);
+    return url.toString();
+  } catch {
+    const joiner = invoiceUrl.includes('?') ? '&' : '?';
+    return `${invoiceUrl}${joiner}paymentCurrency=${PAY_CURRENCY}${
+      paymentId ? `&paymentId=${encodeURIComponent(paymentId)}` : ''
+    }`;
+  }
+}
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
@@ -67,7 +82,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         price_amount: usdPrice,
         price_currency: 'usd',
-        pay_currency: 'usdttrc20',
+        pay_currency: PAY_CURRENCY,
         order_id: orderId,
         order_description: coupon
           ? `${plan.description} · ${couponRewardLabel(coupon)} (${coupon.code})`
@@ -85,18 +100,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: data?.message || 'Failed to create crypto invoice.' }, { status: 500 });
     }
 
+    let paymentId = '';
+    let hostedUrl = data.invoice_url;
     if (data.id != null) {
-      await fetch(`${NP_BASE}/invoice-payment`, {
+      const lockRes = await fetch(`${NP_BASE}/invoice-payment`, {
         method: 'POST',
         headers: {
           'x-api-key': API_KEY,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ iid: data.id, pay_currency: 'usdttrc20' }),
-      }).catch((err) => {
-        console.error('NowPayments invoice-payment lock error:', err);
+        body: JSON.stringify({ iid: data.id, pay_currency: PAY_CURRENCY }),
       });
+      const lockData = (await lockRes.json().catch(() => null)) as
+        | { payment_id?: string | number; invoice_url?: string; message?: string }
+        | null;
+      if (!lockRes.ok) {
+        console.error('NowPayments invoice-payment lock error:', lockData);
+      } else {
+        if (lockData?.payment_id != null) paymentId = String(lockData.payment_id);
+        if (lockData?.invoice_url) hostedUrl = lockData.invoice_url;
+      }
     }
+
+    const checkoutUrl = usdtTrc20CheckoutUrl(hostedUrl, paymentId || undefined);
 
     await connectDB();
     await SlutbotPayment.create({
@@ -109,7 +135,7 @@ export async function POST(req: NextRequest) {
       starsAmount: plan.starsAmount,
       desires: plan.desires,
       orderId,
-      invoiceUrl: data.invoice_url,
+      invoiceUrl: checkoutUrl,
       country: countryFromHeaders(req.headers),
       couponCode: coupon?.code || '',
       couponType: coupon?.type || '',
@@ -117,7 +143,7 @@ export async function POST(req: NextRequest) {
       couponDiscountUsd: coupon?.discountUsd || 0,
     });
 
-    return NextResponse.json({ url: data.invoice_url, usdAmount: usdPrice });
+    return NextResponse.json({ url: checkoutUrl, usdAmount: usdPrice });
   } catch (err) {
     console.error('NowPayments error:', err);
     return NextResponse.json({ message: 'Server error.' }, { status: 500 });
