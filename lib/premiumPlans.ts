@@ -117,9 +117,15 @@ export function cryptoInvoiceUsd(usd: number): number {
   return Math.round(Math.max(CRYPTO_MIN_USD, Number(usd) || 0) * 100) / 100;
 }
 
-/** Crypto price must MATCH the Telegram Stars USD value exactly (no discount). */
+/**
+ * Crypto price matches the real Telegram Stars value: 600 Stars = $7.80,
+ * i.e. $0.013 per Star. No discount, no markup.
+ */
+export const CRYPTO_USD_PER_STAR = 0.013;
+
 export function cryptoUsdForStars(stars: number): number {
-  return cryptoInvoiceUsd(usdTelegramFromStars(stars));
+  const raw = Math.max(0, Number(stars) || 0) * CRYPTO_USD_PER_STAR;
+  return Math.round(raw * 100) / 100;
 }
 
 /** Crypto packs start at the novice — the 750 Starter is sold out on crypto. */

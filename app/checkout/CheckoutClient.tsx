@@ -565,7 +565,7 @@ export default function CheckoutClient({ plan }: Props) {
                           {showVideos.toLocaleString('en-US')} videos
                         </span>
                         {soldOut ? (
-                          <span className="shrink-0 rounded-md bg-zinc-400 px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white sm:text-[8px]">
+                          <span className="shrink-0 rounded-md bg-[#dc2626] px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white sm:text-[8px]">
                             Sold out
                           </span>
                         ) : moreBadge ? (
