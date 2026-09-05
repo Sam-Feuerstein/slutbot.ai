@@ -60,6 +60,26 @@ export function uiMediaUrl(path: string): string {
   return `${PRESET_MEDIA_BASE}/${PRESET_MEDIA_PREFIX}/${path}`;
 }
 
+/**
+ * Map a local `/examples/...` sample asset to its R2 CDN URL.
+ *
+ * Sample posters/videos/before-after images used to ship in `public/examples`
+ * and egress from Vercel on every view. They are now mirrored to the public R2
+ * bucket root (e.g. `/examples/example-ex-1.jpg` -> `<base>/example-ex-1.jpg`,
+ * `/examples/before-after/pair-01-before.jpg` -> `<base>/before-after/...`).
+ * When the CDN base is configured we serve from R2; otherwise (e.g. local dev
+ * without the env var) we fall back to the local path so nothing breaks.
+ *
+ * Non-`/examples/` values (already-absolute R2 URLs from admin uploads, empty
+ * strings, etc.) are returned unchanged.
+ */
+export function exampleMediaUrl(path: string): string {
+  if (!path || !path.startsWith('/examples/')) return path;
+  if (!PRESET_MEDIA_BASE) return path;
+  const rest = path.slice('/examples/'.length);
+  return `${PRESET_MEDIA_BASE}/${rest}`;
+}
+
 export function checkoutPromoMediaUrl(file: string, localFallback: string): string {
   const remote = uiMediaUrl(`checkout/${file}`);
   return PRESET_MEDIA_BASE ? remote : localFallback;

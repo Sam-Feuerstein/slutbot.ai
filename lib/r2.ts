@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { envValue } from '@/lib/env';
@@ -50,10 +50,24 @@ export async function uploadToR2(buffer: Buffer, key: string, contentType: strin
   return key;
 }
 
-export async function getR2Object(key: string) {
+export async function getR2Object(key: string, range?: string) {
   const client = getR2Client();
   return client.send(
     new GetObjectCommand({
+      Bucket: r2UploadBucket(),
+      Key: key,
+      // Forward the browser Range header so video scrubbing streams a slice
+      // instead of the whole file. R2 returns 206 + Content-Range for these.
+      ...(range ? { Range: range } : {}),
+    }),
+  );
+}
+
+/** Metadata only (size/content-type) without opening the object body. */
+export async function headR2Object(key: string) {
+  const client = getR2Client();
+  return client.send(
+    new HeadObjectCommand({
       Bucket: r2UploadBucket(),
       Key: key,
     }),

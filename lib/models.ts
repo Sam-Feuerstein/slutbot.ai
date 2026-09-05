@@ -96,7 +96,7 @@ export const SlutbotPayment = models.SlutbotPayment || model('SlutbotPayment', s
 const generationJobSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'SlutbotUser', required: true, index: true },
-    taskId: { type: String, default: null, unique: true, sparse: true },
+    taskId: { type: String, unique: true, sparse: true },
     mode: { type: String, enum: ['image', 'video'], required: true },
     videoModel: { type: String, enum: ['cheap', 'current'], default: null },
     quality: { type: String, default: '' },
@@ -157,6 +157,8 @@ const platformSettingsSchema = new Schema(
     emailResetBody: { type: String, default: '' },
     /** Once true, empty gallery stays empty — admin deletes are not re-seeded. */
     samplesSeeded: { type: Boolean, default: false },
+    /** Telegram chat ID that receives sale DMs. Set from the admin panel. */
+    adminTelegramChatId: { type: String, default: '' },
   },
   { timestamps: true, collection: 'platformsettings' },
 );

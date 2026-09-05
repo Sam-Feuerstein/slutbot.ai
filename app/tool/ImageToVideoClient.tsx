@@ -26,9 +26,12 @@ import {
   VIDEO_QUALITY_FIXED,
 } from '@/lib/generation/videoOptions';
 import GuestSignupOffer from '../components/GuestSignupOffer';
+import AdminViewAsSwitch from '../components/AdminViewAsSwitch';
+import { useViewAs } from '@/lib/auth/useViewAs';
 import VideoGenerationOptions, { videoGenerationCost } from './VideoGenerationOptions';
 import { uiMediaUrl } from '@/lib/presetMedia';
 import { loginHref } from '@/lib/site';
+import { checkSelectedImage, SUPPORTED_UPLOAD_HINT, MAX_IMAGE_MB } from './imageValidation';
 import type { ExampleVideo } from '@/lib/exampleVideos';
 
 type Mode = 'image' | 'video';
@@ -145,6 +148,16 @@ export default function ImageToVideoClient({
   const [toolStep, setToolStep] = useState<'landing' | 'ready'>('landing');
   const [signedIn, setSignedIn] = useState(false);
   const [balance, setBalance] = useState(0);
+  const { tier, canPreview } = useViewAs();
+  const extraDetailsLocked = tier !== 'ultra';
+  const longClipLocked = tier === 'free';
+
+  useEffect(() => {
+    if (extraDetailsLocked && customPrompt) setCustomPrompt('');
+    if (longClipLocked && videoDuration !== VIDEO_DURATION_DEFAULT) {
+      setVideoDuration(VIDEO_DURATION_DEFAULT);
+    }
+  }, [extraDetailsLocked, longClipLocked, customPrompt, videoDuration]);
 
   const resetOutput = () => {
     setResultUrl('');
@@ -169,8 +182,10 @@ export default function ImageToVideoClient({
 
   const onFileChange = (file: File | null) => {
     if (!file) return;
-    if (file.type && !file.type.startsWith('image/')) {
-      setError('Use a photo (JPG, PNG, or HEIC).');
+    const check = checkSelectedImage(file);
+    if (!check.ok) {
+      setError(check.message);
+      if (inputRef.current) inputRef.current.value = '';
       return;
     }
     setError('');
@@ -253,7 +268,7 @@ export default function ImageToVideoClient({
       videoModel: videoEngine.videoModel,
       quality: VIDEO_QUALITY_FIXED,
       duration: videoDuration,
-      customPrompt: customPrompt.trim() || undefined,
+      customPrompt: extraDetailsLocked ? undefined : customPrompt.trim() || undefined,
     });
   };
 
@@ -287,6 +302,11 @@ export default function ImageToVideoClient({
     <>
       <div className="w-full text-white">
         <SiteHeader />
+        {canPreview ? (
+          <div className="border-b border-white/10 bg-black/40 px-3 py-2">
+            <AdminViewAsSwitch />
+          </div>
+        ) : null}
 
         <main
           className={`relative mx-auto flex w-full max-w-[1600px] flex-col items-center px-3 py-5 sm:px-6 sm:py-10 ${
@@ -335,6 +355,9 @@ export default function ImageToVideoClient({
                     onChange={(e) => onFileChange(e.target.files?.[0] || null)}
                   />
                 </div>
+                <p className="mt-2 text-center text-xs text-white/40">
+                  {SUPPORTED_UPLOAD_HINT} · up to {MAX_IMAGE_MB} MB
+                </p>
               </div>
 
               <div className="mt-4 inline-flex w-full rounded-full border border-white/10 bg-[#1a1a1a] p-1">
@@ -403,6 +426,8 @@ export default function ImageToVideoClient({
                         open={advancedOpen}
                         duration={videoDuration}
                         customPrompt={customPrompt}
+                        extraDetailsLocked={extraDetailsLocked}
+                        longClipLocked={longClipLocked}
                         onOpenChange={setAdvancedOpen}
                         onDurationChange={setVideoDuration}
                         onCustomPromptChange={setCustomPrompt}

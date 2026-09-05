@@ -12,6 +12,7 @@ import {
   getPresetSourceUrl,
   presetHasVideo,
 } from '@/lib/presetMedia';
+import { isRemoteMedia } from '@/lib/media/image';
 import { getAuthToken } from '@/lib/desires';
 import { generatorPresetPath, loginHref } from '@/lib/site';
 
@@ -149,6 +150,7 @@ export default function HomePresetCard({
         fill
         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
         priority={eager}
+        unoptimized={isRemoteMedia(posterSrc)}
         className="pointer-events-none select-none object-cover transition-[filter] duration-500"
       />
       {active && previewSrc ? (
@@ -172,6 +174,7 @@ export default function HomePresetCard({
       fill
       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
       priority={eager}
+      unoptimized={isRemoteMedia(mainImageSrc)}
       className="pointer-events-none select-none object-cover transition-[filter] duration-500"
     />
   );
@@ -203,7 +206,14 @@ export default function HomePresetCard({
       >
         <div className="flex w-full flex-col gap-[16cqi]">
           <div className="card-thumb-swing relative aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
-            <Image src={sourceSrc} alt="" fill sizes="80px" className="object-cover" />
+            <Image
+              src={sourceSrc}
+              alt=""
+              fill
+              sizes="80px"
+              unoptimized={isRemoteMedia(sourceSrc)}
+              className="object-cover"
+            />
           </div>
           <ArrowCurve />
         </div>

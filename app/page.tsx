@@ -3,8 +3,13 @@ import HomeClient from './HomeClient';
 import HomeSeoSection from './components/HomeSeoSection';
 import JsonLd from './components/JsonLd';
 import { buildPageMetadata, softwareApplicationJsonLd } from '@/lib/seo';
+import { exampleMediaUrl } from '@/lib/presetMedia';
 
-export const dynamic = 'force-dynamic';
+// Cache the rendered homepage and refresh it at most every 5 minutes. Admin
+// sample edits call revalidatePath('/') for an instant update, so this only
+// affects anonymous traffic — it stops 3 Mongo queries + a function invocation
+// on every single visit/bot hit.
+export const revalidate = 300;
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'AI Nude image and video Generator | AI SLUTBOT',
@@ -17,7 +22,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function HomePage() {
   return (
     <>
-      <link rel="preload" as="image" href="/examples/example-ex-1.jpg" />
+      <link rel="preload" as="image" href={exampleMediaUrl('/examples/example-ex-1.jpg')} />
       <JsonLd data={softwareApplicationJsonLd()} />
       <HomeClient />
       <HomeSeoSection />

@@ -30,6 +30,103 @@ export default function AdminAppPage() {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushNote, setPushNote] = useState('');
 
+  const [tg, setTg] = useState<{
+    loaded: boolean;
+    botConfigured: boolean;
+    configured: boolean;
+    botLink: string;
+    botUsername: string;
+  }>({ loaded: false, botConfigured: false, configured: false, botLink: '', botUsername: '' });
+  const [tgBusy, setTgBusy] = useState(false);
+  const [tgNote, setTgNote] = useState('');
+  const [tgManual, setTgManual] = useState('');
+
+  const loadTg = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/telegram-alerts', { credentials: 'same-origin', headers: adminHeaders() });
+      const json = (await res.json()) as {
+        configured?: boolean;
+        botConfigured?: boolean;
+        botLink?: string;
+        botUsername?: string;
+      };
+      setTg({
+        loaded: true,
+        botConfigured: Boolean(json.botConfigured),
+        configured: Boolean(json.configured),
+        botLink: json.botLink || '',
+        botUsername: json.botUsername || '',
+      });
+    } catch {
+      setTg((s) => ({ ...s, loaded: true }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTg();
+  }, [loadTg]);
+
+  async function connectTelegram() {
+    setTgBusy(true);
+    setTgNote('');
+    try {
+      const res = await fetch('/api/admin/telegram-alerts', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify(tgManual.trim() ? { chatId: tgManual.trim() } : {}),
+      });
+      const json = (await res.json()) as { ok?: boolean; name?: string; message?: string };
+      if (!res.ok || !json.ok) {
+        setTgNote(json.message || 'Could not link Telegram.');
+        return;
+      }
+      setTgNote(`Linked${json.name ? ` (${json.name})` : ''}. A DM will arrive on every paid pack.`);
+      setTgManual('');
+      await loadTg();
+    } catch {
+      setTgNote('Could not link Telegram. Try again.');
+    } finally {
+      setTgBusy(false);
+    }
+  }
+
+  async function testTelegram() {
+    setTgBusy(true);
+    setTgNote('');
+    try {
+      const res = await fetch('/api/admin/telegram-alerts', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: adminHeaders(),
+      });
+      const json = (await res.json()) as { ok?: boolean; message?: string };
+      setTgNote(res.ok && json.ok ? 'Test DM sent. Check Telegram.' : json.message || 'Could not send test DM.');
+    } catch {
+      setTgNote('Could not send test DM.');
+    } finally {
+      setTgBusy(false);
+    }
+  }
+
+  async function unlinkTelegram() {
+    setTgBusy(true);
+    setTgNote('');
+    try {
+      await fetch('/api/admin/telegram-alerts', {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: adminHeaders(),
+      });
+      setTgNote('Telegram unlinked.');
+      await loadTg();
+    } catch {
+      setTgNote('Could not unlink.');
+    } finally {
+      setTgBusy(false);
+    }
+  }
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -195,6 +292,100 @@ export default function AdminAppPage() {
           </button>
         </div>
         {pushNote ? <p className="mt-3 text-sm text-white/60">{pushNote}</p> : null}
+
+        <div className="mt-6 border-t border-white/10 pt-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-black">Telegram DM alerts</h3>
+            {tg.loaded ? (
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
+                  tg.configured ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/8 text-white/45'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${tg.configured ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                {tg.configured ? 'Linked' : 'Not linked'}
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-1 text-sm text-white/45">
+            The most reliable phone alert. Get a Telegram DM on every paid pack — works even when the app is closed.
+          </p>
+
+          {!tg.botConfigured && tg.loaded ? (
+            <p className="mt-3 text-sm text-amber-300">
+              Telegram bot token is missing on the server (TELEGRAM_PAYMENT_BOT_TOKEN).
+            </p>
+          ) : null}
+
+          {tg.botConfigured ? (
+            <>
+              <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-white/55">
+                <li>
+                  Open your bot
+                  {tg.botLink ? (
+                    <>
+                      {' '}
+                      <a
+                        href={tg.botLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#ff6b9d] underline underline-offset-2"
+                      >
+                        {tg.botUsername ? `@${tg.botUsername}` : 'open bot'}
+                      </a>
+                    </>
+                  ) : null}{' '}
+                  in Telegram on your phone.
+                </li>
+                <li>Tap Start (or send any message).</li>
+                <li>Come back here and tap “Connect Telegram”.</li>
+              </ol>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={tgBusy}
+                  onClick={() => void connectTelegram()}
+                  className="rounded-full bg-[#229ED9] px-6 py-2.5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(34,158,217,0.3)] transition hover:bg-[#1b8ec4] disabled:opacity-50"
+                >
+                  {tgBusy ? 'Working…' : tg.configured ? 'Re-connect Telegram' : 'Connect Telegram'}
+                </button>
+                {tg.configured ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={tgBusy}
+                      onClick={() => void testTelegram()}
+                      className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold text-white/70 hover:text-white disabled:opacity-50"
+                    >
+                      Send test DM
+                    </button>
+                    <button
+                      type="button"
+                      disabled={tgBusy}
+                      onClick={() => void unlinkTelegram()}
+                      className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold text-white/40 hover:text-white/70 disabled:opacity-50"
+                    >
+                      Unlink
+                    </button>
+                  </>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  value={tgManual}
+                  onChange={(event) => setTgManual(event.target.value)}
+                  placeholder="Or paste chat ID manually"
+                  className="w-56 rounded-2xl border border-white/10 bg-black/50 px-3.5 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#229ED9]/70"
+                />
+                <span className="text-xs text-white/30">Optional — auto-detect works for most.</span>
+              </div>
+            </>
+          ) : null}
+
+          {tgNote ? <p className="mt-3 text-sm text-white/60">{tgNote}</p> : null}
+        </div>
       </Panel>
 
       <Panel>

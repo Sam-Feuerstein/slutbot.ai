@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { rememberBalanceBeforePayment, BALANCE_BEFORE_KEY } from '@/app/components/PaymentSuccessBanner';
@@ -12,17 +12,29 @@ import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
 import FeaturedOn from '@/app/components/FeaturedOn';
 import BrandLogo from '@/app/components/BrandLogo';
+import AdminViewAsSwitch from '@/app/components/AdminViewAsSwitch';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import {
   PREMIUM_PLANS,
   planOfferBaseline,
+  planOfferBonusPercent,
   planOfferMoreBadgeLabel,
   planStarsLabel,
   cryptoUsdForStars,
+  applyCryptoCouponUsd,
   isCryptoAvailableForStars,
   formatUsdPrice,
   type PremiumPlan,
 } from '@/lib/premiumPlans';
+import { couponAppliesToPlan } from '@/lib/coupons';
+
+type AppliedCoupon = {
+  code: string;
+  type: 'percent_off' | 'amount_off';
+  discountPercent: number;
+  discountUsd: number;
+  label: string;
+};
 
 export type CheckoutMethod = 'stars' | 'crypto';
 
@@ -112,6 +124,11 @@ export default function CheckoutClient({ plan }: Props) {
   );
   const [agreed, setAgreed] = useState(false);
   const [agreedNoMinors, setAgreedNoMinors] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponNote, setCouponNote] = useState('');
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [couponCelebrate, setCouponCelebrate] = useState(false);
   const [buying, setBuying] = useState(false);
   const [note, setNote] = useState('');
   const [termsNote, setTermsNote] = useState('');
@@ -121,6 +138,7 @@ export default function CheckoutClient({ plan }: Props) {
   const [paymentReceived, setPaymentReceived] = useState(false);
   const balanceBeforePayment = useRef(0);
   const pollRef = useRef<number | null>(null);
+  const couponCelebrateRef = useRef<number | null>(null);
   const payButtonRef = useRef<HTMLButtonElement>(null);
   const resumePayRef = useRef(false);
   const watchForPaymentRef = useRef<(beforeOverride?: number) => void>(() => {});
@@ -129,11 +147,18 @@ export default function CheckoutClient({ plan }: Props) {
   const selectedStars = selected.stars;
   const isCrypto = method === 'crypto';
   const cryptoUnavailable = isCrypto && !isCryptoAvailableForStars(selectedStars);
+  // Coupons apply to crypto only.
+  const activeCoupon = isCrypto ? appliedCoupon : null;
+  const selectedCoupon =
+    activeCoupon && couponAppliesToPlan(activeCoupon.code, selected.id) ? activeCoupon : null;
+  const cryptoListUsd = cryptoUsdForStars(selectedStars);
+  const cryptoFinalUsd = applyCryptoCouponUsd(cryptoListUsd, selectedCoupon);
+  const cryptoSavedUsd = Math.round((cryptoListUsd - cryptoFinalUsd) * 100) / 100;
   const payLabel = useMemo(() => {
     if (buying) return isCrypto ? 'Opening crypto checkout…' : 'Opening Telegram…';
-    if (isCrypto) return `Pay ${formatUsdPrice(cryptoUsdForStars(selectedStars))} in crypto`;
+    if (isCrypto) return `Pay ${formatUsdPrice(cryptoFinalUsd)} in crypto`;
     return `Pay ${planStarsLabel(selectedStars)}`;
-  }, [buying, selectedStars, isCrypto]);
+  }, [buying, selectedStars, isCrypto, cryptoFinalUsd]);
 
   const checkoutPath = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -236,6 +261,10 @@ export default function CheckoutClient({ plan }: Props) {
         window.clearInterval(pollRef.current);
         pollRef.current = null;
       }
+      if (couponCelebrateRef.current) {
+        window.clearTimeout(couponCelebrateRef.current);
+        couponCelebrateRef.current = null;
+      }
     };
   }, []);
 
@@ -273,6 +302,69 @@ export default function CheckoutClient({ plan }: Props) {
       }
     }
     replaceCheckout(nextPlan, next);
+  };
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      setCouponNote('Enter a coupon code.');
+      return;
+    }
+    if (!getAuthToken()) {
+      writePayIntent({ plan: selected.id, agreed, agreedNoMinors });
+      router.push(loginHref(checkoutPath));
+      return;
+    }
+    setCouponBusy(true);
+    setCouponNote('');
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json()) as {
+        code?: string;
+        type?: 'percent_off' | 'amount_off';
+        discountPercent?: number;
+        discountUsd?: number;
+        label?: string;
+        message?: string;
+      };
+      if (!res.ok || !data.code || !data.type) {
+        setAppliedCoupon(null);
+        setCouponNote(data.message || 'Invalid coupon code.');
+        return;
+      }
+      setAppliedCoupon({
+        code: data.code,
+        type: data.type,
+        discountPercent: data.discountPercent || 0,
+        discountUsd: data.discountUsd || 0,
+        label: data.label || '',
+      });
+      setCouponCelebrate(true);
+      if (couponCelebrateRef.current) window.clearTimeout(couponCelebrateRef.current);
+      couponCelebrateRef.current = window.setTimeout(() => setCouponCelebrate(false), 1400);
+      trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
+    } catch {
+      setAppliedCoupon(null);
+      setCouponNote('Could not check that coupon. Try again.');
+    } finally {
+      setCouponBusy(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponNote('');
+    setCouponCelebrate(false);
+    if (couponCelebrateRef.current) {
+      window.clearTimeout(couponCelebrateRef.current);
+      couponCelebrateRef.current = null;
+    }
   };
 
   const startCheckout = async (opts?: { agreed?: boolean; agreedNoMinors?: boolean }) => {
@@ -318,6 +410,7 @@ export default function CheckoutClient({ plan }: Props) {
         },
         body: JSON.stringify({
           plan: selected.id,
+          ...(isCrypto && appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
         }),
       });
       const data = (await res.json()) as { url?: string; message?: string };
@@ -470,6 +563,9 @@ export default function CheckoutClient({ plan }: Props) {
             aria-hidden
           />
 
+          <div className="mb-3">
+            <AdminViewAsSwitch />
+          </div>
           <h1 className="text-center text-xl font-black tracking-tight text-white sm:text-2xl">Choose a pack</h1>
           <p className="mt-1 text-center text-sm text-white/60">
             {isCrypto
@@ -525,12 +621,20 @@ export default function CheckoutClient({ plan }: Props) {
                 const baseline = planOfferBaseline(pack);
                 const extraImages = Math.max(0, pack.imageGenerations - baseline.images);
                 const extraVideos = Math.max(0, pack.videoGenerations - baseline.videos);
-                const showImages = pack.imageGenerations + extraImages;
-                const showVideos = pack.videoGenerations + extraVideos;
+                const showHonestOffer = planOfferBonusPercent(pack) >= 30;
+                const showImages = showHonestOffer
+                  ? pack.imageGenerations
+                  : pack.imageGenerations + extraImages;
+                const showVideos = showHonestOffer
+                  ? pack.videoGenerations
+                  : pack.videoGenerations + extraVideos;
                 const soldOut = isCrypto && !isCryptoAvailableForStars(pack.stars);
-                const priceLabel = isCrypto
-                  ? formatUsdPrice(cryptoUsdForStars(pack.stars))
-                  : planStarsLabel(pack.stars);
+                const listUsd = cryptoUsdForStars(pack.stars);
+                const packCoupon =
+                  activeCoupon && couponAppliesToPlan(activeCoupon.code, pack.id) ? activeCoupon : null;
+                const saleUsd = applyCryptoCouponUsd(listUsd, packCoupon);
+                const showSale = Boolean(isCrypto && !soldOut && packCoupon && saleUsd < listUsd);
+                const priceLabel = isCrypto ? formatUsdPrice(listUsd) : planStarsLabel(pack.stars);
                 return (
                   <button
                     key={pack.id}
@@ -559,32 +663,162 @@ export default function CheckoutClient({ plan }: Props) {
                       {active && !soldOut ? <span className="h-2 w-2 rounded-full bg-[#ff2d78]" /> : null}
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="flex min-w-0 items-center gap-1 whitespace-nowrap">
+                      <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
                         <span className="min-w-0 truncate text-[12px] font-bold text-zinc-900 sm:text-[13px]">
-                          {pack.name} {showImages.toLocaleString('en-US')} images or{' '}
-                          {showVideos.toLocaleString('en-US')} videos
+                          {showImages.toLocaleString('en-US')} images or {showVideos.toLocaleString('en-US')} videos
                         </span>
                         {soldOut ? (
-                          <span className="shrink-0 rounded-md bg-[#dc2626] px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white sm:text-[8px]">
+                          <span className="inline-flex h-[15px] shrink-0 items-center rounded bg-[#dc2626] px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.06em] text-white">
                             Sold out
                           </span>
-                        ) : moreBadge ? (
-                          <span className="shrink-0 rounded-md bg-[#ff2d78] px-1.5 py-px text-[7px] font-black uppercase tracking-wide text-white shadow-[0_1px_0_rgba(255,255,255,0.25)_inset] sm:text-[8px]">
-                            {moreBadge}
-                          </span>
-                        ) : null}
+                        ) : (
+                          <>
+                            {pack.id === 'legend' ? (
+                              <span className="inline-flex h-[15px] shrink-0 items-center rounded bg-zinc-900 px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.06em] text-white">
+                                ULTRA
+                              </span>
+                            ) : null}
+                            {moreBadge ? (
+                              <span className="inline-flex h-[15px] shrink-0 items-center rounded bg-[#ff2d78] px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.06em] text-white">
+                                {moreBadge}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
                       </span>
+                      {!soldOut && pack.id === 'legend' ? (
+                        <span className="mt-0.5 block text-[9px] leading-snug text-zinc-500">
+                          + Unlock custom prompts
+                          <br />
+                          + Unlock PORN generation (Turn boring images into spicy porn)
+                          <br />
+                          + Unused Stars stay — they stack on ULTRA
+                        </span>
+                      ) : !soldOut ? (
+                        <span className="mt-0.5 flex items-start gap-1 text-[9px] leading-snug text-zinc-400">
+                          <svg viewBox="0 0 20 20" className="mt-px h-2.5 w-2.5 shrink-0" fill="currentColor" aria-hidden>
+                            <path d="M10 2a3 3 0 0 0-3 3v2H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a3 3 0 0 0-3-3zm1 5H9V5a1 1 0 1 1 2 0v2z" />
+                          </svg>
+                          <span>
+                            Unlock custom prompts
+                            <br />
+                            Unlock PORN generation — ULTRA only
+                          </span>
+                        </span>
+                      ) : null}
                     </span>
-                    <span
-                      className={`shrink-0 text-right text-[12px] font-bold sm:text-[13px] ${
-                        soldOut ? 'text-zinc-400 line-through' : 'text-zinc-900'
-                      }`}
-                    >
-                      {priceLabel}
+                    <span className="shrink-0 text-right leading-tight">
+                      {showSale ? (
+                        <span className="flex flex-col items-end">
+                          <span className="text-[10px] font-semibold text-zinc-400 line-through">
+                            {formatUsdPrice(listUsd)}
+                          </span>
+                          <span className="text-[12px] font-bold text-[#16a34a] sm:text-[13px]">
+                            {formatUsdPrice(saleUsd)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[12px] font-bold sm:text-[13px] ${
+                            soldOut ? 'text-zinc-400 line-through' : 'text-zinc-900'
+                          }`}
+                        >
+                          {priceLabel}
+                        </span>
+                      )}
                     </span>
                   </button>
                 );
               })}
+            </div>
+
+            {/* Coupon */}
+            <div className="mt-3">
+              {appliedCoupon ? (
+                <div
+                  className={`relative overflow-hidden rounded-xl border border-[#86efac] bg-[#ecfdf5] px-3 py-2.5 ${
+                    couponCelebrate ? 'coupon-applied-celebrate' : 'coupon-applied'
+                  }`}
+                >
+                  {couponCelebrate ? (
+                    <span className="pointer-events-none absolute inset-0" aria-hidden>
+                      {[
+                        ['-42px', '-28px'],
+                        ['36px', '-32px'],
+                        ['48px', '8px'],
+                        ['-50px', '14px'],
+                        ['8px', '-38px'],
+                        ['-18px', '32px'],
+                        ['28px', '30px'],
+                        ['-6px', '-18px'],
+                      ].map(([dx, dy], i) => (
+                        <span
+                          key={i}
+                          className="coupon-spark absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-[#22c55e]"
+                          style={{ '--dx': dx, '--dy': dy, animationDelay: `${i * 35}ms` } as CSSProperties}
+                        />
+                      ))}
+                    </span>
+                  ) : null}
+                  <div className="relative flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-[#14532d] sm:text-[13px]">
+                      <span className="coupon-check inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#22c55e] text-white">
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                          <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.2 7.2a1 1 0 0 1-1.4 0L3.3 9.1a1 1 0 1 1 1.4-1.4l3.1 3.1 6.5-6.5a1 1 0 0 1 1.4 0z" />
+                        </svg>
+                      </span>
+                      <span className="min-w-0">
+                        Coupon{' '}
+                        <span className={couponCelebrate ? 'coupon-code-shimmer' : 'text-[#15803d]'}>
+                          {appliedCoupon.code}
+                        </span>{' '}
+                        applied
+                        {appliedCoupon.label ? ` — ${appliedCoupon.label}` : ''}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearCoupon}
+                      className="shrink-0 text-[11px] font-semibold text-[#166534] underline underline-offset-2 hover:text-[#14532d]"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {isCrypto ? null : (
+                    <p className="relative mt-1 text-[11px] text-[#166534]">
+                      This code applies to crypto payment only.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-stretch gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(event) => setCouponInput(event.target.value.toUpperCase())}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        void applyCoupon();
+                      }
+                    }}
+                    placeholder="Coupon code"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-zinc-900 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-zinc-400 focus:border-[#ff2d78] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void applyCoupon()}
+                    disabled={couponBusy}
+                    className="shrink-0 rounded-xl border border-[#ff2d78] px-4 text-[13px] font-bold text-[#ff2d78] transition hover:bg-[#ff2d78]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {couponBusy ? 'Checking…' : 'Apply'}
+                  </button>
+                </div>
+              )}
+              {couponNote ? <p className="mt-1 text-xs text-[#c81e5a]">{couponNote}</p> : null}
             </div>
 
             <div className="mt-4 border-t border-zinc-200 pt-3">
@@ -654,6 +888,21 @@ export default function CheckoutClient({ plan }: Props) {
             </label>
             {termsNote ? <p className="mt-1 text-xs text-[#c81e5a]">{termsNote}</p> : null}
 
+            {isCrypto && selectedCoupon && cryptoSavedUsd > 0 ? (
+              <p className="mt-3 text-center text-sm font-semibold text-zinc-700">
+                <span className="text-zinc-400 line-through">{formatUsdPrice(cryptoListUsd)}</span>{' '}
+                <span className="text-[#16a34a]">
+                  {formatUsdPrice(cryptoFinalUsd)} with {selectedCoupon.code}
+                </span>
+                {' · '}
+                <span className="text-[#16a34a]">YOU JUST SAVED {formatUsdPrice(cryptoSavedUsd)}</span>
+              </p>
+            ) : isCrypto && activeCoupon && !selectedCoupon ? (
+              <p className="mt-3 text-center text-sm font-semibold text-zinc-600">
+                This coupon applies to the 3 highest packs.
+              </p>
+            ) : null}
+
             <button
               ref={payButtonRef}
               type="button"
@@ -716,7 +965,7 @@ export default function CheckoutClient({ plan }: Props) {
       </main>
 
       <footer className="relative z-10 shrink-0 border-t border-[#ff2d78]/20 bg-[#0a0208]/50 px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))] backdrop-blur-md">
-        <div className="mx-auto max-w-[720px] scale-90">
+        <div className="mx-auto max-w-[720px]">
           <FeaturedOn variant="login-content" />
         </div>
       </footer>

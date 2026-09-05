@@ -41,8 +41,18 @@ type GenerationJobsContextValue = {
 };
 
 const STORAGE_KEY = 'slutbot-active-generations';
-const POLL_MS = 2000;
-const POLL_MAX = 120;
+// Poll with exponential backoff instead of a flat 2s. Stay snappy for the first
+// few checks (most jobs are still queued/starting), then slow down so a long
+// job costs a handful of server-action invocations instead of ~120. The total
+// window is kept at ~4 minutes so the timeout behaviour is unchanged.
+const POLL_TIMEOUT_MS = 4 * 60 * 1000;
+const POLL_MIN_MS = 2000;
+const POLL_MAX_MS = 15000;
+
+function nextPollDelay(attempt: number): number {
+  const delay = POLL_MIN_MS * 2 ** attempt;
+  return Math.min(delay, POLL_MAX_MS);
+}
 
 const GenerationJobsContext = createContext<GenerationJobsContextValue | null>(null);
 
@@ -209,7 +219,9 @@ export default function GenerationJobsProvider({ children }: { children: ReactNo
 
       void (async () => {
         try {
-          for (let i = 0; i < POLL_MAX; i += 1) {
+          const deadline = Date.now() + POLL_TIMEOUT_MS;
+          let attempt = 0;
+          while (Date.now() < deadline) {
             const result = await pollWavespeedImageToVideo(taskId);
             if (typeof result.desires === 'number') setDesires(result.desires);
             if (result.status === 'completed' && (result.outputUrl || result.locked)) {
@@ -235,7 +247,8 @@ export default function GenerationJobsProvider({ children }: { children: ReactNo
               phase: 'generating',
               statusText: result.status === 'processing' ? 'Generating…' : 'Queued…',
             });
-            await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+            await new Promise((resolve) => setTimeout(resolve, nextPollDelay(attempt)));
+            attempt += 1;
           }
           throw new Error('Timed out waiting for the result.');
         } catch (err) {

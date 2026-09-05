@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { ExampleVideo } from '@/lib/exampleVideos';
+import { isRemoteMedia } from '@/lib/media/image';
 import { trackSampleClick } from '@/lib/samples/client';
 import { sampleRefTag } from '@/lib/samples/refTag';
 import { generatorModePath } from '@/lib/site';
@@ -87,6 +88,7 @@ export default function ExploreExampleCard({
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
           priority={eager}
+          unoptimized={isRemoteMedia(example.poster)}
           className="pointer-events-none select-none object-cover object-top"
         />
         {active && example.video ? (
@@ -109,7 +111,14 @@ export default function ExploreExampleCard({
             }`}
           >
             <div className="card-thumb-swing relative aspect-[80/100] w-full overflow-hidden rounded-md border-2 border-white/90 drop-shadow-lg">
-              <Image src={example.source} alt="" fill sizes="80px" className="object-cover object-top" />
+              <Image
+                src={example.source}
+                alt=""
+                fill
+                sizes="80px"
+                unoptimized={isRemoteMedia(example.source)}
+                className="object-cover object-top"
+              />
             </div>
           </div>
         ) : null}

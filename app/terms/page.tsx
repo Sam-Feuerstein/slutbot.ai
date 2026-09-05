@@ -235,10 +235,12 @@ export default function TermsPage() {
               <li>1,500 Telegram Stars (about USD $19.94), for 150 image generations or 75 spicy videos.</li>
               <li>2,500 Telegram Stars (about USD $33.23), for 260 image generations or 130 spicy videos.</li>
               <li>5,000 Telegram Stars (about USD $66.47), for 576 image generations or 288 spicy videos, including up to 20 concurrent jobs.</li>
+              <li>15,000 Telegram Stars (about USD $199.40), for 1,872 image generations or 936 spicy videos, including up to 20 concurrent jobs, custom prompts, and porn generation (turn boring images into spicy porn).</li>
             </ul>
             <p>
               Telegram Stars checkout charges the matching Telegram Stars amount. The pack credits Stars to your wallet so you can use the generations shown at
-              checkout.
+              checkout. Buying a larger pack, including ULTRA, adds those Stars on top of any unused Stars already on
+              your wallet. Unused Stars are not replaced or lost.
             </p>
             <p>
               Estimated image and video counts shown with a pack are illustrations based on typical generation costs

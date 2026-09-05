@@ -17,6 +17,8 @@ export async function createChargedJob(input: {
   locked?: boolean;
 }) {
   await connectDB();
+  // Do not set taskId yet. A unique sparse index treats `null` as a real value,
+  // so one refunded job with taskId:null blocks every later generate.
   return GenerationJob.create({
     userId: input.userId,
     mode: input.mode,

@@ -45,6 +45,16 @@ export function normalizeCouponCode(value: string): string {
   return value.trim().toUpperCase().replace(/\s+/g, '');
 }
 
+/** Crypto launch coupon — 25% off the three highest packs only. */
+export const EROGRAM_CRYPTO_COUPON_CODE = 'EROGRAM30OFF';
+export const EROGRAM_CRYPTO_COUPON_PLAN_IDS = ['desire', 'passion', 'legend'] as const;
+
+export function couponAppliesToPlan(code: string | undefined | null, planId: string): boolean {
+  if (!code) return false;
+  if (normalizeCouponCode(code) !== EROGRAM_CRYPTO_COUPON_CODE) return true;
+  return (EROGRAM_CRYPTO_COUPON_PLAN_IDS as readonly string[]).includes(planId);
+}
+
 export function isPriceCouponType(type?: string | null): type is 'percent_off' | 'amount_off' | 'crypto_discount' {
   return type === 'percent_off' || type === 'amount_off' || type === 'crypto_discount';
 }

@@ -32,7 +32,7 @@ export const BASE_USD = LIST_USD;
 export const STARS_USD_RATE = LIST_USD / LIST_STARS;
 export const MINI_STARS = 750;
 export const MINI_IMAGES = 72;
-export const TELEGRAM_STAR_AMOUNTS = [750, 1500, 2500, 5000] as const;
+export const TELEGRAM_STAR_AMOUNTS = [750, 1500, 2500, 5000, 15000] as const;
 
 export function isTelegramStarAmount(stars: number): boolean {
   return (TELEGRAM_STAR_AMOUNTS as readonly number[]).includes(Math.round(stars));
@@ -126,6 +126,23 @@ export const CRYPTO_USD_PER_STAR = 0.013;
 export function cryptoUsdForStars(stars: number): number {
   const raw = Math.max(0, Number(stars) || 0) * CRYPTO_USD_PER_STAR;
   return Math.round(raw * 100) / 100;
+}
+
+/** Apply a percent/amount-off coupon to a crypto USD price. Never below $0.01. */
+export function applyCryptoCouponUsd(
+  usd: number,
+  coupon: { type: 'percent_off' | 'amount_off'; discountPercent: number; discountUsd: number } | null,
+): number {
+  const base = Math.max(0, Number(usd) || 0);
+  if (!coupon) return Math.round(base * 100) / 100;
+  let next = base;
+  if (coupon.type === 'amount_off') {
+    next = base - Math.max(0, Number(coupon.discountUsd) || 0);
+  } else {
+    const pct = Math.min(90, Math.max(0, Number(coupon.discountPercent) || 0));
+    next = (base * (100 - pct)) / 100;
+  }
+  return Math.round(Math.max(0.01, next) * 100) / 100;
 }
 
 /** Crypto packs start at the novice — the 750 Starter is sold out on crypto. */
@@ -255,8 +272,27 @@ function definePlan(input: {
 
 export const PREMIUM_PLANS: PremiumPlan[] = [
   definePlan({
+    id: 'legend',
+    name: 'ULTRA',
+    stars: 15000,
+    price: usdTelegramFromStars(15000),
+    imageGenerations: 1872,
+    videoGenerations: 936,
+    concurrentGenerations: 20,
+    features: features({
+      hd: 'star',
+      proExports: 'star',
+      ultraHd: 'star',
+      unlimitedHistory: 'check',
+      faster: 'check',
+      fullVideo: 'check',
+      highQuality: 'check',
+      priority: 'check',
+    }),
+  }),
+  definePlan({
     id: 'passion',
-    name: 'The Aislutboss',
+    name: 'PRO',
     stars: 5000,
     price: usdTelegramFromStars(5000),
     imageGenerations: 576,
@@ -276,7 +312,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'desire',
-    name: 'The Player',
+    name: 'ADVANCED',
     stars: 2500,
     price: usdTelegramFromStars(2500),
     imageGenerations: 260,
@@ -294,7 +330,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'flirt',
-    name: 'The novice',
+    name: 'BASIC',
     stars: 1500,
     price: usdTelegramFromStars(1500),
     imageGenerations: 150,
@@ -312,7 +348,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
   }),
   definePlan({
     id: 'spark',
-    name: 'The Starter',
+    name: 'MINI',
     stars: 750,
     price: usdTelegramFromStars(750),
     imageGenerations: 72,

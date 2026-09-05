@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import {
   deleteSample,
@@ -20,6 +21,17 @@ async function denyAdmin(req: NextRequest) {
     return NextResponse.json({ message: 'Admin login required.' }, { status: 401 });
   }
   return null;
+}
+
+// The homepage renders samples/hero/before-after and is ISR-cached. Refresh it
+// immediately whenever an admin changes samples so edits appear without waiting
+// for the revalidate window.
+function revalidateSamplePages() {
+  try {
+    revalidatePath('/');
+  } catch {
+    /* revalidation is best-effort */
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -46,6 +58,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const sample = await upsertSample(body);
+    revalidateSamplePages();
     return NextResponse.json({ sample });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not save sample.';
@@ -81,6 +94,7 @@ export async function PUT(req: NextRequest) {
         if (body[key] !== undefined) patch[key] = String(body[key] ?? '');
       }
       const sample = await patchSampleAssets(body.id, patch);
+      revalidateSamplePages();
       return NextResponse.json({ sample });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not update assets.';
@@ -95,6 +109,7 @@ export async function PUT(req: NextRequest) {
     }
     try {
       const sample = await setSampleHeroSlot(body.id, slot as 0 | 1 | 2);
+      revalidateSamplePages();
       return NextResponse.json({ sample });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not update hero slot.';
@@ -105,6 +120,7 @@ export async function PUT(req: NextRequest) {
   if (body?.heroSlots) {
     try {
       const samples = await setHeroSlots(body.heroSlots.slot1 || '', body.heroSlots.slot2 || '');
+      revalidateSamplePages();
       return NextResponse.json({ samples });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not update hero.';
@@ -115,6 +131,7 @@ export async function PUT(req: NextRequest) {
   if (body?.kind && Array.isArray(body.orderedIds)) {
     try {
       const samples = await reorderSamples(body.kind, body.orderedIds);
+      revalidateSamplePages();
       return NextResponse.json({ samples });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not reorder.';
@@ -127,6 +144,7 @@ export async function PUT(req: NextRequest) {
   }
   try {
     const sample = await setSampleEnabled(body.id, body.enabled);
+    revalidateSamplePages();
     return NextResponse.json({ sample });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not update sample.';
@@ -141,6 +159,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ message: 'Sample id is required.' }, { status: 400 });
   try {
     await deleteSample(id);
+    revalidateSamplePages();
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not delete sample.';

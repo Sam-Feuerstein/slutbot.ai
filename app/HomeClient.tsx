@@ -8,10 +8,19 @@ import { EXAMPLE_VIDEOS } from '@/lib/exampleVideos';
 import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
 import { listHeroDemos, listPublicBeforeAfter, listPublicExamples } from '@/lib/samples';
 import type { PublicHeroDemo } from '@/lib/samples';
+import { exampleMediaUrl } from '@/lib/presetMedia';
 
 const FALLBACK_HERO: [PublicHeroDemo, PublicHeroDemo] = [
-  { id: 'example-ex-1', poster: '/examples/example-ex-1.jpg', video: '/examples/example-ex-1.mp4' },
-  { id: 'example-ex-2', poster: '/examples/example-ex-2.jpg', video: '/examples/example-ex-2.mp4' },
+  {
+    id: 'example-ex-1',
+    poster: exampleMediaUrl('/examples/example-ex-1.jpg'),
+    video: exampleMediaUrl('/examples/example-ex-1.mp4'),
+  },
+  {
+    id: 'example-ex-2',
+    poster: exampleMediaUrl('/examples/example-ex-2.jpg'),
+    video: exampleMediaUrl('/examples/example-ex-2.mp4'),
+  },
 ];
 
 export default async function HomeClient() {

@@ -1,7 +1,13 @@
-import { Archivo_Black } from 'next/font/google';
+import { Archivo_Black, UnifrakturCook } from 'next/font/google';
 
 const erogramxMark = Archivo_Black({
   weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const nypostGothic = UnifrakturCook({
+  weight: '700',
   subsets: ['latin'],
   display: 'swap',
 });
@@ -20,36 +26,16 @@ const FEATURED_PUBLICATIONS: Publication[] = [
     href: 'https://erogram.pro/',
   },
   {
-    name: 'The New York Times',
-    href: 'https://www.nytimes.com/',
-    logo: '/featured/nyt.svg',
-    width: 185,
-    height: 25,
+    name: 'Mashable',
+    href: 'https://mashable.com/',
+  },
+  {
+    name: 'DTOWN Magazine',
+    href: 'https://dtownmag.com/',
   },
   {
     name: 'New York Post',
     href: 'https://nypost.com/',
-  },
-  {
-    name: 'Mashable',
-    href: 'https://mashable.com/',
-    logo: '/featured/mashable.svg',
-    width: 595,
-    height: 95,
-  },
-  {
-    name: 'Lifehacker',
-    href: 'https://lifehacker.com/',
-    logo: '/featured/lifehacker.svg',
-    width: 1497,
-    height: 414,
-  },
-  {
-    name: 'Wired',
-    href: 'https://www.wired.com/',
-    logo: '/featured/wired.svg',
-    width: 125,
-    height: 25,
   },
 ];
 
@@ -57,7 +43,7 @@ function PublicationMark({ name }: { name: string }) {
   if (name === 'EROGRAMX') {
     return (
       <span
-        className={`${erogramxMark.className} inline-flex items-baseline text-[13px] leading-none tracking-[-0.04em] text-white sm:text-[16px]`}
+        className={`${erogramxMark.className} inline-flex items-baseline text-[17px] leading-none tracking-[-0.04em] text-white sm:text-[21px]`}
       >
         <span className="relative z-10">EROGRAM</span>
         <span className="relative z-0 -ml-0.5 text-[1.1em] leading-none tracking-tight">X</span>
@@ -65,12 +51,36 @@ function PublicationMark({ name }: { name: string }) {
     );
   }
 
+  if (name === 'Mashable') {
+    return (
+      <span className="text-[17px] font-black italic leading-none tracking-[-0.03em] text-white sm:text-[21px]">
+        mashable
+      </span>
+    );
+  }
+
   if (name === 'New York Post') {
     return (
       <span className="flex flex-col items-center justify-center text-white">
-        <span className="text-[7px] font-semibold tracking-[0.32em] sm:text-[8px] sm:tracking-[0.36em]">NEW YORK</span>
-        <span className="mt-px text-[12px] font-black leading-none tracking-[0.18em] sm:text-[15px] sm:tracking-[0.2em]">
-          POST
+        <span className="font-serif text-[6.5px] font-bold uppercase leading-none tracking-[0.46em] text-white sm:text-[7.5px] sm:tracking-[0.5em]">
+          New York
+        </span>
+        <span className="mt-1 h-px w-[4.6em] bg-white/80" aria-hidden />
+        <span className={`${nypostGothic.className} -mt-0.5 text-[26px] leading-none sm:text-[30px]`}>
+          Post
+        </span>
+      </span>
+    );
+  }
+
+  if (name === 'DTOWN Magazine') {
+    return (
+      <span className="flex flex-col items-center justify-center text-white">
+        <span className="text-[17px] font-black leading-none tracking-[0.14em] sm:text-[21px] sm:tracking-[0.16em]">
+          DTOWN
+        </span>
+        <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.28em] text-white/80 sm:text-[10px] sm:tracking-[0.32em]">
+          Magazine
         </span>
       </span>
     );
@@ -102,27 +112,27 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
         {isLogin ? 'Featured on' : 'Featured in'}
       </p>
       <ul
-        className={`grid items-center justify-items-center ${
+        className={`flex flex-wrap items-center justify-center ${
           isMenu
-            ? 'mt-3 grid-cols-3 gap-x-2 gap-y-3'
+            ? 'mt-1.5 gap-x-5 gap-y-2'
             : isLogin
-              ? 'mt-5 grid-cols-3 gap-x-4 gap-y-5 sm:mt-6 sm:grid-cols-6 sm:gap-x-6 sm:gap-y-0'
-              : 'mt-8 grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-6 lg:gap-x-5 lg:gap-y-0'
+              ? 'mt-5 gap-x-8 sm:mt-6 sm:gap-x-12'
+              : 'mt-8 gap-x-10 sm:gap-x-14'
         }`}
       >
         {FEATURED_PUBLICATIONS.map(({ name, href, logo, width, height }) => (
-          <li key={name} className="flex w-full items-center justify-center">
+          <li key={name} className="flex min-w-0 items-center justify-center">
             <a
               href={href}
               target="_blank"
               rel="nofollow noopener noreferrer"
               aria-label={`Visit ${name}`}
-              className={`flex w-full items-center justify-center transition-all duration-300 ${
+              className={`flex items-center justify-center transition-all duration-300 ${
                 isMenu
-                  ? 'h-6 max-w-[84px] opacity-50 hover:opacity-100'
+                  ? 'min-h-8 opacity-70 hover:opacity-100'
                   : isLogin
-                    ? 'h-8 max-w-[108px] opacity-45 hover:opacity-100 hover:drop-shadow-[0_0_14px_rgba(255,45,120,0.45)] sm:h-9 sm:max-w-[120px]'
-                    : 'h-9 max-w-[130px] opacity-60 hover:opacity-100'
+                    ? 'min-h-11 opacity-80 hover:opacity-100 hover:drop-shadow-[0_0_14px_rgba(255,45,120,0.45)] sm:min-h-12'
+                    : 'min-h-12 opacity-80 hover:opacity-100 sm:min-h-14'
               }`}
             >
               {logo ? (
@@ -136,8 +146,8 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
                   decoding="async"
                   className={
                     isMenu
-                      ? 'max-h-3.5 w-auto max-w-[78px] object-contain object-center'
-                      : 'max-h-5 w-auto max-w-[112px] object-contain object-center sm:max-h-6'
+                      ? 'max-h-5 w-auto max-w-[100px] object-contain object-center'
+                      : 'max-h-7 w-auto max-w-[150px] object-contain object-center sm:max-h-8'
                   }
                 />
               ) : (

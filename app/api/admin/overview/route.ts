@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
-import { SlutbotPayment, SlutbotUser } from '@/lib/models';
+import { AiToolGeneration, GenerationJob, SlutbotPayment, SlutbotUser } from '@/lib/models';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import { getTotalVisits, getVisitDashboardStats } from '@/lib/analytics';
 import { countPwaInstalls } from '@/lib/pwaInstall';
@@ -67,6 +67,58 @@ export async function GET(req: NextRequest) {
     else dailyMap[day].free += 1;
   }
 
+  const genStart = new Date(`${days[0]}T00:00:00.000Z`);
+  const dailyGens = Object.fromEntries(days.map((day) => [day, { day, images: 0, videos: 0 }]));
+
+  function applyGenCounts(
+    rows: Array<{ _id?: { day?: string; mode?: string }; n?: number }>,
+    merge: 'sum' | 'max',
+  ) {
+    for (const row of rows) {
+      const day = row._id?.day || '';
+      const bucket = dailyGens[day];
+      if (!bucket) continue;
+      const n = Number(row.n) || 0;
+      if (row._id?.mode === 'video') {
+        bucket.videos = merge === 'max' ? Math.max(bucket.videos, n) : bucket.videos + n;
+      } else if (row._id?.mode === 'image') {
+        bucket.images = merge === 'max' ? Math.max(bucket.images, n) : bucket.images + n;
+      }
+    }
+  }
+
+  const genGroup = [
+    {
+      $group: {
+        _id: {
+          day: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          mode: '$mode',
+        },
+        n: { $sum: 1 },
+      },
+    },
+  ];
+
+  const [outputGens, jobGens] = await Promise.all([
+    AiToolGeneration.aggregate([{ $match: { createdAt: { $gte: genStart } } }, ...genGroup]),
+    GenerationJob.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: genStart },
+          status: { $in: ['completed', 'charged', 'ingesting'] },
+          paidWith: { $ne: 'admin' },
+        },
+      },
+      ...genGroup,
+    ]),
+  ]);
+  applyGenCounts(outputGens as Array<{ _id?: { day?: string; mode?: string }; n?: number }>, 'max');
+  applyGenCounts(jobGens as Array<{ _id?: { day?: string; mode?: string }; n?: number }>, 'max');
+
+  const dailyGenerations = days.map((day) => dailyGens[day]);
+  const totalImages = dailyGenerations.reduce((sum, row) => sum + row.images, 0);
+  const totalVideos = dailyGenerations.reduce((sum, row) => sum + row.videos, 0);
+
   return NextResponse.json({
     totalPaid: Math.round(totalPaid * 100) / 100,
     totalUsers,
@@ -77,5 +129,8 @@ export async function GET(req: NextRequest) {
     dailyVisits: visitStats.dailyVisits,
     visitsByCountry: visitStats.visitsByCountry,
     daily: days.map((day) => dailyMap[day]),
+    dailyGenerations,
+    totalImages,
+    totalVideos,
   });
 }

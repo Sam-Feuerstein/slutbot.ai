@@ -1,5 +1,6 @@
 import connectDB from '@/lib/db/mongodb';
 import { getExampleSourceThumb, PART_2_VIDEO_IDS } from '@/lib/exampleVideos';
+import { exampleMediaUrl } from '@/lib/presetMedia';
 import { PlatformSettings, SampleClick, SampleLike, SampleShowcase } from '@/lib/models';
 import { seedSampleInputs } from './seed';
 import type {
@@ -181,9 +182,13 @@ export async function listPublicExamples(): Promise<PublicExampleSample[]> {
   return [...leading, ...pinned, ...rest].map((row) => ({
     id: row.id,
     title: row.title,
-    poster: row.posterUrl,
-    video: row.videoUrl || undefined,
-    source: row.sourceUrl || getExampleSourceThumb(row.id, Boolean(row.videoUrl)),
+    // Rewrite legacy /examples/* paths (from earlier seeds) to the R2 CDN.
+    // Admin-uploaded absolute URLs pass through unchanged.
+    poster: exampleMediaUrl(row.posterUrl),
+    video: row.videoUrl ? exampleMediaUrl(row.videoUrl) : undefined,
+    source: row.sourceUrl
+      ? exampleMediaUrl(row.sourceUrl)
+      : getExampleSourceThumb(row.id, Boolean(row.videoUrl)),
     likeCount: likeCounts.get(row.id) || 0,
   }));
 }
@@ -194,18 +199,19 @@ export async function listPublicBeforeAfter(): Promise<PublicBeforeAfterSample[]
   const likeCounts = await likeCountsFor(enabled.map((row) => row.id));
   return enabled.map((row) => ({
     id: row.id,
-    before: row.beforeUrl,
-    after: row.afterUrl,
-    combined: row.combinedUrl || undefined,
+    before: exampleMediaUrl(row.beforeUrl),
+    after: exampleMediaUrl(row.afterUrl),
+    combined: row.combinedUrl ? exampleMediaUrl(row.combinedUrl) : undefined,
     likeCount: likeCounts.get(row.id) || 0,
   }));
 }
 
 function toHeroDemo(row: SampleDoc): PublicHeroDemo {
+  const video = clip(row.videoUrl || '', 500);
   return {
     id: String(row.sampleId || ''),
-    poster: clip(row.posterUrl || '', 500),
-    video: clip(row.videoUrl || '', 500) || undefined,
+    poster: exampleMediaUrl(clip(row.posterUrl || '', 500)),
+    video: video ? exampleMediaUrl(video) : undefined,
   };
 }
 

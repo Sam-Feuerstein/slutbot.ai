@@ -32,7 +32,8 @@ function ensureVapid() {
 
 async function sendTelegramDM(text: string) {
   const bot = envValue('TELEGRAM_PAYMENT_BOT_TOKEN');
-  const chat = envValue('ADMIN_TELEGRAM_CHAT_ID');
+  const { getAdminTelegramChatId } = await import('@/lib/adminAlerts');
+  const chat = await getAdminTelegramChatId();
   if (!bot || !chat) return;
   try {
     await fetch(`https://api.telegram.org/bot${bot}/sendMessage`, {

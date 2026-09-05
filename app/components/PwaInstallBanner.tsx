@@ -2,34 +2,22 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { getImageToVideoClientId } from '@/app/tool/clientId';
 import { AGE_CONSENT_EVENT, hasAgeConsent } from '@/lib/ageConsent';
+import {
+  ensurePwaInstallListener,
+  getDeferredPwaPrompt,
+  isIosDevice,
+  isMobileUa,
+  isStandaloneDisplay,
+  promptPwaInstall,
+  recordPwaInstallClient,
+  subscribePwaPrompt,
+} from './pwaInstallClient';
 
 const DISMISS_KEY = 'pwa_install_dismissed';
-const RECORDED_KEY = 'pwa_install_recorded';
 const DISMISS_DAYS = 14;
 const SW_URL = '/sw.js?v=3';
 const ICON_SRC = '/icons/icon-192.png?v=3';
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-};
-
-function isStandalone(): boolean {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
-function isMobileUa(): boolean {
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-}
-
-function isIosDevice(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
-}
 
 function wasDismissedRecently(): boolean {
   try {
@@ -43,35 +31,9 @@ function wasDismissedRecently(): boolean {
   }
 }
 
-function recordInstall() {
-  try {
-    const clientId = getImageToVideoClientId();
-    if (!clientId) return;
-    const recorded = localStorage.getItem(RECORDED_KEY) === '1';
-    const signedIn = localStorage.getItem('slutbot-signed-in') === '1';
-    const linked = localStorage.getItem('pwa_install_user_linked') === '1';
-    if (recorded && (!signedIn || linked)) return;
-    void fetch('/api/pwa/install', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId }),
-    })
-      .then((res) => {
-        if (!res.ok) return;
-        localStorage.setItem(RECORDED_KEY, '1');
-        if (signedIn) localStorage.setItem('pwa_install_user_linked', '1');
-      })
-      .catch(() => {});
-  } catch {
-    /* ignore */
-  }
-}
-
 export default function PwaInstallBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [showIosTip, setShowIosTip] = useState(false);
   const [consentReady, setConsentReady] = useState(false);
@@ -96,13 +58,14 @@ export default function PwaInstallBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (isStandalone()) {
-      recordInstall();
+    ensurePwaInstallListener();
+    if (isStandaloneDisplay()) {
+      recordPwaInstallClient();
       return;
     }
 
     const onInstalled = () => {
-      recordInstall();
+      recordPwaInstallClient();
       setVisible(false);
     };
     window.addEventListener('appinstalled', onInstalled);
@@ -113,20 +76,16 @@ export default function PwaInstallBanner() {
     if (typeof window === 'undefined') return;
     if (!consentReady) return;
     if (pathname.startsWith('/admin')) return;
-    if (isStandalone()) return;
+    if (isStandaloneDisplay()) return;
 
     if (!isMobileUa() || wasDismissedRecently()) {
       return;
     }
 
     setIsIOS(isIosDevice());
-
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setVisible(true);
-    };
-    window.addEventListener('beforeinstallprompt', onPrompt);
+    const unsubscribe = subscribePwaPrompt(() => {
+      if (getDeferredPwaPrompt()) setVisible(true);
+    });
 
     let iosTimer: ReturnType<typeof setTimeout> | undefined;
     if (isIosDevice()) {
@@ -134,7 +93,7 @@ export default function PwaInstallBanner() {
     }
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
+      unsubscribe();
       if (iosTimer) clearTimeout(iosTimer);
     };
   }, [consentReady, pathname]);
@@ -148,20 +107,17 @@ export default function PwaInstallBanner() {
   }, []);
 
   const install = useCallback(async () => {
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-      if (choice.outcome === 'accepted') {
-        recordInstall();
-        setVisible(false);
-        return;
-      }
-      dismiss();
+    const outcome = await promptPwaInstall();
+    if (outcome === 'accepted') {
+      setVisible(false);
       return;
     }
-    if (isIOS) setShowIosTip(true);
-  }, [deferredPrompt, dismiss, isIOS]);
+    if (outcome === 'ios-help' || (outcome === 'unavailable' && isIOS)) {
+      setShowIosTip(true);
+      return;
+    }
+    if (outcome === 'dismissed') dismiss();
+  }, [dismiss, isIOS]);
 
   if (!visible) return null;
 

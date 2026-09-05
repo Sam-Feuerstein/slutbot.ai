@@ -15,6 +15,7 @@ import {
   getPresetMainImageUrl,
   presetHasVideo,
 } from '@/lib/presetMedia';
+import { isRemoteMedia } from '@/lib/media/image';
 import { getAuthToken } from '@/lib/desires';
 import { EXPLORE_PATH, generatorPresetPath, loginHref } from '@/lib/site';
 import SampleLikeButton from './SampleLikeButton';
@@ -90,6 +91,7 @@ function ExplorePresetSlide({
               sizes="(max-width: 480px) 100vw, 480px"
               priority={eagerPoster}
               loading={eagerPoster ? 'eager' : 'lazy'}
+              unoptimized={isRemoteMedia(posterSrc)}
               className="object-cover object-top"
             />
             {mountVideo ? (
@@ -116,6 +118,7 @@ function ExplorePresetSlide({
             sizes="(max-width: 480px) 100vw, 480px"
             priority={eagerPoster}
             loading={eagerPoster ? 'eager' : 'lazy'}
+            unoptimized={isRemoteMedia(mainImageSrc)}
             className="object-cover object-top"
           />
         )}

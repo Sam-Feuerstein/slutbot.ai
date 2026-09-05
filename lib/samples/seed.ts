@@ -1,5 +1,6 @@
 import { EXAMPLE_VIDEOS } from '@/lib/exampleVideos';
 import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
+import { exampleMediaUrl } from '@/lib/presetMedia';
 import type { SampleInput } from './types';
 
 /** Current hardcoded hero demos — seeded so admins can reassign those slots. */
@@ -8,8 +9,8 @@ export const DEFAULT_HERO_SAMPLES: SampleInput[] = [
     id: 'example-ex-1',
     kind: 'example',
     title: 'Hero left',
-    posterUrl: '/examples/example-ex-1.jpg',
-    videoUrl: '/examples/example-ex-1.mp4',
+    posterUrl: exampleMediaUrl('/examples/example-ex-1.jpg'),
+    videoUrl: exampleMediaUrl('/examples/example-ex-1.mp4'),
     sortOrder: -2,
     enabled: true,
     pinned: false,
@@ -19,8 +20,8 @@ export const DEFAULT_HERO_SAMPLES: SampleInput[] = [
     id: 'example-ex-2',
     kind: 'example',
     title: 'Hero right',
-    posterUrl: '/examples/example-ex-2.jpg',
-    videoUrl: '/examples/example-ex-2.mp4',
+    posterUrl: exampleMediaUrl('/examples/example-ex-2.jpg'),
+    videoUrl: exampleMediaUrl('/examples/example-ex-2.mp4'),
     sortOrder: -1,
     enabled: true,
     pinned: false,

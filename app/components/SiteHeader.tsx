@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { LogOut, User, X } from 'lucide-react';
+import { Download, LogOut, User, X } from 'lucide-react';
 import FeaturedOn from './FeaturedOn';
 import BrandLogo from './BrandLogo';
 import Breadcrumbs from './Breadcrumbs';
@@ -29,6 +29,11 @@ import {
   remainingGenerationsCopy,
 } from '@/lib/desires';
 import GuestSignupOffer from './GuestSignupOffer';
+import {
+  isStandaloneDisplay,
+  promptPwaInstall,
+  subscribePwaPrompt,
+} from './pwaInstallClient';
 import { EXPLORE_PATH, GENERATOR_PATH, loginHref, ACCOUNT_PATH, ARCHIVE_PATH, checkoutHref } from '@/lib/site';
 
 function SparkleIcon({ className }: { className?: string }) {
@@ -65,6 +70,8 @@ export default function SiteHeader() {
   const [desires, setDesires] = useState(0);
   const [signedIn, setSignedIn] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showDownloadApp, setShowDownloadApp] = useState(true);
+  const [installHint, setInstallHint] = useState('');
 
   const refreshAuth = useCallback(() => {
     const token = getAuthToken();
@@ -101,6 +108,7 @@ export default function SiteHeader() {
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
+    if (!menuOpen) setInstallHint('');
     return () => {
       document.body.style.overflow = '';
     };
@@ -119,6 +127,26 @@ export default function SiteHeader() {
       setDesires(amount);
     });
   }, [menuOpen]);
+
+  useEffect(() => {
+    const syncInstall = () => setShowDownloadApp(!isStandaloneDisplay());
+    syncInstall();
+    return subscribePwaPrompt(syncInstall);
+  }, []);
+
+  async function downloadApp() {
+    const outcome = await promptPwaInstall();
+    if (outcome === 'accepted') {
+      setShowDownloadApp(false);
+      setInstallHint('');
+      return;
+    }
+    if (outcome === 'ios-help') {
+      setInstallHint('On iPhone: tap Share, then Add to Home Screen.');
+      return;
+    }
+    setInstallHint('In your browser menu, tap Install app or Add to Home Screen.');
+  }
 
   async function logOut() {
     setMenuOpen(false);
@@ -310,44 +338,60 @@ export default function SiteHeader() {
                   {label}
                 </Link>
               ))}
-              {!signedIn ? (
-                <div className="mt-1 space-y-1">
-                  <Link
-                    href={loginHref(pathname)}
-                    onClick={() => setMenuOpen(false)}
-                    className="block rounded-lg px-2 py-1.5 text-[12px] font-semibold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
+            </nav>
+
+            <div className="relative mt-2 shrink-0 space-y-1.5">
+              {showDownloadApp ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => void downloadApp()}
+                    className="flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-white/20 bg-white/[0.08] px-3 text-[12px] font-bold text-white transition-colors hover:bg-white/15"
                   >
-                    Sign in
-                  </Link>
+                    <Download className="h-3.5 w-3.5" />
+                    Download the app
+                  </button>
+                  {installHint ? (
+                    <p className="mt-1.5 px-1 text-center text-[11px] leading-snug text-white/60">{installHint}</p>
+                  ) : null}
                 </div>
+              ) : null}
+              {!signedIn ? (
+                <Link
+                  href={loginHref(pathname)}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex h-9 w-full items-center justify-center rounded-full border border-white/15 px-3 text-[12px] font-bold text-white/80 transition-colors hover:bg-black/25 hover:text-white"
+                >
+                  Sign in
+                </Link>
               ) : (
                 <button
                   type="button"
                   onClick={() => void logOut()}
-                  className="mt-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[12px] font-semibold text-white/55 transition-colors hover:bg-black/25 hover:text-white"
+                  className="flex h-9 w-full items-center justify-center gap-1.5 rounded-full px-3 text-[12px] font-semibold text-white/55 transition-colors hover:bg-black/25 hover:text-white"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   Log out
                 </button>
               )}
-            </nav>
+            </div>
 
-            <div className="relative mt-auto shrink-0">
+            <div className="relative mt-1.5 shrink-0">
               <div className="pointer-events-none relative z-10 flex justify-center overflow-visible">
                 <div
                   aria-hidden
-                  className="absolute bottom-8 left-1/2 h-24 w-[88%] -translate-x-1/2 rounded-full bg-[#ff2d78]/25 blur-3xl"
+                  className="absolute bottom-4 left-1/2 h-12 w-[70%] -translate-x-1/2 rounded-full bg-[#ff2d78]/20 blur-2xl"
                 />
                 <Image
                   src="/brand/menu-mascot.png"
                   alt=""
                   width={504}
                   height={994}
-                  className="relative h-[min(28vh,14rem)] w-auto max-w-none translate-x-1 select-none object-contain object-bottom drop-shadow-[0_12px_28px_rgba(255,45,120,0.38)] sm:h-[min(30vh,16rem)]"
+                  className="relative h-[min(13vh,6.75rem)] w-auto max-w-none translate-x-1 select-none object-contain object-bottom drop-shadow-[0_8px_18px_rgba(255,45,120,0.32)] sm:h-[min(20vh,10rem)]"
                   priority={false}
                 />
               </div>
-              <div className="relative -mt-6 bg-gradient-to-t from-[#090505] via-[#090505]/92 via-40% to-[#4a122c]/0 px-2 pb-[max(0.75rem,var(--safe-bottom))] pt-10">
+              <div className="relative -mt-3 bg-gradient-to-t from-[#090505] via-[#090505]/92 via-40% to-[#4a122c]/0 px-2 pb-[max(0.5rem,var(--safe-bottom))] pt-5">
                 <FeaturedOn variant="menu" />
               </div>
             </div>

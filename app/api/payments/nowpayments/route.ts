@@ -3,7 +3,10 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment } from '@/lib/models';
 import { getCheckoutPlan } from '@/lib/payments/catalog';
 import { paymentAuthRequiredResponse, requireSlutbotUser } from '@/lib/payments/requireAuth';
-import { cryptoUsdForStars, isCryptoAvailableForStars } from '@/lib/premiumPlans';
+import { applyCryptoCouponUsd, cryptoUsdForStars, isCryptoAvailableForStars } from '@/lib/premiumPlans';
+import { resolveCheckoutPriceCoupon } from '@/lib/coupons/store';
+import { couponAppliesToPlan } from '@/lib/coupons';
+import { couponRewardLabel } from '@/lib/coupons/pricing';
 import { getAppUrl } from '@/lib/site';
 import { countryFromHeaders } from '@/lib/starsGeo/detect';
 
@@ -18,7 +21,7 @@ export async function POST(req: NextRequest) {
   const user = await requireSlutbotUser(req);
   if (!user) return paymentAuthRequiredResponse();
 
-  const body = (await req.json().catch(() => null)) as { plan?: string } | null;
+  const body = (await req.json().catch(() => null)) as { plan?: string; couponCode?: string } | null;
   const planId = body?.plan?.trim() || '';
   const clientId = user.clientId;
 
@@ -34,8 +37,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Crypto price matches the Telegram Stars USD value exactly — no discount, no coupon.
-  const usdPrice = cryptoUsdForStars(plan.starsAmount);
+  // Crypto price is the real Stars USD value ($0.013/Star). A coupon may discount it.
+  const listUsd = cryptoUsdForStars(plan.starsAmount);
+
+  let coupon = null;
+  if (body?.couponCode?.trim()) {
+    try {
+      coupon = await resolveCheckoutPriceCoupon({ code: body.couponCode, userId: user.id });
+      if (coupon && !couponAppliesToPlan(coupon.code, plan.id)) {
+        coupon = null;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid coupon code.';
+      return NextResponse.json({ message }, { status: 400 });
+    }
+  }
+
+  const usdPrice = applyCryptoCouponUsd(listUsd, coupon);
   const orderId = `sb1__${clientId}__${plan.id}__${Date.now()}`;
   const siteUrl = getAppUrl();
 
@@ -51,7 +69,9 @@ export async function POST(req: NextRequest) {
         price_currency: 'usd',
         pay_currency: 'usdttrc20',
         order_id: orderId,
-        order_description: plan.description,
+        order_description: coupon
+          ? `${plan.description} · ${couponRewardLabel(coupon)} (${coupon.code})`
+          : plan.description,
         ipn_callback_url: `${siteUrl}/api/payments/nowpayments/webhook`,
         success_url: `${siteUrl}/?payment=crypto_success`,
         cancel_url: `${siteUrl}/checkout?plan=${plan.id}&method=crypto`,
@@ -91,6 +111,10 @@ export async function POST(req: NextRequest) {
       orderId,
       invoiceUrl: data.invoice_url,
       country: countryFromHeaders(req.headers),
+      couponCode: coupon?.code || '',
+      couponType: coupon?.type || '',
+      couponDiscountPercent: coupon?.discountPercent || 0,
+      couponDiscountUsd: coupon?.discountUsd || 0,
     });
 
     return NextResponse.json({ url: data.invoice_url, usdAmount: usdPrice });

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAdminSession } from '@/lib/auth/useAdminSession';
 import type { BeforeAfterPair } from '@/lib/beforeAfterExamples';
 import { BEFORE_AFTER_EXAMPLES } from '@/lib/beforeAfterExamples';
+import { isRemoteMedia } from '@/lib/media/image';
 import { SAMPLE_DELETED_EVENT } from '@/lib/samples/adminDelete';
 import { trackSampleClick } from '@/lib/samples/client';
 import { generatorModePath } from '@/lib/site';
@@ -32,6 +33,7 @@ function BeforeAfterImage({
         fill
         sizes="(max-width: 768px) 40vw, 16vw"
         priority={eager}
+        unoptimized={isRemoteMedia(src)}
         className="object-cover object-top"
       />
       <figcaption

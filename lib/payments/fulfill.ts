@@ -7,20 +7,46 @@ function isDupKey(err: unknown) {
   return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: number }).code === 11000);
 }
 
-async function creditClientWallet(clientId: string, desires: number, chargeId: string, userId?: string | null) {
-  const user = await SlutbotUser.findOneAndUpdate(
-    { clientId },
-    { $inc: { desires } },
-    { new: true },
-  );
+function asUserId(value: unknown): string | null {
+  if (!value) return null;
+  const id = String(value);
+  return /^[a-fA-F0-9]{24}$/.test(id) ? id : null;
+}
+
+/**
+ * Pack Stars always stack on the leftover balance. Buying ULTRA (or any pack)
+ * adds the full pack — it never replaces what the user already has.
+ */
+async function stackPackStarsOnAccount(input: {
+  clientId: string;
+  packStars: number;
+  chargeId: string;
+  userId?: string | null;
+}) {
+  const packStars = Math.max(0, Math.round(input.packStars));
+  const userId = asUserId(input.userId);
+
+  let user = userId
+    ? await SlutbotUser.findByIdAndUpdate(userId, { $inc: { desires: packStars } }, { new: true })
+    : null;
+
+  if (!user) {
+    user = await SlutbotUser.findOneAndUpdate(
+      { clientId: input.clientId },
+      { $inc: { desires: packStars } },
+      { new: true },
+    );
+  }
+
+  const walletClientId = typeof user?.clientId === 'string' && user.clientId ? user.clientId : input.clientId;
 
   await SlutbotWallet.findOneAndUpdate(
-    { clientId },
+    { clientId: walletClientId },
     user
-      ? { $set: { desires: user.desires, lastPaymentChargeId: chargeId, userId: user._id } }
+      ? { $set: { desires: user.desires, lastPaymentChargeId: input.chargeId, userId: user._id } }
       : {
-          $inc: { desires },
-          $set: { lastPaymentChargeId: chargeId, ...(userId ? { userId } : {}) },
+          $inc: { desires: packStars },
+          $set: { lastPaymentChargeId: input.chargeId, ...(userId ? { userId } : {}) },
         },
     { upsert: true, new: true },
   );
@@ -43,11 +69,14 @@ export async function creditDesires(input: {
 
   await connectDB();
 
-  // Coupons change what the user pays. Wallet always gets the full pack Stars.
+  // Coupons change what the user pays. Wallet always gets the full pack Stars,
+  // stacked on leftover Stars. Nothing from a smaller pack is wiped on ULTRA.
   const creditedStars = plan.desires;
+  const owner = await SlutbotUser.findOne({ clientId: input.clientId }).select('_id');
 
   const fields = {
     clientId: input.clientId,
+    userId: owner?._id ?? undefined,
     planId: input.planId,
     provider: input.provider,
     status: 'paid' as const,
@@ -96,7 +125,12 @@ export async function creditDesires(input: {
   if (!claimed) return { ok: true, already: true };
 
   try {
-    const linkedUser = await creditClientWallet(input.clientId, creditedStars, input.chargeId);
+    const linkedUser = await stackPackStarsOnAccount({
+      clientId: input.clientId,
+      packStars: creditedStars,
+      chargeId: input.chargeId,
+      userId: claimed.userId || owner?._id,
+    });
     if (linkedUser) {
       await SlutbotPayment.updateOne({ chargeId: input.chargeId }, { $set: { userId: linkedUser._id } });
       try {

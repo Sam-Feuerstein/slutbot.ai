@@ -27,6 +27,7 @@ import { publicGenerationOutput } from '@/lib/media/generationUrl';
 import { displayMediaUrl, isUserUploadKey, wavespeedFetchUrl } from '@/lib/media/sign';
 import { uploadToR2, isR2Configured } from '@/lib/r2';
 import { planGenerationCharge } from '@/lib/trial/plan';
+import { accountTierForUser } from '@/lib/entitlements';
 import { ingestLockedTrialVideo } from '@/lib/trial/ingest';
 import { recordUserGeneration, reverseGenerationSpend, spendGenerationCredits, type CreditSource } from '@/lib/users/wallet';
 import type { AiToolGenerationRecord, VideoModel } from '@/lib/imageToVideo/types';
@@ -42,6 +43,27 @@ const SEEDREAM_EDIT_URL = 'https://api.wavespeed.ai/api/v3/bytedance/seedream-v5
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
+/** Detect real image format from magic bytes; browser MIME is unreliable on mobile. */
+function sniffImageType(buffer: Buffer): 'jpeg' | 'png' | null {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'jpeg';
+  }
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return 'png';
+  }
+  return null;
+}
 
 const CHEAP_DURATIONS = [5, 8] as const;
 const TASK_ID_RE = /^[a-zA-Z0-9_-]{8,128}$/;
@@ -119,23 +141,38 @@ export async function uploadImageToVideoSource(
   if (!auth.user) return { error: auth.error || 'Sign in required.' };
   const file = formData.get('file') as File | null;
   if (!file) return { error: 'No image provided.' };
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return { error: 'Use JPG or PNG. WEBP is not supported by the model.' };
-  }
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  if (buffer.length > MAX_IMAGE_BYTES) return { error: 'Image too large. Max 10 MB.' };
+  if (buffer.length > MAX_IMAGE_BYTES) {
+    return { error: 'That image is too large. Please upload a photo under 10 MB.' };
+  }
+
+  // Trust the file bytes, not the browser-reported MIME. Mobile browsers send
+  // HEIC, image/jpg, or an empty type; the client normalizes to JPEG but the
+  // signature is the source of truth so a valid image is never rejected.
+  const sniffed = sniffImageType(buffer);
+  const declared = (file.type || '').toLowerCase();
+  const isJpeg = sniffed === 'jpeg';
+  const isPng = sniffed === 'png';
+  if (!isJpeg && !isPng) {
+    if (declared && !ALLOWED_IMAGE_TYPES.includes(declared)) {
+      return { error: 'Use a JPG or PNG photo.' };
+    }
+    return { error: 'Could not read that image. Please try a JPG or PNG photo.' };
+  }
+  const contentType = isPng ? 'image/png' : 'image/jpeg';
 
   if (!isR2Configured()) {
+    console.error('Image upload blocked: R2 storage is not configured (missing R2_UPLOAD_BUCKET / credentials).');
     return {
-      error: 'Image storage is not configured. Set R2 credentials and R2_UPLOAD_BUCKET.',
+      error: 'Upload is temporarily unavailable. Please try again in a moment.',
     };
   }
 
-  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+  const ext = isPng ? 'png' : 'jpg';
   const key = `image-to-video/uploads/${randomUUID()}.${ext}`;
-  await uploadToR2(buffer, key, file.type);
+  await uploadToR2(buffer, key, contentType);
   return { key };
 }
 
@@ -177,7 +214,8 @@ async function startWavespeedJob(input: {
       paidWith: input.paidWith,
       locked: input.lockVideo,
     });
-  } catch {
+  } catch (err) {
+    console.error('createChargedJob failed:', err);
     if (spent.charged) {
       await reverseGenerationSpend(input.user.id, input.cost, input.paidWith);
     }
@@ -245,7 +283,13 @@ export async function submitWavespeedImageToVideo(
   }
 
   const quality = plan.quality as VideoQuality;
-  const trimmedPrompt = mergeVideoPrompts(await getVideoPrompt(), userPrompt);
+  const tier = await accountTierForUser({
+    userId: auth.user.id,
+    email: auth.user.email,
+    desires: auth.user.desires,
+  });
+  const allowedPrompt = tier === 'ultra' ? userPrompt : undefined;
+  const trimmedPrompt = mergeVideoPrompts(await getVideoPrompt(), allowedPrompt);
   const image = await wavespeedFetchUrl(sourceKey.trim());
   const submitUrl = WAN_ULTRA_FAST_SUBMIT_URL;
   const body = {

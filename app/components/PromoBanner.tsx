@@ -5,15 +5,25 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { prefersReducedMedia } from '@/lib/media/autoplay';
+import { isRemoteMedia } from '@/lib/media/image';
 import { useAdminSession } from '@/lib/auth/useAdminSession';
 import { SAMPLE_DELETED_EVENT } from '@/lib/samples/adminDelete';
 import type { PublicHeroDemo } from '@/lib/samples';
+import { exampleMediaUrl } from '@/lib/presetMedia';
 import { generatorModePath } from '@/lib/site';
 import AdminSampleDeleteButton from './AdminSampleDeleteButton';
 
 const FALLBACK_DEMOS: [PublicHeroDemo, PublicHeroDemo] = [
-  { id: 'example-ex-1', poster: '/examples/example-ex-1.jpg', video: '/examples/example-ex-1.mp4' },
-  { id: 'example-ex-2', poster: '/examples/example-ex-2.jpg', video: '/examples/example-ex-2.mp4' },
+  {
+    id: 'example-ex-1',
+    poster: exampleMediaUrl('/examples/example-ex-1.jpg'),
+    video: exampleMediaUrl('/examples/example-ex-1.mp4'),
+  },
+  {
+    id: 'example-ex-2',
+    poster: exampleMediaUrl('/examples/example-ex-2.jpg'),
+    video: exampleMediaUrl('/examples/example-ex-2.mp4'),
+  },
 ];
 
 const STEPS = ['Upload photo', 'Generate video or image', 'Save it.'] as const;
@@ -64,6 +74,7 @@ function DemoMedia({
             fill
             sizes="(max-width: 1024px) 42vw, 280px"
             priority={priority}
+            unoptimized={isRemoteMedia(poster)}
             className="object-cover object-top"
           />
           {playVideo && videoSrc ? (

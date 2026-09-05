@@ -1,3 +1,5 @@
+import { exampleMediaUrl } from '@/lib/presetMedia';
+
 export type ExampleVideo = {
   id: string;
   title: string;
@@ -22,12 +24,17 @@ export const PART_2_VIDEO_IDS = [
 
 export function getExampleSourceThumb(id: string, hasVideo = false): string | undefined {
   if (!hasVideo || !id) return undefined;
-  return `/examples/${id}-source.jpg`;
+  return exampleMediaUrl(`/examples/${id}-source.jpg`);
 }
 
 function withSourceThumb(example: ExampleVideo): ExampleVideo {
-  if (!example.video) return example;
-  return { ...example, source: getExampleSourceThumb(example.id, true) };
+  const mapped: ExampleVideo = {
+    ...example,
+    poster: exampleMediaUrl(example.poster),
+    video: example.video ? exampleMediaUrl(example.video) : example.video,
+  };
+  if (!mapped.video) return mapped;
+  return { ...mapped, source: getExampleSourceThumb(mapped.id, true) };
 }
 
 const PART_2_SAMPLES: ExampleVideo[] = [
@@ -43,6 +50,10 @@ const PART_2_SAMPLES: ExampleVideo[] = [
   withSourceThumb({ id: 'example-part-2', title: 'Sample', video: '/examples/example-part-2.mp4', poster: '/examples/example-part-2.jpg' }),
 ];
 
+function withPoster(example: ExampleVideo): ExampleVideo {
+  return { ...example, poster: exampleMediaUrl(example.poster) };
+}
+
 const STILL_SAMPLES: ExampleVideo[] = [
   { id: 'example-sample-01', title: 'Sample', poster: '/examples/example-sample-01.jpg' },
   { id: 'example-sample-02', title: 'Sample', poster: '/examples/example-sample-02.jpg' },
@@ -53,7 +64,7 @@ const STILL_SAMPLES: ExampleVideo[] = [
   { id: 'example-slutbot-03', title: 'Sample', poster: '/examples/example-slutbot-03.jpg' },
   { id: 'example-slutbot-04', title: 'Sample', poster: '/examples/example-slutbot-04.jpg' },
   { id: 'example-slutbot-05', title: 'Sample', poster: '/examples/example-slutbot-05.jpg' },
-];
+].map(withPoster);
 
 const VIDEO_SAMPLES: ExampleVideo[] = [
   withSourceThumb({ id: 'example-ad074579', title: 'Example 01', video: '/examples/example-ad074579.mp4', poster: '/examples/example-ad074579.jpg' }),

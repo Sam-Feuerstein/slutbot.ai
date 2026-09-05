@@ -54,13 +54,48 @@ type Overview = {
   dailyVisits: Array<{ day: string; visits: number }>;
   visitsByCountry: Array<{ country: string; visits: number }>;
   daily: Array<{ day: string; paid: number; free: number }>;
+  dailyGenerations: Array<{ day: string; images: number; videos: number }>;
+  totalImages: number;
+  totalVideos: number;
 };
+
+function formatDay(day: string) {
+  const [, month, date] = day.split('-');
+  return `${month}-${date}`;
+}
+
+function ChartTooltip({
+  x,
+  y,
+  title,
+  lines,
+}: {
+  x: number | string;
+  y: number | string;
+  title: string;
+  lines: string[];
+}) {
+  return (
+    <div
+      className="pointer-events-none absolute z-10 min-w-[8.5rem] -translate-x-1/2 -translate-y-full rounded-lg border border-white/15 bg-[#141414] px-2.5 py-2 text-[11px] leading-snug text-white shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+      style={{ left: x, top: typeof y === 'number' ? y - 10 : y }}
+    >
+      <p className="font-semibold text-white/90">{title}</p>
+      {lines.map((line) => (
+        <p key={line} className="mt-0.5 tabular-nums text-white/65">
+          {line}
+        </p>
+      ))}
+    </div>
+  );
+}
 
 function formatUsd(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
 function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
+  const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...daily.map((row) => row.visits));
   const w = 640;
   const h = 220;
@@ -77,9 +112,10 @@ function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
 
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const areaPath = `${linePath} L ${points[points.length - 1]?.x ?? pad.l} ${pad.t + innerH} L ${points[0]?.x ?? pad.l} ${pad.t + innerH} Z`;
+  const active = hover != null ? points[hover] : null;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
       <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Unique daily visits">
         <defs>
           <linearGradient id="visitsFill" x1="0" y1="0" x2="0" y2="1">
@@ -101,17 +137,33 @@ function DailyVisitsChart({ daily }: { daily: Overview['dailyVisits'] }) {
         })}
         <path d={areaPath} fill="url(#visitsFill)" />
         <path d={linePath} fill="none" stroke="#ff2d78" strokeWidth="2.5" strokeLinejoin="round" />
-        {points.map((p) => (
+        {points.map((p, i) => (
           <g key={p.day}>
-            <circle cx={p.x} cy={p.y} r={3.5} fill="#ff2d78" />
+            <circle cx={p.x} cy={p.y} r={hover === i ? 5 : 3.5} fill="#ff2d78" />
             <text x={p.x} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
-              {p.day.slice(5)}
+              {formatDay(p.day)}
             </text>
+            <rect
+              x={p.x - step / 2}
+              y={pad.t}
+              width={Math.max(step, 16)}
+              height={innerH}
+              fill="transparent"
+              onMouseEnter={() => setHover(i)}
+            />
           </g>
         ))}
       </svg>
+      {active ? (
+        <ChartTooltip
+          x={(active.x / w) * 100 + '%'}
+          y={(active.y / h) * 220}
+          title={active.day}
+          lines={[`${active.visits.toLocaleString('en-US')} unique visits`]}
+        />
+      ) : null}
       <p className="mt-2 text-xs text-white/45">
-        Unique visitors per UTC day — one count per browser, deduplicated by client ID.
+        Unique visitors per UTC day — one count per browser, deduplicated by client ID. Hover a day for the exact count.
       </p>
     </div>
   );
@@ -157,6 +209,7 @@ function VisitsByCountryChart({ rows }: { rows: Overview['visitsByCountry'] }) {
 }
 
 function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
+  const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...daily.flatMap((row) => [row.paid, row.free]));
   const w = 640;
   const h = 220;
@@ -166,21 +219,23 @@ function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
   const gap = 8;
   const groupW = innerW / Math.max(daily.length, 1);
   const barW = Math.max(4, (groupW - gap) / 2);
+  const active = hover != null ? daily[hover] : null;
+  const activeX = hover != null ? pad.l + hover * groupW + barW : 0;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
       <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Paid vs free users by signup day">
         {daily.map((row, i) => {
           const x0 = pad.l + i * groupW;
           const paidH = (row.paid / max) * innerH;
           const freeH = (row.free / max) * innerH;
           return (
-            <g key={row.day}>
+            <g key={row.day} onMouseEnter={() => setHover(i)}>
               <rect
                 x={x0}
                 y={pad.t + innerH - paidH}
                 width={barW}
-                height={paidH}
+                height={Math.max(paidH, 0)}
                 rx={3}
                 fill="#ff2d78"
               />
@@ -188,23 +243,103 @@ function PaidFreeChart({ daily }: { daily: Overview['daily'] }) {
                 x={x0 + barW + 3}
                 y={pad.t + innerH - freeH}
                 width={barW}
-                height={freeH}
+                height={Math.max(freeH, 0)}
                 rx={3}
                 fill="#6b7280"
               />
+              <rect x={x0} y={pad.t} width={groupW} height={innerH} fill="transparent" />
               <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
-                {row.day.slice(5)}
+                {formatDay(row.day)}
               </text>
             </g>
           );
         })}
       </svg>
+      {active ? (
+        <ChartTooltip
+          x={`${(activeX / w) * 100}%`}
+          y={28}
+          title={active.day}
+          lines={[`${active.paid} paid signups`, `${active.free} free signups`]}
+        />
+      ) : null}
       <div className="mt-2 flex gap-4 text-xs text-white/50">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-sm bg-[#ff2d78]" /> Paid signups
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-sm bg-[#6b7280]" /> Free signups
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function DailyGenerationsChart({ daily }: { daily: Overview['dailyGenerations'] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const max = Math.max(1, ...daily.flatMap((row) => [row.images, row.videos]));
+  const w = 640;
+  const h = 220;
+  const pad = { l: 28, r: 8, t: 16, b: 36 };
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const gap = 8;
+  const groupW = innerW / Math.max(daily.length, 1);
+  const barW = Math.max(4, (groupW - gap) / 2);
+  const active = hover != null ? daily[hover] : null;
+  const activeX = hover != null ? pad.l + hover * groupW + barW : 0;
+
+  return (
+    <div className="relative overflow-x-auto" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-[220px] w-full min-w-[560px]" role="img" aria-label="Images and videos generated per day">
+        {daily.map((row, i) => {
+          const x0 = pad.l + i * groupW;
+          const imageH = (row.images / max) * innerH;
+          const videoH = (row.videos / max) * innerH;
+          return (
+            <g key={row.day} onMouseEnter={() => setHover(i)}>
+              <rect
+                x={x0}
+                y={pad.t + innerH - imageH}
+                width={barW}
+                height={Math.max(imageH, 0)}
+                rx={3}
+                fill="#ff2d78"
+              />
+              <rect
+                x={x0 + barW + 3}
+                y={pad.t + innerH - videoH}
+                width={barW}
+                height={Math.max(videoH, 0)}
+                rx={3}
+                fill="#60a5fa"
+              />
+              <rect x={x0} y={pad.t} width={groupW} height={innerH} fill="transparent" />
+              <text x={x0 + barW} y={h - 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9">
+                {formatDay(row.day)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {active ? (
+        <ChartTooltip
+          x={`${(activeX / w) * 100}%`}
+          y={28}
+          title={active.day}
+          lines={[
+            `${active.images} images`,
+            `${active.videos} videos`,
+            `${active.images + active.videos} total`,
+          ]}
+        />
+      ) : null}
+      <div className="mt-2 flex gap-4 text-xs text-white/50">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-[#ff2d78]" /> Images
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm bg-[#60a5fa]" /> Videos
         </span>
       </div>
     </div>
@@ -290,6 +425,17 @@ export default function AdminOverviewPage() {
           </div>
         </Panel>
       </div>
+
+      <Panel className="mb-8">
+        <h2 className="text-lg font-black">Generations per day</h2>
+        <p className="mt-1 text-sm text-white/45">
+          Images and videos generated in the last 14 UTC days.
+          {data ? ` ${data.totalImages} images · ${data.totalVideos} videos in this window.` : ''}
+        </p>
+        <div className="mt-5">
+          {data ? <DailyGenerationsChart daily={data.dailyGenerations ?? []} /> : <p className="text-sm text-white/40">Loading…</p>}
+        </div>
+      </Panel>
 
       <Panel className="mb-8">
         <h2 className="text-lg font-black">Paid vs free daily</h2>

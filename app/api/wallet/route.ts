@@ -4,6 +4,7 @@ import { SlutbotUser } from '@/lib/models';
 import { authenticateSlutbotUser } from '@/lib/auth/slutbotAuth';
 import { isAdminAppUserEmail } from '@/lib/auth/adminUser';
 import { publicBalanceFields } from '@/lib/users/wallet';
+import { accountTierForUser } from '@/lib/entitlements';
 
 export async function GET(req: NextRequest) {
   const user = await authenticateSlutbotUser(req);
@@ -16,9 +17,15 @@ export async function GET(req: NextRequest) {
     email?: string;
   } | null;
   const balance = publicBalanceFields(doc || user);
+  const tier = await accountTierForUser({
+    userId: user.id,
+    email: doc?.email || user.email,
+    desires: doc?.desires ?? user.desires,
+  });
 
   return NextResponse.json({
     ...balance,
+    tier,
     clientId: user.clientId,
     source: 'user',
     ...(isAdminAppUserEmail(user.email) ? { isAdmin: true } : {}),

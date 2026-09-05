@@ -1,3 +1,5 @@
+import { exampleMediaUrl } from '@/lib/presetMedia';
+
 export type BeforeAfterPair = {
   id: string;
   before: string;
@@ -6,7 +8,7 @@ export type BeforeAfterPair = {
   combined?: string;
 };
 
-export const BEFORE_AFTER_EXAMPLES: BeforeAfterPair[] = [
+const RAW_BEFORE_AFTER_EXAMPLES: BeforeAfterPair[] = [
   {
     id: 'before-after-01',
     before: '/examples/before-after/pair-01-before.jpg',
@@ -41,3 +43,10 @@ export const BEFORE_AFTER_EXAMPLES: BeforeAfterPair[] = [
     combined: '/examples/before-after/pair-06-combined.jpg',
   },
 ];
+
+export const BEFORE_AFTER_EXAMPLES: BeforeAfterPair[] = RAW_BEFORE_AFTER_EXAMPLES.map((pair) => ({
+  ...pair,
+  before: exampleMediaUrl(pair.before),
+  after: exampleMediaUrl(pair.after),
+  combined: pair.combined ? exampleMediaUrl(pair.combined) : pair.combined,
+}));
