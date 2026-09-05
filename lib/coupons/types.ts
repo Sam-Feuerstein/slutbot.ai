@@ -45,10 +45,10 @@ export function normalizeCouponCode(value: string): string {
   return value.trim().toUpperCase().replace(/\s+/g, '');
 }
 
-/** Crypto launch coupon — 25% off the three highest packs only. */
+/** Crypto launch coupon. 25% off packs from 1,500 Stars up. */
 export const EROGRAM_CRYPTO_COUPON_CODE = 'EROGRAM25OFF';
 const EROGRAM_CRYPTO_COUPON_ALIASES = ['EROGRAM30OFF'] as const;
-export const EROGRAM_CRYPTO_COUPON_PLAN_IDS = ['desire', 'passion', 'legend'] as const;
+export const EROGRAM_CRYPTO_COUPON_PLAN_IDS = ['flirt', 'desire', 'passion', 'legend'] as const;
 
 export function isErogramCryptoCoupon(code: string | undefined | null): boolean {
   const normalized = normalizeCouponCode(code || '');

@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import JsonLd from './JsonLd';
-import { faqJsonLd } from '@/lib/seo';
 import { EXPLORE_PATH, GENERATOR_PATH } from '@/lib/site';
 
 const COMPETITOR_LINKS: { label: string; href: string }[] = [
@@ -14,24 +12,6 @@ const COMPETITOR_LINKS: { label: string; href: string }[] = [
   { label: 'Face Swap AI', href: '/face-swap-ai' },
   { label: 'Face Swap Video AI', href: '/face-swap-video-ai' },
   { label: 'Face Swap Porn AI', href: '/face-swap-porn-ai' },
-];
-
-const FAQ = [
-  {
-    question: 'Is AI SLUTBOT Safe to Use?',
-    answer:
-      'AI SLUTBOT prioritizes user safety and privacy policies, ensuring a secure platform for creating AI nude content. We implement robust measures to protect your data and prevent any unauthorized leak of your creations. Our commitment to ethical AI image generation means you can confidently create high-quality, realistic nude images without concerns about your personal information or the security of your fantasy content.',
-  },
-  {
-    question: 'What Makes AI SLUTBOT the Best Nude AI Generator?',
-    answer:
-      'AI SLUTBOT distinguishes itself as the best nude AI generator through its unparalleled realism, extensive customization, and commitment to user privacy. Our advanced AI porn generator tools allow users to create stunningly realistic nude images with incredible detail and accuracy. The ability to generate uncensored, high-quality content tailored to your specific preference makes us the ultimate choice for AI-generated adult content, surpassing other platforms in both quality and control.',
-  },
-  {
-    question: 'Can I Create Videos with AI SLUTBOT?',
-    answer:
-      'Currently, AI SLUTBOT specializes in creating high-quality, realistic nude still images from text prompts or existing images. While our focus is on refining AI nude image generation, we are continuously exploring future developments, including potential video generator capabilities. For now, users can rely on our platform for exceptional static AI art and explicit content creation, ensuring every nude image meets the highest standards of realism and detail.',
-  },
 ];
 
 function CompetitorLinks() {
@@ -53,7 +33,6 @@ function CompetitorLinks() {
 export default function HomeSeoSection() {
   return (
     <section className="safe-x mx-auto max-w-3xl px-3 pb-[max(2rem,var(--safe-bottom))] pt-8 text-white sm:px-6 sm:pb-12">
-      <JsonLd data={faqJsonLd(FAQ)} />
 
       <h2 className="text-2xl font-black tracking-tight sm:text-3xl">AI porn generator for uncensored images and videos</h2>
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-white/65 sm:text-base">
@@ -266,21 +245,6 @@ export default function HomeSeoSection() {
             and control.
           </p>
         </div>
-      </div>
-
-      <h3 className="mt-10 text-xl font-black sm:text-2xl">Frequently asked questions</h3>
-      <div className="mt-4 space-y-3">
-        {FAQ.map(({ question, answer }) => (
-          <details
-            key={question}
-            className="rounded-2xl border border-white/10 bg-[#141414] open:border-[#ff2d78]/30"
-          >
-            <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-white sm:text-base [&::-webkit-details-marker]:hidden">
-              {question}
-            </summary>
-            <p className="border-t border-white/10 px-5 py-4 text-sm leading-relaxed text-white/60">{answer}</p>
-          </details>
-        ))}
       </div>
 
       <div className="mt-10 space-y-5 text-sm leading-relaxed text-white/65 sm:text-base">

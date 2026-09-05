@@ -71,12 +71,7 @@ run(
 );
 
 mkdirSync(publicDir, { recursive: true });
-for (const [src, dest] of [
-  [mp4Out, join(publicDir, 'swipey-promo.mp4')],
-  [posterJpg, join(publicDir, 'swipey-promo.jpg')],
-]) {
-  run(`cp "${src}" "${dest}"`);
-}
+run(`cp "${posterJpg}" "${join(publicDir, 'swipey-promo.jpg')}"`);
 
 console.log('\nUploading to R2…');
 await uploadFile(`${PREFIX}/AISLUTBOT-NUDE GENERATOR.mp4`, mp4Out, 'video/mp4');

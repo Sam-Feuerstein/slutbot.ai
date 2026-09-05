@@ -80,7 +80,7 @@ export function exampleMediaUrl(path: string): string {
   return `${PRESET_MEDIA_BASE}/${rest}`;
 }
 
-export function checkoutPromoMediaUrl(file: string, localFallback: string): string {
+export function checkoutPromoMediaUrl(file: string, localFallback = ''): string {
   if (!PRESET_MEDIA_BASE) return localFallback;
   return `${PRESET_MEDIA_BASE}/${PRESET_MEDIA_PREFIX}/checkout/${encodeURIComponent(file)}`;
 }

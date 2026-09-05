@@ -11,7 +11,7 @@ import { loginHref, HELLO_EMAIL, checkoutBannerCopy, GENERATOR_PATH } from '@/li
 import { capturePosthogEvent, capturePosthogException } from '@/lib/posthog';
 import { trackEvent } from '@/lib/trackClient';
 import FeaturedOn from '@/app/components/FeaturedOn';
-import BrandLogo from '@/app/components/BrandLogo';
+import SiteFaq from '@/app/components/SiteFaq';
 import AdminViewAsSwitch from '@/app/components/AdminViewAsSwitch';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import {
@@ -44,7 +44,7 @@ type Props = {
 
 const PACKS = [...PREMIUM_PLANS].sort((a, b) => a.stars - b.stars);
 const CHECKOUT_PAY_INTENT_KEY = 'aislutbot-checkout-pay';
-const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4', '/checkout/swipey-promo.mp4');
+const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4');
 const CHECKOUT_PROMO_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
 
 type CheckoutPayIntent = {
@@ -544,11 +544,9 @@ export default function CheckoutClient({ plan }: Props) {
           aria-hidden
         />
         <p className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-5 pt-8 text-center sm:hidden">
-          <span className="inline-flex flex-wrap items-baseline justify-center gap-x-2 leading-none">
-            <BrandLogo className="text-[1.55rem]" />
-            <span className="text-[1.05rem] font-black uppercase tracking-[0.08em] text-white">
-              Undress Anyone
-            </span>
+          <span className="block text-[0.72rem] font-black uppercase leading-snug tracking-[0.04em] text-white sm:text-sm">
+            Ready to turn your boring static images to{' '}
+            <span className="text-[#ff2d78]">spicy content?</span>
           </span>
         </p>
       </div>
@@ -586,21 +584,19 @@ export default function CheckoutClient({ plan }: Props) {
             aria-hidden
           />
 
-          <p className="text-center text-sm text-white/60">
-            {isCrypto
-              ? 'One-time payment. Credits never expire. Pay with USDT (TRC20).'
-              : 'One-time payment. Stars never expire. Pay by card in Telegram.'}
-          </p>
-
           {checkoutBanner ? (
             <p className="mt-3 rounded-xl border border-[#fde68a]/40 bg-[#fffbeb]/95 px-3 py-2 text-center text-sm text-[#854d0e]">
               {checkoutBanner}
             </p>
           ) : null}
 
+          <p className="mt-3 text-center text-[10px] font-medium leading-snug text-[#fde68a] sm:mt-4 sm:text-[11px]">
+            One time payment · ✨ Stars never expire
+          </p>
+
           {/* Payment method toggle */}
           <div
-            className="mt-4 grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/35 p-1"
+            className="mt-3 grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/35 p-1 sm:mt-4"
             role="tablist"
             aria-label="Payment method"
           >
@@ -833,34 +829,20 @@ export default function CheckoutClient({ plan }: Props) {
               {couponNote ? <p className="mt-1 text-xs text-[#c81e5a]">{couponNote}</p> : null}
             </div>
 
-            <div className="mt-4 border-t border-zinc-200 pt-3">
-              {isCrypto ? (
-                <>
-                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
-                    Secure payment using NOWPayments
-                  </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/payments/nowpayments-logo.png"
-                    alt="NOWPayments"
-                    className="mx-auto mt-2 block h-[28px] w-auto max-w-[180px] object-contain sm:h-[32px] sm:max-w-[220px]"
-                  />
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
-                    <TelegramIcon className="h-[22px] w-[22px] shrink-0 rounded-md" />
-                    Secure debit/credit card payment via Telegram
-                  </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/payments/wallet-logos.png"
-                    alt="Mastercard, Visa, Google Pay, Apple Pay"
-                    className="mx-auto mt-2 block h-[31px] w-auto max-w-[220px] object-contain sm:h-[36px] sm:max-w-[260px]"
-                  />
-                </>
-              )}
-            </div>
+            {!isCrypto ? (
+              <div className="mt-4 border-t border-zinc-200 pt-3">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
+                  <TelegramIcon className="h-[22px] w-[22px] shrink-0 rounded-md" />
+                  Secure debit/credit card payment via Telegram
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/payments/wallet-logos.png"
+                  alt="Mastercard, Visa, Google Pay, Apple Pay"
+                  className="mx-auto mt-2 block h-[31px] w-auto max-w-[220px] object-contain sm:h-[36px] sm:max-w-[260px]"
+                />
+              </div>
+            ) : null}
 
             <label
               htmlFor="checkout-no-minors"
@@ -927,7 +909,7 @@ export default function CheckoutClient({ plan }: Props) {
               </p>
             ) : isCrypto && activeCoupon && !selectedCoupon ? (
               <p className="mt-3 text-center text-sm font-semibold text-zinc-600">
-                This coupon applies to the 3 highest packs.
+                This coupon applies to the 4 highest packs.
               </p>
             ) : null}
 
@@ -941,6 +923,20 @@ export default function CheckoutClient({ plan }: Props) {
               {payLabel}
               <LockIcon className="h-3.5 w-3.5" />
             </button>
+
+            {isCrypto ? (
+              <div className="mt-3">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
+                  Secure payment using NOWPayments
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/payments/nowpayments-logo.png"
+                  alt="NOWPayments"
+                  className="mx-auto mt-2 block h-[28px] w-auto max-w-[180px] object-contain sm:h-[32px] sm:max-w-[220px]"
+                />
+              </div>
+            ) : null}
 
             {paymentUrl ? (
               <a
@@ -957,8 +953,8 @@ export default function CheckoutClient({ plan }: Props) {
 
             <p className="mt-3 text-center text-[11px] leading-relaxed text-zinc-600">
               {isCrypto
-                ? 'Complete the crypto payment. This page updates when you come back. Credits are added as soon as the payment confirms.'
-                : 'Complete payment in Telegram. This page updates when you come back. Stars are added as soon as Telegram confirms.'}
+                ? 'Your account will be credited once you complete the payment.'
+                : 'Complete payment on Telegram using a credit or debit card. Your account will be credited instantly after you make the payment.'}
             </p>
             <p className="mt-2 text-center text-[11px] text-zinc-500">
               Need help? Email our support at{' '}
@@ -966,7 +962,7 @@ export default function CheckoutClient({ plan }: Props) {
                 href={`mailto:${HELLO_EMAIL}`}
                 className="underline underline-offset-2 hover:text-zinc-800"
               >
-                Hello@aislutbot.com
+                {HELLO_EMAIL}
               </a>
             </p>
             {isCrypto ? null : (
@@ -981,14 +977,47 @@ export default function CheckoutClient({ plan }: Props) {
               </p>
             )}
 
-            <p className="mt-3 text-center text-[11px] text-black">
-              Secure · No adult line on your bank statement · No hidden fees
-            </p>
+            <div className="mt-4 border-t border-zinc-200 pt-4">
+              <div className="space-y-2 text-center text-[11px] leading-snug text-zinc-900 sm:text-[12px]">
+                <p className="flex items-center justify-center gap-2 font-bold">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
+                    <path d="M10 2a3 3 0 0 0-3 3v2H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a3 3 0 0 0-3-3zm1 5H9V5a1 1 0 1 1 2 0v2z" />
+                  </svg>
+                  Secure Checkout
+                </p>
+                <p className="flex items-center justify-center gap-2 font-medium">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
+                    <path d="M10 1.5 3 4.5v5.8c0 4.1 2.9 7.9 7 9.2 4.1-1.3 7-5.1 7-9.2V4.5L10 1.5zm-1.2 9.8-2.3-2.3 1.1-1.1 1.2 1.2 3.4-3.4 1.1 1.1-4.5 4.5z" />
+                  </svg>
+                  No adult transaction in your bank statement
+                </p>
+                <p className="flex items-center justify-center gap-2 font-medium">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
+                    <path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm3.7 6.3-4.2 4.2a1 1 0 0 1-1.4 0l-2-2a1 1 0 1 1 1.4-1.4l1.3 1.3 3.5-3.5a1 1 0 0 1 1.4 1.4z" />
+                  </svg>
+                  No hidden fees · 100% Anonymous
+                </p>
+              </div>
+              <div className="mt-4 border-t border-zinc-200 pt-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/checkout/ssl-secure-badge.png"
+                  alt="Fully secured SSL checkout"
+                  className="mx-auto h-9 w-auto max-w-[160px] object-contain sm:h-10 sm:max-w-[180px]"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="relative z-10 shrink-0 border-t border-[#ff2d78]/20 bg-[#0a0208]/50 px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))] backdrop-blur-md">
+      <div className="relative z-10 mx-auto mt-12 w-full max-w-[560px] px-4 pb-10 sm:mt-16 sm:pb-12">
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_12px_40px_rgba(0,0,0,0.18)] sm:p-6">
+          <SiteFaq variant="checkout" />
+        </div>
+      </div>
+
+      <footer className="relative z-10 shrink-0 border-t border-[#ff2d78]/20 bg-[#0a0208]/50 px-4 pt-8 pb-[max(0.75rem,var(--safe-bottom))] backdrop-blur-md">
         <div className="mx-auto max-w-[720px]">
           <FeaturedOn variant="login-content" />
         </div>

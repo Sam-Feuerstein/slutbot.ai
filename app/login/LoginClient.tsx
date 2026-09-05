@@ -13,7 +13,7 @@ import { safeNextPath } from '@/lib/site';
 
 export { storeAuthSession, clearAuthSession };
 
-const LOGIN_BG_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4', '/checkout/swipey-promo.mp4');
+const LOGIN_BG_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4');
 const LOGIN_BG_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
 
 

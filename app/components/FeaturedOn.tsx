@@ -14,29 +14,16 @@ const nypostGothic = UnifrakturCook({
 
 type Publication = {
   name: string;
-  href: string;
   logo?: string;
   width?: number;
   height?: number;
 };
 
 const FEATURED_PUBLICATIONS: Publication[] = [
-  {
-    name: 'EROGRAMX',
-    href: 'https://erogram.pro/',
-  },
-  {
-    name: 'Mashable',
-    href: 'https://mashable.com/',
-  },
-  {
-    name: 'DTOWN Magazine',
-    href: 'https://dtownmag.com/',
-  },
-  {
-    name: 'New York Post',
-    href: 'https://nypost.com/',
-  },
+  { name: 'EROGRAMX' },
+  { name: 'Mashable' },
+  { name: 'DTOWN Magazine' },
+  { name: 'New York Post' },
 ];
 
 function PublicationMark({ name }: { name: string }) {
@@ -120,19 +107,15 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
               : 'mt-8 gap-x-10 sm:gap-x-14'
         }`}
       >
-        {FEATURED_PUBLICATIONS.map(({ name, href, logo, width, height }) => (
+        {FEATURED_PUBLICATIONS.map(({ name, logo, width, height }) => (
           <li key={name} className="flex min-w-0 items-center justify-center">
-            <a
-              href={href}
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              aria-label={`Visit ${name}`}
-              className={`flex items-center justify-center transition-all duration-300 ${
+            <span
+              className={`flex cursor-default items-center justify-center ${
                 isMenu
-                  ? 'min-h-8 opacity-70 hover:opacity-100'
+                  ? 'min-h-8 opacity-70'
                   : isLogin
-                    ? 'min-h-11 opacity-80 hover:opacity-100 hover:drop-shadow-[0_0_14px_rgba(255,45,120,0.45)] sm:min-h-12'
-                    : 'min-h-12 opacity-80 hover:opacity-100 sm:min-h-14'
+                    ? 'min-h-11 opacity-80 sm:min-h-12'
+                    : 'min-h-12 opacity-80 sm:min-h-14'
               }`}
             >
               {logo ? (
@@ -153,7 +136,7 @@ export default function FeaturedOn({ variant = 'default' }: FeaturedOnProps) {
               ) : (
                 <PublicationMark name={name} />
               )}
-            </a>
+            </span>
           </li>
         ))}
       </ul>
