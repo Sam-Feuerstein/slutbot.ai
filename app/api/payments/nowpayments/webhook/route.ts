@@ -29,16 +29,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const payCurrency = String(body.pay_currency ?? '').toLowerCase();
-  if (payCurrency !== 'usdttrc20') {
-    console.error('NowPayments webhook: ignored non-USDT-TRC20 payment', {
-      payCurrency,
-      orderId: body.order_id,
-      paymentId: body.payment_id,
-    });
-    return NextResponse.json({ ok: true });
-  }
-
   const orderId = String(body.order_id ?? '');
   const paymentId = String(body.payment_id ?? '');
   const parts = orderId.split('__');

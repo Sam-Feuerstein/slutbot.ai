@@ -12,14 +12,6 @@ import { countryFromHeaders } from '@/lib/starsGeo/detect';
 
 const API_KEY = process.env.NOWPAYMENTS_API_KEY || '';
 const NP_BASE = 'https://api.nowpayments.io/v1';
-const PAY_CURRENCY = 'usdttrc20';
-
-function lockedUsdtTrc20Url(invoiceId: string | number, paymentId: string) {
-  const url = new URL('https://nowpayments.io/payment');
-  url.searchParams.set('iid', String(invoiceId));
-  url.searchParams.set('paymentId', paymentId);
-  return url.toString();
-}
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
@@ -75,7 +67,6 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         price_amount: usdPrice,
         price_currency: 'usd',
-        pay_currency: PAY_CURRENCY,
         order_id: orderId,
         order_description: coupon
           ? `${plan.description} · ${couponRewardLabel(coupon)} (${coupon.code})`
@@ -88,39 +79,10 @@ export async function POST(req: NextRequest) {
 
     const data = (await res.json()) as { id?: string | number; invoice_url?: string; message?: string };
 
-    if (!res.ok || data.id == null) {
+    if (!res.ok || !data.invoice_url) {
       console.error('NowPayments invoice error:', data);
       return NextResponse.json({ message: data?.message || 'Failed to create crypto invoice.' }, { status: 500 });
     }
-
-    const lockRes = await fetch(`${NP_BASE}/invoice-payment`, {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ iid: data.id, pay_currency: PAY_CURRENCY }),
-    });
-    const lockData = (await lockRes.json().catch(() => null)) as {
-      payment_id?: string | number;
-      pay_currency?: string;
-      pay_address?: string;
-      pay_amount?: number;
-      network?: string;
-      message?: string;
-    } | null;
-
-    const paymentId = lockData?.payment_id != null ? String(lockData.payment_id) : '';
-    const payCurrency = String(lockData?.pay_currency ?? '').toLowerCase();
-    if (!lockRes.ok || !paymentId || payCurrency !== PAY_CURRENCY || !lockData?.pay_address) {
-      console.error('NowPayments invoice-payment lock error:', lockData);
-      return NextResponse.json(
-        { message: lockData?.message || 'Failed to create USDT TRC20 payment.' },
-        { status: 500 },
-      );
-    }
-
-    const checkoutUrl = lockedUsdtTrc20Url(data.id, paymentId);
 
     await connectDB();
     await SlutbotPayment.create({
@@ -133,8 +95,7 @@ export async function POST(req: NextRequest) {
       starsAmount: plan.starsAmount,
       desires: plan.desires,
       orderId,
-      chargeId: paymentId,
-      invoiceUrl: checkoutUrl,
+      invoiceUrl: data.invoice_url,
       country: countryFromHeaders(req.headers),
       couponCode: coupon?.code || '',
       couponType: coupon?.type || '',
@@ -142,14 +103,7 @@ export async function POST(req: NextRequest) {
       couponDiscountUsd: coupon?.discountUsd || 0,
     });
 
-    return NextResponse.json({
-      url: checkoutUrl,
-      usdAmount: usdPrice,
-      payAddress: lockData.pay_address,
-      payAmount: lockData.pay_amount,
-      payCurrency: PAY_CURRENCY,
-      network: lockData.network || 'trx',
-    });
+    return NextResponse.json({ url: data.invoice_url, usdAmount: usdPrice });
   } catch (err) {
     console.error('NowPayments error:', err);
     return NextResponse.json({ message: 'Server error.' }, { status: 500 });
