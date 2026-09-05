@@ -13,7 +13,7 @@ export const metadata = buildPageMetadata({
 });
 
 const CHECKOUT_PROMO_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
-const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
+const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4', '/checkout/swipey-promo.mp4');
 
 type SearchParams = Promise<{ plan?: string; method?: string }>;
 

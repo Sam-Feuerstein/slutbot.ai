@@ -81,6 +81,6 @@ export function exampleMediaUrl(path: string): string {
 }
 
 export function checkoutPromoMediaUrl(file: string, localFallback: string): string {
-  const remote = uiMediaUrl(`checkout/${file}`);
-  return PRESET_MEDIA_BASE ? remote : localFallback;
+  if (!PRESET_MEDIA_BASE) return localFallback;
+  return `${PRESET_MEDIA_BASE}/${PRESET_MEDIA_PREFIX}/checkout/${encodeURIComponent(file)}`;
 }

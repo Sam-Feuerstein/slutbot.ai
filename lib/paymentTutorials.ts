@@ -1,4 +1,4 @@
-import { SUPPORT_EMAIL } from '@/lib/site';
+import { HELLO_EMAIL, SUPPORT_EMAIL } from '@/lib/site';
 
 export const PAYMENT_SUPPORT_EMAIL = SUPPORT_EMAIL;
 
@@ -17,6 +17,7 @@ export type PaymentTutorial = {
   steps: PaymentTutorialStep[];
   supportTitle: string;
   supportText: string;
+  supportEmail?: string;
 };
 
 export const CRYPTO_PAYMENT_TUTORIAL: PaymentTutorial = {
@@ -111,7 +112,6 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
       paragraphs: [
         'After tapping “Card with Telegram”, you will be instantly redirected to Telegram, where a payment popup for your AI SLUTBOT subscription will appear.',
       ],
-      images: ['/payments/tutorials/stars/stars-step-2.avif'],
     },
     {
       title: 'Step 3 — Buy Telegram Stars',
@@ -156,12 +156,13 @@ export const TELEGRAM_STARS_PAYMENT_TUTORIAL: PaymentTutorial = {
         {
           title: 'Didn’t receive your credits after payment?',
           paragraphs: [
-            `No problem! Email ${PAYMENT_SUPPORT_EMAIL} with your Telegram username and pack details — we will manually add the credits within a few minutes.`,
+            `No problem! Email ${HELLO_EMAIL} with your Telegram username and pack details — we will manually add the credits within a few minutes.`,
           ],
         },
       ],
     },
   ],
   supportTitle: 'Still have questions about payment using bank card via Telegram?',
-  supportText: `Email us at ${PAYMENT_SUPPORT_EMAIL} and our team will help you complete the payment.`,
+  supportText: `Email us at ${HELLO_EMAIL} and our team will help you complete the payment.`,
+  supportEmail: HELLO_EMAIL,
 };

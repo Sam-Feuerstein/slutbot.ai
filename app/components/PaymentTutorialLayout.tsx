@@ -11,6 +11,7 @@ type Props = {
 };
 
 export default function PaymentTutorialLayout({ tutorial, alternateHref, alternateLabel }: Props) {
+  const supportEmail = tutorial.supportEmail ?? PAYMENT_SUPPORT_EMAIL;
   return (
     <div className="w-full text-white">
       <SiteHeader />
@@ -129,11 +130,13 @@ export default function PaymentTutorialLayout({ tutorial, alternateHref, alterna
           <h2 className="text-lg font-black text-white sm:text-xl">{tutorial.supportTitle}</h2>
           <p className="mt-3 text-sm leading-relaxed text-white/75 sm:text-base">{tutorial.supportText}</p>
           <a
-            href={`mailto:${PAYMENT_SUPPORT_EMAIL}`}
+            href={`mailto:${supportEmail}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#ff2d78] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#ff1a6b]"
           >
             <Mail className="h-4 w-4" />
-            Contact Support — {PAYMENT_SUPPORT_EMAIL}
+            Contact Support — {supportEmail}
           </a>
         </section>
 

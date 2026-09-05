@@ -44,7 +44,7 @@ type Props = {
 
 const PACKS = [...PREMIUM_PLANS].sort((a, b) => a.stars - b.stars);
 const CHECKOUT_PAY_INTENT_KEY = 'aislutbot-checkout-pay';
-const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('swipey-promo.mp4', '/checkout/swipey-promo.mp4');
+const CHECKOUT_PROMO_VIDEO = checkoutPromoMediaUrl('AISLUTBOT-NUDE GENERATOR.mp4', '/checkout/swipey-promo.mp4');
 const CHECKOUT_PROMO_POSTER = checkoutPromoMediaUrl('swipey-promo.jpg', '/checkout/swipey-promo.jpg');
 
 type CheckoutPayIntent = {
@@ -344,9 +344,13 @@ export default function CheckoutClient({ plan }: Props) {
         discountUsd: data.discountUsd || 0,
         label: data.label || '',
       });
-      setCouponCelebrate(true);
-      if (couponCelebrateRef.current) window.clearTimeout(couponCelebrateRef.current);
-      couponCelebrateRef.current = window.setTimeout(() => setCouponCelebrate(false), 1400);
+      if (method === 'crypto') {
+        setCouponCelebrate(true);
+        if (couponCelebrateRef.current) window.clearTimeout(couponCelebrateRef.current);
+        couponCelebrateRef.current = window.setTimeout(() => setCouponCelebrate(false), 1400);
+      } else {
+        setCouponCelebrate(false);
+      }
       trackEvent('checkout_coupon', { kind: 'click', plan: planId, method });
     } catch {
       setAppliedCoupon(null);
@@ -704,21 +708,6 @@ export default function CheckoutClient({ plan }: Props) {
                       {!soldOut && pack.id === 'legend' ? (
                         <span className="mt-0.5 block text-[9px] leading-snug text-zinc-500">
                           + Unlock custom prompts
-                          <br />
-                          + Unlock PORN generation (Turn boring images into spicy porn)
-                          <br />
-                          + Unused Stars stay — they stack on ULTRA
-                        </span>
-                      ) : !soldOut ? (
-                        <span className="mt-0.5 flex items-start gap-1 text-[9px] leading-snug text-zinc-400">
-                          <svg viewBox="0 0 20 20" className="mt-px h-2.5 w-2.5 shrink-0" fill="currentColor" aria-hidden>
-                            <path d="M10 2a3 3 0 0 0-3 3v2H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a3 3 0 0 0-3-3zm1 5H9V5a1 1 0 1 1 2 0v2z" />
-                          </svg>
-                          <span>
-                            Unlock custom prompts
-                            <br />
-                            Unlock PORN generation — ULTRA only
-                          </span>
                         </span>
                       ) : null}
                     </span>
@@ -749,7 +738,7 @@ export default function CheckoutClient({ plan }: Props) {
 
             {/* Coupon */}
             <div className="mt-3">
-              {appliedCoupon ? (
+              {appliedCoupon && isCrypto ? (
                 <div
                   className={`relative overflow-hidden rounded-xl border border-[#86efac] bg-[#ecfdf5] px-3 py-2.5 ${
                     couponCelebrate ? 'coupon-applied-celebrate' : 'coupon-applied'
@@ -788,7 +777,7 @@ export default function CheckoutClient({ plan }: Props) {
                           {appliedCoupon.code}
                         </span>{' '}
                         applied
-                        {appliedCoupon.label ? ` — ${appliedCoupon.label}` : ''}
+                        {appliedCoupon.label ? `. ${appliedCoupon.label}` : ''}
                       </span>
                     </span>
                     <button
@@ -799,11 +788,19 @@ export default function CheckoutClient({ plan }: Props) {
                       Remove
                     </button>
                   </div>
-                  {isCrypto ? null : (
-                    <p className="relative mt-1 text-[11px] text-[#166534]">
-                      This code applies to crypto payment only.
-                    </p>
-                  )}
+                </div>
+              ) : appliedCoupon ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2.5">
+                  <p className="min-w-0 text-[12px] font-semibold leading-snug text-zinc-700 sm:text-[13px]">
+                    This coupon is valid for crypto payment.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearCoupon}
+                    className="shrink-0 text-[11px] font-semibold text-zinc-500 underline underline-offset-2 hover:text-zinc-800"
+                  >
+                    Remove
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-stretch gap-2">
@@ -838,9 +835,17 @@ export default function CheckoutClient({ plan }: Props) {
 
             <div className="mt-4 border-t border-zinc-200 pt-3">
               {isCrypto ? (
-                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
-                  Pay with USDT (TRC20) · Same USD price as card
-                </div>
+                <>
+                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
+                    Secure payment using NOWPayments
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/payments/nowpayments-logo.png"
+                    alt="NOWPayments"
+                    className="mx-auto mt-2 block h-[28px] w-auto max-w-[180px] object-contain sm:h-[32px] sm:max-w-[220px]"
+                  />
+                </>
               ) : (
                 <>
                   <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight text-zinc-900">
@@ -898,6 +903,14 @@ export default function CheckoutClient({ plan }: Props) {
                 >
                   Terms of Service
                 </Link>
+                {' '}and{' '}
+                <Link
+                  href="/privacy"
+                  className="font-semibold text-[#ff2d78] underline underline-offset-2 hover:text-[#c81e5a]"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  Privacy Policy
+                </Link>
                 .
               </span>
             </label>
@@ -942,35 +955,31 @@ export default function CheckoutClient({ plan }: Props) {
 
             {note ? <p className="mt-2 text-center text-xs text-[#c81e5a]">{note}</p> : null}
 
-            <p className="mt-3 text-center text-sm leading-relaxed text-zinc-600">
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-zinc-600">
               {isCrypto
-                ? 'Complete the crypto payment. This page updates when you come back — credits are added as soon as the payment confirms.'
-                : 'Complete payment in Telegram. This page updates when you come back — Stars are added as soon as Telegram confirms.'}
+                ? 'Complete the crypto payment. This page updates when you come back. Credits are added as soon as the payment confirms.'
+                : 'Complete payment in Telegram. This page updates when you come back. Stars are added as soon as Telegram confirms.'}
             </p>
-            <p className="mt-2 text-center text-sm">
-              {isCrypto ? (
+            <p className="mt-2 text-center text-[11px] text-zinc-500">
+              Need help? Email our support at{' '}
+              <a
+                href={`mailto:${HELLO_EMAIL}`}
+                className="underline underline-offset-2 hover:text-zinc-800"
+              >
+                Hello@aislutbot.com
+              </a>
+            </p>
+            {isCrypto ? null : (
+              <p className="mt-2 text-center text-[11px]">
                 <a
-                  href={`mailto:${HELLO_EMAIL}`}
-                  className="text-zinc-500 underline underline-offset-2 hover:text-zinc-800"
+                  href="/payments/telegram-stars-tutorial"
+                  onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
+                  className="font-semibold text-[#ff2d78] underline underline-offset-2 hover:text-[#c81e5a]"
                 >
-                  {HELLO_EMAIL}
+                  Telegram Payment Tutorial
                 </a>
-              ) : (
-                <>
-                  <a
-                    href="/payments/telegram-stars-tutorial"
-                    onClick={() => trackEvent('checkout_tutorial', { kind: 'click', plan: planId, method: 'stars' })}
-                    className="font-semibold text-[#ff2d78] underline underline-offset-2 hover:text-[#c81e5a]"
-                  >
-                    Telegram Payment Tutorial
-                  </a>
-                  {' · '}
-                  <a href={`mailto:${HELLO_EMAIL}`} className="text-zinc-500 underline underline-offset-2 hover:text-zinc-800">
-                    {HELLO_EMAIL}
-                  </a>
-                </>
-              )}
-            </p>
+              </p>
+            )}
 
             <p className="mt-3 text-center text-[11px] text-black">
               Secure · No adult line on your bank statement · No hidden fees

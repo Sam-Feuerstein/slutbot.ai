@@ -79,13 +79,13 @@ for (const [src, dest] of [
 }
 
 console.log('\nUploading to R2…');
-await uploadFile(`${PREFIX}/swipey-promo.mp4`, mp4Out, 'video/mp4');
+await uploadFile(`${PREFIX}/AISLUTBOT-NUDE GENERATOR.mp4`, mp4Out, 'video/mp4');
 await uploadFile(`${PREFIX}/swipey-promo.jpg`, posterJpg, 'image/jpeg');
 
 const base =
   process.env.NEXT_PUBLIC_PRESET_MEDIA_BASE || 'https://pub-17aa5d996caf4f7086190be5ee8807c5.r2.dev';
 console.log(`\nDone. CDN URLs:`);
-console.log(`${base}/${PREFIX}/swipey-promo.mp4`);
+console.log(`${base}/${PREFIX}/AISLUTBOT-NUDE GENERATOR.mp4`);
 console.log(`${base}/${PREFIX}/swipey-promo.jpg`);
 
 rmSync(WORK, { recursive: true, force: true });
