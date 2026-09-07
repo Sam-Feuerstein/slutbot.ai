@@ -3,6 +3,7 @@ import Script from 'next/script';
 import AppProviders from './components/AppProviders';
 import JsonLd from './components/JsonLd';
 import FeaturedOn from './components/FeaturedOn';
+import GoogleTagSnippet from './components/GoogleTagSnippet';
 import PostHogSnippet from './components/PostHogSnippet';
 import SiteChrome from './components/SiteChrome';
 import SiteFooter from './components/SiteFooter';
@@ -83,6 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Script id="age-gate-boot" src="/scripts/age-gate-boot.js" strategy="beforeInteractive" />
+        <GoogleTagSnippet />
         <PostHogSnippet />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <AppProviders>
