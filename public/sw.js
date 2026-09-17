@@ -1,4 +1,4 @@
-/* v=3 — push + installability (no network intercept) */
+/* v=4 — push + installability (no network intercept) */
 const NOTIFICATION_ICON = '/icons/icon-192.png?v=3';
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -13,23 +13,30 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  try {
-    const data = event.data.json();
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'AI SLUTBOT', {
-        body: data.body || '',
+  const fallback = {
+    title: 'New sale',
+    body: 'A paid pack just came in.',
+  };
+  event.waitUntil(
+    (async () => {
+      let data = fallback;
+      try {
+        if (event.data) data = { ...fallback, ...event.data.json() };
+      } catch (e) {
+        console.error('[SW] Push parse error:', e);
+      }
+      await self.registration.showNotification(data.title || fallback.title, {
+        body: data.body || fallback.body,
         icon: data.icon || NOTIFICATION_ICON,
         badge: data.badge || NOTIFICATION_ICON,
-        tag: data.tag || 'aislutbot-notification',
-        data: data.data || {},
+        tag: data.tag || `aislutbot-sale-${Date.now()}`,
+        data: data.data || { url: '/admin' },
         vibrate: [200, 100, 200],
         requireInteraction: true,
-      })
-    );
-  } catch (e) {
-    console.error('[SW] Push parse error:', e);
-  }
+        renotify: true,
+      });
+    })()
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {

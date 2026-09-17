@@ -120,7 +120,7 @@ export async function creditDesires(input: {
 
   const claimed = await SlutbotPayment.findOneAndUpdate(
     { chargeId: input.chargeId, walletCredited: { $ne: true } },
-    { $set: { walletCredited: true, status: 'paid' } },
+    { $set: { walletCredited: true, status: 'paid', paidAt: new Date() } },
   );
   if (!claimed) return { ok: true, already: true };
 

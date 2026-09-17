@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   await connectDB();
   const [users, paidPayments, pwaInstalls, totalVisits, visitStats, traffic] = await Promise.all([
     SlutbotUser.find({}).select('_id clientId createdAt').lean(),
-    SlutbotPayment.find({ status: 'paid' }).select('userId clientId usdAmount').lean(),
+    SlutbotPayment.find({ status: 'paid' }).select('userId clientId usdAmount createdAt updatedAt paidAt').lean(),
     countPwaInstalls().catch(() => 0),
     getTotalVisits().catch(() => 0),
     getVisitDashboardStats(14).catch(() => ({
@@ -53,10 +53,14 @@ export async function GET(req: NextRequest) {
   const totalUsers = users.length;
   const paidUsers = users.filter(isPaidUser).length;
   const freeUsers = Math.max(0, totalUsers - paidUsers);
-  const totalPaid = (paidPayments as Array<{ usdAmount?: number }>).reduce(
-    (sum, row) => sum + (Number(row.usdAmount) || 0),
-    0,
-  );
+  const paidRows = paidPayments as Array<{
+    usdAmount?: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+    paidAt?: Date;
+  }>;
+  const totalPaid = paidRows.reduce((sum, row) => sum + (Number(row.usdAmount) || 0), 0);
+  const totalOrders = paidRows.length;
 
   const days = lastDays(14);
   const dailyMap = Object.fromEntries(days.map((day) => [day, { day, paid: 0, free: 0 }]));
@@ -123,6 +127,13 @@ export async function GET(req: NextRequest) {
   const todayGenerations = dailyGens[todayKey] || { day: todayKey, images: 0, videos: 0 };
 
   const now = new Date();
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const todayRows = paidRows.filter((row) => {
+    const paidAt = row.paidAt || row.updatedAt || row.createdAt;
+    return Boolean(paidAt && new Date(paidAt) >= todayStart);
+  });
+  const todayPaid = todayRows.reduce((sum, row) => sum + (Number(row.usdAmount) || 0), 0);
+  const todayOrders = todayRows.length;
   const hourStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours()),
   );
@@ -140,6 +151,9 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     totalPaid: Math.round(totalPaid * 100) / 100,
+    todayPaid: Math.round(todayPaid * 100) / 100,
+    totalOrders,
+    todayOrders,
     totalUsers,
     paidUsers,
     freeUsers,

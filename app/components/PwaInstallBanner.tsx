@@ -16,7 +16,7 @@ import {
 
 const DISMISS_KEY = 'pwa_install_dismissed';
 const DISMISS_DAYS = 14;
-const SW_URL = '/sw.js?v=3';
+const SW_URL = '/sw.js?v=4';
 const ICON_SRC = '/icons/icon-192.png?v=3';
 
 function wasDismissedRecently(): boolean {

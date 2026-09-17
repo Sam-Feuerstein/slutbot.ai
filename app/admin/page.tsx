@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { countryName } from '@/lib/starsGeo/countries';
 import { PageHeader, Panel, StatusChip, usePaymentEnvStatus } from './components/AdminUi';
+import SaleAlertSetup from './components/SaleAlertSetup';
 
 type RecentBuyer = {
   id: string;
@@ -59,6 +60,9 @@ const CARDS = [
 
 type Overview = {
   totalPaid: number;
+  todayPaid?: number;
+  totalOrders?: number;
+  todayOrders?: number;
   totalUsers: number;
   paidUsers: number;
   freeUsers: number;
@@ -611,10 +615,39 @@ export default function AdminOverviewPage() {
       <PageHeader
         kicker="Control room"
         title="Live admin overview"
-        description="Live visits and generations at the top. Totals below are from real users and paid invoices. Refreshes every 30 seconds."
+        description="Sales first. Visits and generations below. Totals are from paid invoices. Refreshes every 30 seconds."
       />
 
       {error ? <p className="mb-4 text-sm text-rose-300">{error}</p> : null}
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <Panel className="!border-[#ff2d78]/35 !p-5 sm:!p-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#ff6b9d] sm:text-[11px]">
+            Total sales
+          </p>
+          <p className="mt-2 text-4xl font-black tracking-tight tabular-nums sm:text-5xl">
+            {data ? formatUsd(data.totalPaid) : '—'}
+          </p>
+          <p className="mt-2 text-sm text-white/45">
+            {data ? `${(data.totalOrders ?? 0).toLocaleString('en-US')} paid orders · ${data.paidUsers} paid users` : 'All-time paid invoices'}
+          </p>
+        </Panel>
+        <Panel className="!border-white/12 !p-5 sm:!p-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">
+            Sales today
+          </p>
+          <p className="mt-2 text-4xl font-black tracking-tight tabular-nums sm:text-5xl">
+            {data ? formatUsd(data.todayPaid ?? 0) : '—'}
+          </p>
+          <p className="mt-2 text-sm text-white/45">
+            {data
+              ? `${(data.todayOrders ?? 0).toLocaleString('en-US')} order${(data.todayOrders ?? 0) === 1 ? '' : 's'} since 00:00 UTC`
+              : 'Paid since 00:00 UTC'}
+          </p>
+        </Panel>
+      </div>
+
+      <SaleAlertSetup />
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
@@ -657,21 +690,12 @@ export default function AdminOverviewPage() {
         </div>
       </Panel>
 
-      <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-        <Panel className="!p-4 sm:!p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">Total paid</p>
-          <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">
-            {data ? formatUsd(data.totalPaid) : '—'}
-          </p>
-          <p className="mt-1 text-xs text-white/40">
-            {data ? `${data.paidUsers} paid users` : ''}
-          </p>
-        </Panel>
+      <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
         <Panel className="!p-4 sm:!p-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 sm:text-[11px]">Total users</p>
           <p className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl">{data ? data.totalUsers : '—'}</p>
           <p className="mt-1 text-xs text-white/40">
-            {data ? `${data.freeUsers} free` : ''}
+            {data ? `${data.paidUsers} paid · ${data.freeUsers} free` : ''}
           </p>
         </Panel>
         <Panel className="!p-4 sm:!p-5">

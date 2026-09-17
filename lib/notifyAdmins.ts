@@ -47,16 +47,22 @@ async function sendTelegramDM(text: string) {
 }
 
 async function sendPushToAdmins(notification: object) {
-  if (!ensureVapid()) return;
+  if (!ensureVapid()) {
+    console.warn('[notifyAdmins] VAPID keys missing — cannot send web push.');
+    return;
+  }
   try {
     await connectDB();
     const subs = (await AdminPushSubscription.find({}).lean()) as unknown as Array<{
       endpoint: string;
       keys?: { p256dh?: string; auth?: string };
     }>;
-    if (!subs.length) return;
+    if (!subs.length) {
+      console.warn('[notifyAdmins] No admin push subscriptions saved.');
+      return;
+    }
     const payload = JSON.stringify(notification);
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       subs.map(async (sub) => {
         if (!sub.keys?.p256dh || !sub.keys?.auth) return;
         try {
@@ -68,10 +74,14 @@ async function sendPushToAdmins(notification: object) {
           const status = err && typeof err === 'object' && 'statusCode' in err ? Number(err.statusCode) : 0;
           if (status === 404 || status === 410) {
             await AdminPushSubscription.deleteOne({ endpoint: sub.endpoint }).catch(() => {});
+          } else {
+            console.error('[notifyAdmins] Push delivery failed:', status || err);
           }
         }
       }),
     );
+    const sent = results.filter((row) => row.status === 'fulfilled').length;
+    console.info(`[notifyAdmins] Push attempted for ${subs.length} device(s), ${sent} settled.`);
   } catch (err) {
     console.error('[notifyAdmins] Error sending push notifications:', err);
   }
@@ -96,13 +106,16 @@ export function saleNotificationCopy(payload: SaleNotificationPayload) {
 
 export async function notifyAdminsOfSale(payload: SaleNotificationPayload) {
   const copy = saleNotificationCopy(payload);
+  const tag = `aislutbot-sale-${Date.now()}`;
   await Promise.allSettled([
     sendPushToAdmins({
       title: 'New sale',
       body: copy.body,
       icon: '/icons/icon-192.png?v=3',
       badge: '/icons/icon-192.png?v=3',
-      tag: 'aislutbot-sale',
+      tag,
+      renotify: true,
+      requireInteraction: true,
       data: { url: '/admin' },
     }),
     sendTelegramDM(`<b>New sale</b>\n${copy.body}`),

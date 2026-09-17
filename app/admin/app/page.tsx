@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { adminHeaders } from '@/lib/adminApi';
+import {
+  sendAdminPushTest,
+  subscribeAdminPush,
+} from '@/lib/adminPushClient';
 import { PageHeader, Panel } from '../components/AdminUi';
 
 type InstallRow = {
@@ -154,50 +158,8 @@ export default function AdminAppPage() {
     setPushBusy(true);
     setPushNote('');
     try {
-      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-        setPushNote('This browser does not support push notifications.');
-        return;
-      }
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') {
-        setPushNote('Notifications were blocked. Allow them in the browser or installed app, then try again.');
-        return;
-      }
-      const sw = await navigator.serviceWorker.register('/sw.js?v=3');
-      await navigator.serviceWorker.ready;
-      const keyRes = await fetch('/api/admin/push/vapid-key', { credentials: 'same-origin' });
-      if (!keyRes.ok) {
-        setPushNote('Push keys are not configured on the server yet.');
-        return;
-      }
-      const { publicKey } = (await keyRes.json()) as { publicKey?: string };
-      if (!publicKey) {
-        setPushNote('Push keys are not configured on the server yet.');
-        return;
-      }
-      const padding = '='.repeat((4 - (publicKey.length % 4)) % 4);
-      const base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const raw = atob(base64);
-      const keyBytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i += 1) keyBytes[i] = raw.charCodeAt(i);
-      const existing = await sw.pushManager.getSubscription();
-      const sub =
-        existing ||
-        (await sw.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: keyBytes,
-        }));
-      const save = await fetch('/api/admin/push/subscribe', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      });
-      if (!save.ok) {
-        setPushNote('Could not save this device for alerts.');
-        return;
-      }
-      setPushNote('This device will get a notification on each paid pack.');
+      const result = await subscribeAdminPush({ forceRefresh: true });
+      setPushNote(result.message);
     } catch {
       setPushNote('Could not enable notifications on this device.');
     } finally {
@@ -209,21 +171,13 @@ export default function AdminAppPage() {
     setPushBusy(true);
     setPushNote('');
     try {
-      const res = await fetch('/api/admin/push/test', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: adminHeaders(),
-      });
-      if (!res.ok) {
-        setPushNote('Could not send a test alert.');
-        return;
-      }
+      const result = await sendAdminPushTest();
       window.dispatchEvent(
         new CustomEvent('slutbot:admin-sale-toast', {
           detail: { planLabel: 'AI SLUTBOT 1,500 Stars', method: 'crypto', username: 'test', usd: 9.99 },
         }),
       );
-      setPushNote('Test alert sent. Check this browser or the installed app.');
+      setPushNote(result.message);
     } catch {
       setPushNote('Could not send a test alert.');
     } finally {
@@ -267,8 +221,9 @@ export default function AdminAppPage() {
       <Panel className="mb-8">
         <h2 className="text-lg font-black">Sale notifications</h2>
         <p className="mt-1 text-sm text-white/45">
-          On the website, a toast appears while you are logged into admin. On the phone, install the app, open it while
-          logged into admin, and allow notifications. iPhone only delivers push after Add to Home Screen.
+          On the website, a toast appears while you are logged into admin. Enable alerts on the overview page or here.
+          On the phone, install the app, open it while logged into admin, and allow notifications. iPhone only delivers
+          push after Add to Home Screen.
         </p>
         {data && !data.push?.vapidConfigured ? (
           <p className="mt-3 text-sm text-amber-300">VAPID keys are missing. Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to the server env.</p>

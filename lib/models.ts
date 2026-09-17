@@ -83,6 +83,7 @@ const slutbotPaymentSchema = new Schema(
     couponDiscountPercent: { type: Number, default: 0 },
     couponDiscountUsd: { type: Number, default: 0 },
     walletCredited: { type: Boolean, default: false },
+    paidAt: { type: Date, default: null, index: true },
   },
   { timestamps: true, collection: 'slutbotpayments' },
 );
