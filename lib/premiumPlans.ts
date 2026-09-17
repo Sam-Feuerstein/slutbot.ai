@@ -118,14 +118,26 @@ export function cryptoInvoiceUsd(usd: number): number {
 }
 
 /**
- * Crypto price matches the real Telegram Stars value: 600 Stars = $7.80,
- * i.e. $0.013 per Star. No discount, no markup.
+ * Crypto list price matches the real Telegram Stars value: 600 Stars = $7.80,
+ * i.e. $0.013 per Star. Checkout then applies CRYPTO_SALE_PERCENT.
  */
 export const CRYPTO_USD_PER_STAR = 0.013;
+export const CRYPTO_SALE_PERCENT = 10;
+export const CRYPTO_SALE_BADGE = '10% OFF';
 
 export function cryptoUsdForStars(stars: number): number {
   const raw = Math.max(0, Number(stars) || 0) * CRYPTO_USD_PER_STAR;
   return Math.round(raw * 100) / 100;
+}
+
+export function applyCryptoSaleUsd(usd: number): number {
+  const base = Math.max(0, Number(usd) || 0);
+  const pct = Math.min(90, Math.max(0, CRYPTO_SALE_PERCENT));
+  return Math.round(((base * (100 - pct)) / 100) * 100) / 100;
+}
+
+export function cryptoSaleUsdForStars(stars: number): number {
+  return applyCryptoSaleUsd(cryptoUsdForStars(stars));
 }
 
 /** Apply a percent/amount-off coupon to a crypto USD price. Never below $0.01. */
@@ -145,11 +157,11 @@ export function applyCryptoCouponUsd(
   return Math.round(Math.max(0.01, next) * 100) / 100;
 }
 
-/** Crypto packs start at the novice — the 750 Starter is sold out on crypto. */
-export const CRYPTO_MIN_STARS = 1500;
+/** All catalog packs can be paid with crypto. */
+export const CRYPTO_MIN_STARS = 0;
 
 export function isCryptoAvailableForStars(stars: number): boolean {
-  return Math.round(Number(stars) || 0) >= CRYPTO_MIN_STARS;
+  return Math.round(Number(stars) || 0) > 0;
 }
 
 export function cryptoUsdPrice(usd: number): number {
@@ -198,6 +210,9 @@ export function planOfferMoreBadgeLabel(plan: PremiumPlan): string | null {
 }
 
 export function planOfferBonusPercent(plan: PremiumPlan): number {
+  if (typeof plan.bonusPercent === 'number' && Number.isFinite(plan.bonusPercent)) {
+    return Math.max(0, Math.round(plan.bonusPercent));
+  }
   const baselineImages = Math.round((plan.stars * MINI_IMAGES) / MINI_STARS);
   if (baselineImages < 1) return 0;
   return Math.max(0, Math.round((plan.imageGenerations / baselineImages - 1) * 100));
@@ -276,8 +291,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     name: 'ULTRA',
     stars: 15000,
     price: usdTelegramFromStars(15000),
-    imageGenerations: 1872,
-    videoGenerations: 936,
+    imageGenerations: 2088,
+    videoGenerations: 1044,
     concurrentGenerations: 20,
     features: features({
       hd: 'star',
@@ -295,8 +310,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     name: 'PRO',
     stars: 5000,
     price: usdTelegramFromStars(5000),
-    imageGenerations: 576,
-    videoGenerations: 288,
+    imageGenerations: 624,
+    videoGenerations: 312,
     badge: 'Best value',
     concurrentGenerations: 20,
     features: features({
@@ -315,8 +330,8 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     name: 'ADVANCED',
     stars: 2500,
     price: usdTelegramFromStars(2500),
-    imageGenerations: 260,
-    videoGenerations: 130,
+    imageGenerations: 300,
+    videoGenerations: 150,
     features: features({
       hd: 'star',
       proExports: 'star',
@@ -333,8 +348,9 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     name: 'BASIC',
     stars: 1500,
     price: usdTelegramFromStars(1500),
-    imageGenerations: 150,
-    videoGenerations: 75,
+    bonusPercent: 20,
+    imageGenerations: 172,
+    videoGenerations: 86,
     badge: 'Bestseller',
     features: features({
       proExports: 'check',

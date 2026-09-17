@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminSessionOk } from '@/lib/auth/adminSession';
 import { EMAIL_TEMPLATE_IDS, type EmailTemplateId, type EmailTemplates } from '@/lib/email/templates';
 import { isSendableEmail, sendTemplateEmail, smtpConfigured } from '@/lib/email/send';
+import { SITE_URL, checkoutHref } from '@/lib/site';
 
 export async function POST(req: NextRequest) {
   if (!(await adminSessionOk(req))) {
@@ -40,8 +41,8 @@ export async function POST(req: NextRequest) {
       amount: '$19.94',
       desires: '1,500',
       stars: '1,500',
-      resetLink: 'https://aislutbot.com/login',
-      checkoutUrl: 'https://aislutbot.com/checkout?plan=flirt',
+      resetLink: `${SITE_URL}/login`,
+      checkoutUrl: `${SITE_URL}${checkoutHref({ plan: 'flirt' })}`,
     },
   });
   if (!result.ok) {

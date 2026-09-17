@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import SiteHeader from '../components/SiteHeader';
 import { buildPageMetadata } from '@/lib/seo';
+import { LEGAL_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Cookie Policy',
@@ -20,7 +21,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
+const Mail = ({ children = LEGAL_EMAIL }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -39,7 +40,7 @@ export default function CookiesPage() {
           <Section title="1. Introduction">
             <p>
               This Cookie Policy explains how cookies and similar technologies are used on the AI SLUTBOT Platform at
-              aislutbot.com (the “Platform”). By using our Platform, you consent to the use of cookies in accordance with
+              slutbot.ai (the “Platform”). By using our Platform, you consent to the use of cookies in accordance with
               this Cookie Policy.
             </p>
           </Section>

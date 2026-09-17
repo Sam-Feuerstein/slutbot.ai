@@ -295,7 +295,7 @@ export default function HomePresetCard({
           {preset.remixes.includes('used')
             ? preset.remixes
             : `${preset.remixes} Remixes`}{' '}
-          <span className="mx-1">|</span> @aislutbot.com
+          <span className="mx-1">|</span> @slutbot.ai
         </p>
       </div>
 

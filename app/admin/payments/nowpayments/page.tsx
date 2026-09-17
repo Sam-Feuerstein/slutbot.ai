@@ -61,7 +61,7 @@ export default function NowPaymentsPage() {
         <Panel>
           <h2 className="text-lg font-black">USD pricing</h2>
           <p className="mt-1 text-sm text-white/40">
-            Live invoices bill these catalog USD amounts. Telegram Stars stay 750 / 1,500 / 2,500 / 5,000. Crypto uses the pack USD (USDT 40% off, $12 minimum).
+            Live invoices bill these catalog USD amounts. Telegram Stars stay 750 / 1,500 / 2,500 / 5,000 / 15,000. Crypto uses the pack USD (10% off, all packs).
           </p>
           <div className="mt-5 space-y-3">
             {settings.plans.map((plan, index) => {

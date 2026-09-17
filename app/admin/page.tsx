@@ -5,6 +5,19 @@ import { useEffect, useState } from 'react';
 import { countryName } from '@/lib/starsGeo/countries';
 import { PageHeader, Panel, StatusChip, usePaymentEnvStatus } from './components/AdminUi';
 
+type RecentBuyer = {
+  id: string;
+  country: string;
+  countryLabel: string;
+  usdAmount: number;
+  starsAmount: number;
+  method: 'stars' | 'crypto';
+  planId: string;
+  username: string | null;
+  userId: string | null;
+  paidAt: string;
+};
+
 const CARDS = [
   {
     href: '/admin/payments/nowpayments',
@@ -410,9 +423,140 @@ function StatCard({
   );
 }
 
+function formatPaidAt(iso: string) {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  if (diffMs < 60_000) return 'Just now';
+  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)}m ago`;
+  if (diffMs < 86_400_000) return `${Math.floor(diffMs / 3_600_000)}h ago`;
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  }) + ' UTC';
+}
+
+function MethodBadge({ method }: { method: RecentBuyer['method'] }) {
+  if (method === 'stars') {
+    return (
+      <span className="inline-flex rounded-full bg-amber-400/15 px-2.5 py-1 text-[11px] font-bold text-amber-200">
+        Stars
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-full bg-violet-400/15 px-2.5 py-1 text-[11px] font-bold text-violet-200">
+      Crypto
+    </span>
+  );
+}
+
+function RecentBuyersPanel({ buyers, loading }: { buyers: RecentBuyer[]; loading: boolean }) {
+  return (
+    <>
+      <div className="space-y-3 sm:hidden">
+        {loading ? (
+          <p className="text-sm text-white/40">Loading…</p>
+        ) : buyers.length === 0 ? (
+          <p className="text-sm text-white/40">No paid purchases yet.</p>
+        ) : (
+          buyers.map((buyer) => (
+            <div key={buyer.id} className="rounded-xl border border-white/8 bg-black/20 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-bold text-white">{formatUsd(buyer.usdAmount)}</p>
+                  {buyer.method === 'stars' && buyer.starsAmount ? (
+                    <p className="mt-0.5 text-xs text-white/40">{buyer.starsAmount.toLocaleString('en-US')} Stars</p>
+                  ) : null}
+                </div>
+                <MethodBadge method={buyer.method} />
+              </div>
+              <p className="mt-2 text-sm text-white/70">
+                {buyer.countryLabel}
+                <span className="ml-1.5 font-mono text-[11px] text-white/30">{buyer.country}</span>
+              </p>
+              <p className="mt-1 text-xs text-white/45">
+                {formatPaidAt(buyer.paidAt)}
+                {buyer.planId ? ` · ${buyer.planId}` : ''}
+                {buyer.username ? ` · ${buyer.username}` : ''}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto sm:block">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="text-[11px] uppercase tracking-[0.16em] text-white/35">
+            <tr className="border-b border-white/8">
+              <th className="px-1 py-3 pr-4 font-semibold">When</th>
+              <th className="px-4 py-3 font-semibold">Country</th>
+              <th className="px-4 py-3 font-semibold">Amount</th>
+              <th className="px-4 py-3 font-semibold">Method</th>
+              <th className="px-4 py-3 font-semibold">Plan</th>
+              <th className="px-1 py-3 pl-4 font-semibold">User</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-white/40">
+                  Loading…
+                </td>
+              </tr>
+            ) : buyers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-white/40">
+                  No paid purchases yet.
+                </td>
+              </tr>
+            ) : (
+              buyers.map((buyer) => (
+                <tr key={buyer.id} className="border-t border-white/6 transition hover:bg-white/[0.03]">
+                  <td className="py-3.5 pr-4 text-white/55 tabular-nums">{formatPaidAt(buyer.paidAt)}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="font-medium text-white/85">{buyer.countryLabel}</span>
+                    <span className="ml-2 font-mono text-[11px] text-white/30">{buyer.country}</span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <span className="font-black tabular-nums text-white">{formatUsd(buyer.usdAmount)}</span>
+                    {buyer.method === 'stars' && buyer.starsAmount ? (
+                      <p className="mt-0.5 text-xs text-white/40">{buyer.starsAmount.toLocaleString('en-US')} Stars</p>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <MethodBadge method={buyer.method} />
+                  </td>
+                  <td className="px-4 py-3.5 capitalize text-white/60">{buyer.planId || '—'}</td>
+                  <td className="py-3.5 pl-4">
+                    {buyer.userId ? (
+                      <Link href={`/admin/users/${buyer.userId}`} className="font-medium text-white hover:text-[#ff6b9d]">
+                        {buyer.username || 'View user'}
+                      </Link>
+                    ) : (
+                      <span className="text-white/35">Guest</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 export default function AdminOverviewPage() {
   const env = usePaymentEnvStatus();
   const [data, setData] = useState<Overview | null>(null);
+  const [buyers, setBuyers] = useState<RecentBuyer[]>([]);
+  const [buyersLoading, setBuyersLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -429,6 +573,22 @@ export default function AdminOverviewPage() {
         })
         .catch((err: Error) => {
           if (!cancelled) setError(err.message);
+        });
+
+      void fetch('/api/admin/payments/recent?limit=25')
+        .then(async (res) => {
+          const json = (await res.json()) as { buyers?: RecentBuyer[]; message?: string };
+          if (!res.ok) throw new Error(json.message || 'Could not load recent buyers.');
+          if (!cancelled) {
+            setBuyers(json.buyers || []);
+            setBuyersLoading(false);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setBuyers([]);
+            setBuyersLoading(false);
+          }
         });
     };
     load();
@@ -484,6 +644,16 @@ export default function AdminOverviewPage() {
         <p className="mt-1 text-sm text-white/45">Unique visitors in each of the last 24 UTC hours.</p>
         <div className="mt-4">
           {data ? <HourlyVisitsStrip hourly={data.hourlyVisits || []} /> : <p className="text-sm text-white/40">Loading…</p>}
+        </div>
+      </Panel>
+
+      <Panel className="mb-6">
+        <h2 className="text-base font-black sm:text-lg">Recent buyers</h2>
+        <p className="mt-1 text-sm text-white/45">
+          Latest completed purchases — country at checkout, USD paid, and Stars vs crypto. Refreshes every 30 seconds.
+        </p>
+        <div className="mt-4">
+          <RecentBuyersPanel buyers={buyers} loading={buyersLoading} />
         </div>
       </Panel>
 

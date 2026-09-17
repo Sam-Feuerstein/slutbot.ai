@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import SiteHeader from '../components/SiteHeader';
 import { buildPageMetadata } from '@/lib/seo';
+import { LEGAL_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Privacy Policy',
@@ -20,7 +21,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
+const Mail = ({ children = LEGAL_EMAIL }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -46,7 +47,7 @@ export default function PrivacyPage() {
 
           <Section title="2. Company Information and Data Controller">
             <p>
-              AI SLUTBOT, operating the Platform at aislutbot.com, is the data controller responsible for the processing
+              AI SLUTBOT, operating the Platform at slutbot.ai, is the data controller responsible for the processing
               of personal data described in this Privacy Policy (“we”, “us”, or “our”).
             </p>
             <p>
@@ -416,7 +417,7 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <strong className="text-white/80">Platform:</strong> the AI SLUTBOT image and video generation services
-                operated at aislutbot.com, including related features such as Stars, generation history, and
+                operated at slutbot.ai, including related features such as Stars, generation history, and
                 affiliate tools.
               </li>
               <li>

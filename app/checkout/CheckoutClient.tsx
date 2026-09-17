@@ -16,14 +16,15 @@ import AdminViewAsSwitch from '@/app/components/AdminViewAsSwitch';
 import { checkoutPromoMediaUrl } from '@/lib/presetMedia';
 import {
   PREMIUM_PLANS,
-  planOfferBaseline,
-  planOfferBonusPercent,
   planOfferMoreBadgeLabel,
   planStarsLabel,
+  planTotalSavedCopy,
   cryptoUsdForStars,
+  applyCryptoSaleUsd,
   applyCryptoCouponUsd,
   isCryptoAvailableForStars,
   formatUsdPrice,
+  CRYPTO_SALE_BADGE,
   type PremiumPlan,
 } from '@/lib/premiumPlans';
 import { couponAppliesToPlan } from '@/lib/coupons';
@@ -152,7 +153,8 @@ export default function CheckoutClient({ plan }: Props) {
   const selectedCoupon =
     activeCoupon && couponAppliesToPlan(activeCoupon.code, selected.id) ? activeCoupon : null;
   const cryptoListUsd = cryptoUsdForStars(selectedStars);
-  const cryptoFinalUsd = applyCryptoCouponUsd(cryptoListUsd, selectedCoupon);
+  const cryptoSaleUsd = applyCryptoSaleUsd(cryptoListUsd);
+  const cryptoFinalUsd = applyCryptoCouponUsd(cryptoSaleUsd, selectedCoupon);
   const cryptoSavedUsd = Math.round((cryptoListUsd - cryptoFinalUsd) * 100) / 100;
   const payLabel = useMemo(() => {
     if (buying) return isCrypto ? 'Opening crypto checkout…' : 'Opening Telegram…';
@@ -292,16 +294,7 @@ export default function CheckoutClient({ plan }: Props) {
     setMethod(next);
     setNote('');
     trackEvent('checkout_method', { kind: 'click', plan: planId, method: next });
-    // Crypto starts at the novice — bump off the sold-out Starter automatically.
-    let nextPlan = planId;
-    if (next === 'crypto' && !isCryptoAvailableForStars(selectedStars)) {
-      const fallback = PACKS.find((pack) => isCryptoAvailableForStars(pack.stars));
-      if (fallback) {
-        nextPlan = fallback.id;
-        setPlanId(fallback.id);
-      }
-    }
-    replaceCheckout(nextPlan, next);
+    replaceCheckout(planId, next);
   };
 
   const applyCoupon = async () => {
@@ -618,13 +611,20 @@ export default function CheckoutClient({ plan }: Props) {
               role="tab"
               aria-selected={isCrypto}
               onClick={() => selectMethod('crypto')}
-              className={`rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:text-sm ${
+              className={`inline-flex items-center justify-center gap-1 rounded-full px-3 py-2.5 text-center text-xs font-bold transition sm:gap-1.5 sm:text-sm ${
                 isCrypto
                   ? 'bg-[#ff2d78] text-white shadow-[0_0_16px_rgba(255,45,120,0.35)]'
                   : 'text-white/55 hover:text-white/80'
               }`}
             >
               Crypto
+              <span
+                className={`inline-flex h-[15px] items-center rounded px-1 text-[8px] font-black uppercase leading-none tracking-[0.06em] ${
+                  isCrypto ? 'bg-white text-[#16a34a]' : 'bg-[#16a34a] text-white'
+                }`}
+              >
+                {CRYPTO_SALE_BADGE}
+              </span>
             </button>
           </div>
 
@@ -633,22 +633,13 @@ export default function CheckoutClient({ plan }: Props) {
               {PACKS.map((pack) => {
                 const active = pack.id === selected.id;
                 const moreBadge = planOfferMoreBadgeLabel(pack);
-                const baseline = planOfferBaseline(pack);
-                const extraImages = Math.max(0, pack.imageGenerations - baseline.images);
-                const extraVideos = Math.max(0, pack.videoGenerations - baseline.videos);
-                const showHonestOffer = planOfferBonusPercent(pack) >= 30;
-                const showImages = showHonestOffer
-                  ? pack.imageGenerations
-                  : pack.imageGenerations + extraImages;
-                const showVideos = showHonestOffer
-                  ? pack.videoGenerations
-                  : pack.videoGenerations + extraVideos;
+                const bonusGens = planTotalSavedCopy(pack);
                 const soldOut = isCrypto && !isCryptoAvailableForStars(pack.stars);
                 const listUsd = cryptoUsdForStars(pack.stars);
                 const packCoupon =
                   activeCoupon && couponAppliesToPlan(activeCoupon.code, pack.id) ? activeCoupon : null;
-                const saleUsd = applyCryptoCouponUsd(listUsd, packCoupon);
-                const showSale = Boolean(isCrypto && !soldOut && packCoupon && saleUsd < listUsd);
+                const saleUsd = applyCryptoCouponUsd(applyCryptoSaleUsd(listUsd), packCoupon);
+                const showSale = Boolean(isCrypto && !soldOut && saleUsd < listUsd);
                 const priceLabel = isCrypto ? formatUsdPrice(listUsd) : planStarsLabel(pack.stars);
                 return (
                   <button
@@ -680,7 +671,8 @@ export default function CheckoutClient({ plan }: Props) {
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
                         <span className="min-w-0 truncate text-[12px] font-bold text-zinc-900 sm:text-[13px]">
-                          {showImages.toLocaleString('en-US')} images or {showVideos.toLocaleString('en-US')} videos
+                          {pack.imageGenerations.toLocaleString('en-US')} images or{' '}
+                          {pack.videoGenerations.toLocaleString('en-US')} videos
                         </span>
                         {soldOut ? (
                           <span className="inline-flex h-[15px] shrink-0 items-center rounded bg-[#dc2626] px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.06em] text-white">
@@ -701,6 +693,11 @@ export default function CheckoutClient({ plan }: Props) {
                           </>
                         )}
                       </span>
+                      {!soldOut && bonusGens ? (
+                        <span className="mt-0.5 block text-[9px] font-semibold leading-snug text-[#ff2d78]">
+                          Bonus {bonusGens}
+                        </span>
+                      ) : null}
                       {!soldOut && pack.id === 'legend' ? (
                         <span className="mt-0.5 block text-[9px] leading-snug text-zinc-500">
                           + Unlock custom prompts
@@ -907,6 +904,13 @@ export default function CheckoutClient({ plan }: Props) {
                 {' · '}
                 <span className="text-[#16a34a]">YOU JUST SAVED {formatUsdPrice(cryptoSavedUsd)}</span>
               </p>
+            ) : isCrypto && cryptoSavedUsd > 0 ? (
+              <p className="mt-3 text-center text-sm font-semibold text-zinc-700">
+                <span className="text-zinc-400 line-through">{formatUsdPrice(cryptoListUsd)}</span>{' '}
+                <span className="text-[#16a34a]">{formatUsdPrice(cryptoFinalUsd)}</span>
+                {' · '}
+                <span className="text-[#16a34a]">{CRYPTO_SALE_BADGE}</span>
+              </p>
             ) : isCrypto && activeCoupon && !selectedCoupon ? (
               <p className="mt-3 text-center text-sm font-semibold text-zinc-600">
                 This coupon applies to the 4 highest packs.
@@ -921,6 +925,11 @@ export default function CheckoutClient({ plan }: Props) {
               className="mt-3 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff2d78] to-[#ff1a6b] px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(255,45,120,0.35)] hover:from-[#ff4d8f] hover:to-[#ff2d78] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {payLabel}
+              {isCrypto && !buying ? (
+                <span className="inline-flex h-[18px] items-center rounded bg-white/20 px-1.5 text-[9px] font-black uppercase leading-none tracking-[0.06em]">
+                  {CRYPTO_SALE_BADGE}
+                </span>
+              ) : null}
               <LockIcon className="h-3.5 w-3.5" />
             </button>
 

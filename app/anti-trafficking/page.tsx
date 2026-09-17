@@ -28,7 +28,7 @@ export default function AntiTraffickingPage() {
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Anti-Trafficking &amp; Abuse Policy</h1>
         <p className="mt-3 text-sm text-white/45">Effective Date: 23.06.2026</p>
-        <p className="mt-1 text-sm text-white/45">Platform: aislutbot.com</p>
+        <p className="mt-1 text-sm text-white/45">Platform: slutbot.ai</p>
 
         <div className="mt-10 space-y-10">
           <Section title="1. Purpose">
@@ -247,7 +247,7 @@ export default function AntiTraffickingPage() {
               <li>
                 Content removal form:{' '}
                 <Link href="/content-removal" className="text-white underline underline-offset-2 hover:text-white/80">
-                  aislutbot.com/content-removal
+                  slutbot.ai/content-removal
                 </Link>
               </li>
             </ul>

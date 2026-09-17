@@ -3,11 +3,12 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import SiteHeader from '../components/SiteHeader';
 import { buildPageMetadata } from '@/lib/seo';
+import { LEGAL_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Terms of Service',
   description:
-    'Terms of Service for AI SLUTBOT at aislutbot.com — AI porn generator rules, Stars, prohibited content, refunds, and adult-only use.',
+    'Terms of Service for AI SLUTBOT at slutbot.ai — AI porn generator rules, Stars, prohibited content, refunds, and adult-only use.',
   path: '/terms',
 });
 
@@ -20,7 +21,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const Mail = ({ children = 'legal@aislutbot.com' }: { children?: string }) => (
+const Mail = ({ children = LEGAL_EMAIL }: { children?: string }) => (
   <a href={`mailto:${children}`} className="text-white underline underline-offset-2 hover:text-white/80">
     {children}
   </a>
@@ -44,7 +45,7 @@ export default function TermsPage() {
             <p>
               These Terms of Service govern access to and use of the AI SLUTBOT image and video generation Platform
               (the “Platform”) and the services we offer on the Platform. The Platform is designed and operated by
-              AI SLUTBOT at aislutbot.com (“we”, “us”, or “our”).
+              AI SLUTBOT at slutbot.ai (“we”, “us”, or “our”).
             </p>
             <p>
               If you are accepting these Terms of Service and using the Platform and services on behalf of a company,
@@ -232,10 +233,10 @@ export default function TermsPage() {
             <p>Current packs, as displayed on the Platform, may include:</p>
             <ul className="list-disc space-y-2 pl-5">
               <li>750 Telegram Stars (about USD $9.97), for 72 image generations or 36 spicy videos.</li>
-              <li>1,500 Telegram Stars (about USD $19.94), for 150 image generations or 75 spicy videos.</li>
-              <li>2,500 Telegram Stars (about USD $33.23), for 260 image generations or 130 spicy videos.</li>
-              <li>5,000 Telegram Stars (about USD $66.47), for 576 image generations or 288 spicy videos, including up to 20 concurrent jobs.</li>
-              <li>15,000 Telegram Stars (about USD $199.40), for 1,872 image generations or 936 spicy videos, including up to 20 concurrent jobs, custom prompts, and porn generation (turn boring images into spicy porn).</li>
+              <li>1,500 Telegram Stars (about USD $19.94), for 172 image generations or 86 spicy videos.</li>
+              <li>2,500 Telegram Stars (about USD $33.23), for 300 image generations or 150 spicy videos.</li>
+              <li>5,000 Telegram Stars (about USD $66.47), for 624 image generations or 312 spicy videos, including up to 20 concurrent jobs.</li>
+              <li>15,000 Telegram Stars (about USD $199.40), for 2,088 image generations or 1,044 spicy videos, including up to 20 concurrent jobs, custom prompts, and porn generation (turn boring images into spicy porn).</li>
             </ul>
             <p>
               Telegram Stars checkout charges the matching Telegram Stars amount. The pack credits Stars to your wallet so you can use the generations shown at
@@ -415,7 +416,7 @@ export default function TermsPage() {
               these Terms.
             </p>
             <p>
-              Affiliates may not use AI SLUTBOT, aislutbot.com, or any confusingly similar variation of
+              Affiliates may not use AI SLUTBOT, slutbot.ai, or any confusingly similar variation of
               these names or marks in any domain name, subdomain, app name, landing page, ad copy, metadata, social
               media profile, paid search campaign, display URL, redirect URL, or promotional material in a way that
               suggests ownership, official affiliation, endorsement, or control by AI SLUTBOT.

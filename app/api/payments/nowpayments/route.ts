@@ -3,7 +3,7 @@ import connectDB from '@/lib/db/mongodb';
 import { SlutbotPayment } from '@/lib/models';
 import { getCheckoutPlan } from '@/lib/payments/catalog';
 import { paymentAuthRequiredResponse, requireSlutbotUser } from '@/lib/payments/requireAuth';
-import { applyCryptoCouponUsd, cryptoUsdForStars, isCryptoAvailableForStars } from '@/lib/premiumPlans';
+import { applyCryptoCouponUsd, applyCryptoSaleUsd, cryptoUsdForStars } from '@/lib/premiumPlans';
 import { resolveCheckoutPriceCoupon } from '@/lib/coupons/store';
 import { couponAppliesToPlan } from '@/lib/coupons';
 import { couponRewardLabel } from '@/lib/coupons/pricing';
@@ -30,15 +30,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Invalid plan.' }, { status: 400 });
   }
 
-  if (!isCryptoAvailableForStars(plan.starsAmount)) {
-    return NextResponse.json(
-      { message: 'This pack is card-only. Pick a larger pack to pay with crypto.' },
-      { status: 400 },
-    );
-  }
-
-  // Crypto price is the real Stars USD value ($0.013/Star). A coupon may discount it.
-  const listUsd = cryptoUsdForStars(plan.starsAmount);
+  // Crypto list is $0.013/Star, then 10% off. A coupon may discount it further.
+  const listUsd = applyCryptoSaleUsd(cryptoUsdForStars(plan.starsAmount));
 
   let coupon = null;
   if (body?.couponCode?.trim()) {

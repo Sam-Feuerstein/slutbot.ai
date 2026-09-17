@@ -29,7 +29,7 @@ export const SITE_FAQ: SiteFaqItem[] = [
   {
     question: 'What does ULTRA unlock that other packs do not?',
     answer:
-      "ULTRA gives you 30% more credit, a custom prompt to generate spicier pictures and porn (the limit is your imagination), and longer videos up to 20 seconds. And you'll also be the first to play with our newest beta features.",
+      "ULTRA gives you 45% more credit, a custom prompt to generate spicier pictures and porn (the limit is your imagination), and longer videos up to 20 seconds. And you'll also be the first to play with our newest beta features.",
   },
   {
     question: 'Do unused Stars expire?',

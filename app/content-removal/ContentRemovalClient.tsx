@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import SiteHeader from '../components/SiteHeader';
+import { LEGAL_EMAIL } from '@/lib/site';
 
 const inputClass =
   'mt-1.5 w-full rounded-2xl border border-white/10 bg-black/50 px-3.5 py-3 text-base outline-none focus:border-[#ff2d78]/70';
@@ -53,8 +54,8 @@ export default function ContentRemovalClient() {
           </p>
           <p>
             For legal complaints, non-consensual content, trafficking, abuse, coercion, or urgent safety reports, email{' '}
-            <a href="mailto:legal@aislutbot.com" className="text-white underline underline-offset-2 hover:text-white/80">
-              legal@aislutbot.com
+            <a href={`mailto:${LEGAL_EMAIL}`} className="text-white underline underline-offset-2 hover:text-white/80">
+              {LEGAL_EMAIL}
             </a>
           </p>
         </div>

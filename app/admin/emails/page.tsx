@@ -18,6 +18,7 @@ import {
   type EmailTemplateId,
   type EmailTemplates,
 } from '@/lib/email/templates';
+import { HELLO_EMAIL, SITE_URL, checkoutHref } from '@/lib/site';
 
 function templatesEqual(a: EmailTemplates, b: EmailTemplates): boolean {
   return (Object.keys(a) as Array<keyof EmailTemplates>).every((key) => a[key] === b[key]);
@@ -252,8 +253,8 @@ export default function AdminEmailsPage() {
     amount: '$19.94',
     desires: '1,500',
     stars: '1,500',
-    resetLink: 'https://aislutbot.com/login',
-    checkoutUrl: 'https://aislutbot.com/checkout?plan=flirt',
+    resetLink: `${SITE_URL}/login`,
+    checkoutUrl: `${SITE_URL}${checkoutHref({ plan: 'flirt' })}`,
   };
   const previewSubject = applyEmailTokens(templates[active.subjectKey], previewVars);
   const previewBody = applyEmailTokens(templates[active.bodyKey], previewVars);
@@ -283,7 +284,7 @@ export default function AdminEmailsPage() {
         <Panel>
           <h2 className="text-lg font-black">Sending identity</h2>
           <p className="mt-1 text-sm text-white/40">
-            From address is {fromEmail || 'hello@aislutbot.com'}. SMTP lives in env:{' '}
+            From address is {fromEmail || HELLO_EMAIL}. SMTP lives in env:{' '}
             <span className="font-mono text-white/55">SMTP_HOST</span>,{' '}
             <span className="font-mono text-white/55">SMTP_USER</span>,{' '}
             <span className="font-mono text-white/55">SMTP_PASSWORD</span>
@@ -367,7 +368,7 @@ export default function AdminEmailsPage() {
             <div className="rounded-[24px] border border-white/8 bg-black/40 p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">Preview</p>
               <p className="mt-3 text-xs text-white/35">
-                {fromName} &lt;{fromEmail || 'hello@aislutbot.com'}&gt;
+                {fromName} &lt;{fromEmail || HELLO_EMAIL}&gt;
               </p>
               <p className="mt-4 text-lg font-black leading-snug">{previewSubject}</p>
               <pre className="mt-4 whitespace-pre-wrap font-sans text-sm leading-relaxed text-white/70">
@@ -408,7 +409,7 @@ export default function AdminEmailsPage() {
         <Panel>
           <h2 className="text-lg font-black">Send Launch offer</h2>
           <p className="mt-1 text-sm text-white/40">
-            This emails real users from hello@aislutbot.com. Telegram-only accounts and banned users are skipped.
+            This emails real users from {HELLO_EMAIL}. Telegram-only accounts and banned users are skipped.
             Anyone already sent this audience in the last 7 days is skipped.
           </p>
           <div className="mt-5 grid gap-4 md:grid-cols-[1.3fr_0.7fr]">

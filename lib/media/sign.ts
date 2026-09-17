@@ -40,7 +40,7 @@ export function verifyMediaSignature(key: string, exp: number, sig: string): boo
 }
 
 /**
- * URL WaveSpeed can fetch without hitting aislutbot.com.
+ * URL WaveSpeed can fetch without hitting slutbot.ai.
  * Site WAF / bot rules often return 403 to their crawlers.
  * Never put WAVESPEED_API_KEY on this URL.
  */
